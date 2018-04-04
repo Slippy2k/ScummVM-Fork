@@ -25,11 +25,13 @@
 
 #include "common/scummsys.h"
 #include "common/events.h"
+#include "common/queue.h"
 #include "xeen/sprites.h"
 
 namespace Xeen {
 
-#define GAME_FRAME_RATE (1000 / 18.2)
+#define GAME_FRAME_RATE (1000 / 50)
+#define GAME_FRAME_TIME 50
 
 class XeenEngine;
 
@@ -40,7 +42,8 @@ private:
 	uint32 _priorFrameCounterTime;
 	uint32 _gameCounter;
 	uint32 _gameCounters[6];
-	Common::KeyCode _keyCode;
+	uint32 _playTime;
+	Common::Queue<Common::KeyState> _keys;
 	SpriteResource _sprites;
 
 	/**
@@ -106,10 +109,36 @@ public:
 	uint32 timeElapsed4() const { return _frameCounter - _gameCounters[4]; }
 	uint32 timeElapsed5() const { return _frameCounter - _gameCounters[5]; }
 	uint32 getTicks() { return _frameCounter; }
+	uint32 playTime() const { return _playTime; }
+	void setPlayTime(uint32 time) { _playTime = time; }
 
+	/**
+	 * Waits for a given number of frames
+	 * @param numFrames			Number of frames to wait
+	 * @param interruptable		If set, aborts if the mouse or a key is pressed
+	 * @returns		True if the wait was aborted
+	 */
 	bool wait(uint numFrames, bool interruptable = true);
 
+	/**
+	 * Pause for a set amount
+	 */
 	void ipause(uint amount);
+
+	/**
+	 * Pauses a set amount past the previous call to timeMark5
+	 */
+	void ipause5(uint amount);
+
+	/**
+	 * Waits for a key or mouse press, animating the 3d view in the background
+	 */
+	void waitForPressAnimated();
+
+	/**
+	 * Waits for a key or mouse press
+	 */
+	void waitForPress();
 };
 
 class GameEvent {

@@ -37,7 +37,8 @@ namespace Mohawk {
 namespace MystStacks {
 
 Myst::Myst(MohawkEngine_Myst *vm) :
-		MystScriptParser(vm), _state(_vm->_gameState->_myst) {
+		MystScriptParser(vm),
+		_state(_vm->_gameState->_myst) {
 	setupOpcodes();
 
 	// Card ID preinitialized by the engine for use by opcode 18
@@ -45,22 +46,112 @@ Myst::Myst(MohawkEngine_Myst *vm) :
 	_savedCardId = 4329;
 
 	_towerRotationBlinkLabel = false;
+	_towerRotationBlinkLabelCount = 0;
+	_towerRotationSpeed = 0;
+	_towerRotationMapInitialized = 0;
+	_towerRotationMapRunning = false;
+	_towerRotationMapClicked = false;
+	_towerRotationMapTower = nullptr;
+	_towerRotationMapLabel = nullptr;
+	_towerRotationOverSpot = false;
+
 	_libraryBookcaseChanged = false;
+	_libraryBookcaseMoving = false;
+	_libraryBookcaseMovie = nullptr;
+	_libraryBookcaseSoundId = 0;
+
+	_libraryBookPagesTurning = false;
+	_libraryBookNumPages = 0;
+	_libraryBookBaseImage = 0;
+	_libraryBookSound1 = 0;
+	_libraryBookSound2 = 0;
+
+	_libraryCombinationBookPagesTurning = false;
+
+	for (uint i = 0; i < ARRAYSIZE(_fireplaceLines); i++) {
+		_fireplaceLines[i] = 0;
+	}
+
 	_dockVaultState = 0;
+
 	_cabinDoorOpened = 0;
 	_cabinHandleDown = 0;
 	_cabinMatchState = 2;
 	_cabinGaugeMovieEnabled = false;
+
+	_boilerPressureIncreasing = false;
+	_boilerPressureDecreasing = false;
+	_basementPressureIncreasing = false;
+	_basementPressureDecreasing = false;
+
 	_matchBurning = false;
+	_matchGoOutCnt = 0;
+	_matchGoOutTime = 0;
+
 	_tree = nullptr;
 	_treeAlcove = nullptr;
 	_treeStopped = false;
 	_treeMinPosition = 0;
+	_treeMinAccessiblePosition = 0;
+	_treeMaxAccessiblePosition = 0;
+
+	_imagerRunning = false;
+	_imagerRedButton = nullptr;
+	_imagerMovie = nullptr;
+	_imagerValidationRunning = false;
+	_imagerValidationCard = 0;
 	_imagerValidationStep = 0;
-	_observatoryCurrentSlider = nullptr;
+	for (uint i = 0; i < ARRAYSIZE(_imagerSound); i++) {
+		_imagerSound[i] = 0;
+	}
+
 	_butterfliesMoviePlayed = false;
 	_state.treeLastMoveTime = _vm->_system->getMillis();
+
 	_rocketPianoSound = 0;
+	_rocketSlider1 = nullptr;
+	_rocketSlider2 = nullptr;
+	_rocketSlider3 = nullptr;
+	_rocketSlider4 = nullptr;
+	_rocketSlider5 = nullptr;
+	_rocketSliderSound = 0;
+	_rocketLeverPosition = 0;
+
+	_generatorControlRoomRunning = false;
+	_generatorVoltage = _state.generatorVoltage;
+
+	_observatoryRunning = false;
+	_observatoryMonthChanging = false;
+	_observatoryDayChanging = false;
+	_observatoryYearChanging = false;
+	_observatoryTimeChanging = false;
+	_observatoryVisualizer = nullptr;
+	_observatoryGoButton = nullptr;
+	_observatoryCurrentSlider = nullptr;
+	_observatoryDaySlider = nullptr;
+	_observatoryMonthSlider = nullptr;
+	_observatoryYearSlider = nullptr;
+	_observatoryTimeSlider = nullptr;
+	_observatoryLastTime = 0;
+	_observatoryNotInitialized = true;
+	_observatoryIncrement = 0;
+
+	_greenBookRunning = false;
+
+	_gullsFlying1 = false;
+	_gullsFlying2 = false;
+	_gullsFlying3 = false;
+	_gullsNextTime = 0;
+
+	_courtyardBoxSound = 0;
+
+	_clockTurningWheel = 0;
+	_clockWeightPosition = 0;
+	_clockMiddleGearMovedAlone = false;
+	_clockLeverPulled = false;
+	for (uint i = 0; i < ARRAYSIZE(_clockGearsPositions); i++) {
+		_clockGearsPositions[i] = 0;
+	}
 }
 
 Myst::~Myst() {
@@ -149,6 +240,8 @@ void Myst::setupOpcodes() {
 	REGISTER_OPCODE(175, Myst, o_observatoryYearSliderEndMove);
 	REGISTER_OPCODE(176, Myst, o_observatoryTimeSliderStartMove);
 	REGISTER_OPCODE(177, Myst, o_observatoryTimeSliderEndMove);
+	REGISTER_OPCODE(178, Myst, o_libraryBookPageTurnStartLeft);
+	REGISTER_OPCODE(179, Myst, o_libraryBookPageTurnStartRight);
 	REGISTER_OPCODE(180, Myst, o_libraryCombinationBookStop);
 	REGISTER_OPCODE(181, Myst, NOP);
 	REGISTER_OPCODE(182, Myst, o_cabinMatchLight);
@@ -211,6 +304,7 @@ void Myst::setupOpcodes() {
 void Myst::disablePersistentScripts() {
 	_libraryBookcaseMoving = false;
 	_generatorControlRoomRunning = false;
+	_libraryBookPagesTurning = false;
 	_libraryCombinationBookPagesTurning = false;
 	_clockTurningWheel = 0;
 	_towerRotationMapRunning = false;
@@ -241,6 +335,9 @@ void Myst::runPersistentScripts() {
 
 	if (_libraryCombinationBookPagesTurning)
 		libraryCombinationBook_run();
+
+	if (_libraryBookPagesTurning)
+		libraryBook_run();
 
 	if (_libraryBookcaseMoving)
 		libraryBookcaseTransform_run();
@@ -812,6 +909,10 @@ uint16 Myst::bookCountPages(uint16 var) {
 }
 
 void Myst::o_libraryBookPageTurnLeft(uint16 var, const ArgumentsArray &args) {
+	libraryBookPageTurnLeft();
+}
+
+void Myst::libraryBookPageTurnLeft() {
 	if (_libraryBookPage - 1 >= 0) {
 		_libraryBookPage--;
 
@@ -826,6 +927,10 @@ void Myst::o_libraryBookPageTurnLeft(uint16 var, const ArgumentsArray &args) {
 }
 
 void Myst::o_libraryBookPageTurnRight(uint16 var, const ArgumentsArray &args) {
+	libraryBookPageTurnRight();
+}
+
+void Myst::libraryBookPageTurnRight() {
 	if (_libraryBookPage + 1 < _libraryBookNumPages) {
 		_libraryBookPage++;
 
@@ -2260,7 +2365,7 @@ void Myst::o_rocketPianoMove(uint16 var, const ArgumentsArray &args) {
 
 	if (piano.contains(mouse)) {
 		MystArea *resource = _vm->forceUpdateClickedResource();
-		if (resource && resource->type == kMystAreaDrag) {
+		if (resource && resource->hasType(kMystAreaDrag)) {
 			// Press new key
 			key = static_cast<MystAreaDrag *>(resource);
 			src = key->getSubImage(1).rect;
@@ -2505,7 +2610,35 @@ void Myst::observatoryUpdateTime() {
 	}
 }
 
+void Myst::o_libraryBookPageTurnStartLeft(uint16 var, const ArgumentsArray &args) {
+	_tempVar = -1;
+	libraryBookPageTurnLeft();
+	_startTime = _vm->_system->getMillis();
+	_libraryBookPagesTurning = true;
+}
+
+void Myst::o_libraryBookPageTurnStartRight(uint16 var, const ArgumentsArray &args) {
+	_tempVar = 1;
+	libraryBookPageTurnRight();
+	_startTime = _vm->_system->getMillis();
+	_libraryBookPagesTurning = true;
+}
+
+void Myst::libraryBook_run() {
+	uint32 time = _vm->_system->getMillis();
+	if (time >= _startTime + 500) {
+		if (_tempVar > 0) {
+			libraryBookPageTurnRight();
+			_startTime = time;
+		} else if (_tempVar < 0) {
+			libraryBookPageTurnLeft();
+			_startTime = time;
+		}
+	}
+}
+
 void Myst::o_libraryCombinationBookStop(uint16 var, const ArgumentsArray &args) {
+	_libraryBookPagesTurning = false;
 	_libraryCombinationBookPagesTurning = false;
 }
 

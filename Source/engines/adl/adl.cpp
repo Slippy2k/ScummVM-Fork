@@ -252,15 +252,15 @@ void AdlEngine::loadWords(Common::ReadStream &stream, WordMap &map, Common::Stri
 			break;
 
 		// WORKAROUND: Missing verb list terminator in hires3
-		if (_gameDescription->gameType == GAME_TYPE_HIRES3 && index == 72 && synonyms == 0)
+		if (getGameType() == GAME_TYPE_HIRES3 && index == 72 && synonyms == 0)
 			return;
 
 		// WORKAROUND: Missing noun list terminator in hires3
-		if (_gameDescription->gameType == GAME_TYPE_HIRES3 && index == 113)
+		if (getGameType() == GAME_TYPE_HIRES3 && index == 113)
 			return;
 
 		// WORKAROUND: Missing noun list terminator in hires5 region 15
-		if (_gameDescription->gameType == GAME_TYPE_HIRES5 && _state.region == 15 && index == 81)
+		if (getGameType() == GAME_TYPE_HIRES5 && _state.region == 15 && index == 81)
 			return;
 
 		for (uint i = 0; i < synonyms; ++i) {
@@ -484,7 +484,7 @@ bool AdlEngine::playTones(const Tones &tones, bool isMusic, bool allowSkip) cons
 	Audio::SoundHandle handle;
 	Audio::AudioStream *stream = new Sound(tones);
 
-	g_system->getMixer()->playStream((isMusic ? Audio::Mixer::kMusicSoundType : Audio::Mixer::kSFXSoundType), &handle, stream);
+	g_system->getMixer()->playStream((isMusic ? Audio::Mixer::kMusicSoundType : Audio::Mixer::kSFXSoundType), &handle, stream, -1, 25);
 
 	while (!g_engine->shouldQuit() && g_system->getMixer()->isSoundHandleActive(handle)) {
 		Common::Event event;

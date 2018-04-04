@@ -434,7 +434,7 @@ ADGameDescList AdvancedMetaEngine::detectGame(const Common::FSNode &parent, cons
 	const ADGameFileDescription *fileDesc;
 	const ADGameDescription *g;
 	const byte *descPtr;
-	printf("\n\n");
+	//debug("\n\n");
 	debug(3,"Starting detection in dir '%s'", parent.getPath().c_str());
 
 	// Check which files are included in some ADGameDescription *and* are present.
@@ -496,20 +496,20 @@ ADGameDescList AdvancedMetaEngine::detectGame(const Common::FSNode &parent, cons
 				continue;
 
 			if (fileDesc->md5 != NULL && fileDesc->md5 != filesProps[tstr].md5) {
-				printf("MD5 Mismatch. Skipping (%s) (%s) File: %s\n", fileDesc->md5, filesProps[tstr].md5.c_str(),tstr.c_str());
+				debug("MD5 Mismatch. Skipping (%s) (%s) File: %s", fileDesc->md5, filesProps[tstr].md5.c_str(),tstr.c_str());
 				fileMissing = true;
 				hashOrSizeMismatch = true;
 				continue;
 			}
 
 			if (fileDesc->fileSize != -1 && fileDesc->fileSize != filesProps[tstr].size) {
-				printf("Size Mismatch. Skipping (%d) (%d) File: %s\n", fileDesc->fileSize, filesProps[tstr].size,tstr.c_str());
+				debug("Size Mismatch. Skipping (%d) (%d) File: %s", fileDesc->fileSize, filesProps[tstr].size,tstr.c_str());
 				fileMissing = true;
 				hashOrSizeMismatch = true;
 				continue;
 			}
 
-			printf("Matched file: %s \t\t%s\n", tstr.c_str(), fileDesc->md5);
+			debug("Matched file: %s \t\t%s", tstr.c_str(), fileDesc->md5);
 			curFilesMatched++;
 		}
 
@@ -529,11 +529,11 @@ ADGameDescList AdvancedMetaEngine::detectGame(const Common::FSNode &parent, cons
 		}
 
 		if (!fileMissing) {
-			printf("\n\nFound game: %s (%s %s/%s) (%d)\n", g->gameId, g->extra,
+			debug("\n\nFound game: %s (%s %s/%s) (%d)", g->gameId, g->extra,
 			 getPlatformDescription(g->platform), getLanguageDescription(g->language), i);
 
 			if (curFilesMatched > maxFilesMatched) {
-				printf("\n ... new best match, removing all previous candidates\n");
+				debug("\n ... new best match, removing all previous candidates");
 				maxFilesMatched = curFilesMatched;
 
 				matched.clear();	// Remove any prior, lower ranked matches.
@@ -541,7 +541,7 @@ ADGameDescList AdvancedMetaEngine::detectGame(const Common::FSNode &parent, cons
 			} else if (curFilesMatched == maxFilesMatched) {
 				matched.push_back(g);
 			} else {
-				printf(" ... skipped");
+				debug(" ... skipped");
 			}
 
 		} else {
@@ -585,13 +585,13 @@ const ADGameDescription *AdvancedMetaEngine::detectGameFilebased(const FileMap &
 		}
 
 		if (!fileMissing) {
-			printf("\n\nMatched: %s", agdesc->gameId);
+			debug("\n\nMatched: %s", agdesc->gameId);
 
 			if (numMatchedFiles > maxNumMatchedFiles) {
 				matchedDesc = agdesc;
 				maxNumMatchedFiles = numMatchedFiles;
 
-				printf("and overridden");
+				debug("and overridden");
 
 				if (filesProps) {
 					for (filenames = ptr->filenames; *filenames; ++filenames) {

@@ -63,6 +63,7 @@ void ButtonContainer::addPartyButtons(XeenEngine *vm) {
 
 bool ButtonContainer::checkEvents(XeenEngine *vm) {
 	EventsManager &events = *vm->_events;
+	Windows &windows = *_vm->_windows;
 	_buttonValue = 0;
 
 	if (events._leftButton) {
@@ -74,11 +75,11 @@ bool ButtonContainer::checkEvents(XeenEngine *vm) {
 				events.debounceMouse();
 
 				_buttonValue = _buttons[i]._value;
-				return true;
+				break;
 			}
 		}
 
-		if (Common::Rect(8, 8, 224, 135).contains(pt)) {
+		if (!_buttonValue && Common::Rect(8, 8, 224, 135).contains(pt)) {
 			_buttonValue = 1;
 			return true;
 		}
@@ -94,9 +95,36 @@ bool ButtonContainer::checkEvents(XeenEngine *vm) {
 		else if (_buttonValue == Common::KEYCODE_KP_ENTER)
 			_buttonValue = Common::KEYCODE_RETURN;
 
-		_buttonValue |= (keyState.flags << 8);
-		if (_buttonValue)
-			return true;
+		_buttonValue |= (keyState.flags & ~Common::KBD_CAPS) << 16;
+	}
+
+	if (_buttonValue) {
+		// Check for a button matching the selected _buttonValue
+		Window &win = windows[39];
+		for (uint btnIndex = 0; btnIndex < _buttons.size(); ++btnIndex) {
+			UIButton &btn = _buttons[btnIndex];
+			if (btn._draw && btn._value == _buttonValue) {
+				// Found the correct button
+				// Draw button depressed
+				btn._sprites->draw(0, btnIndex * 2 + 1,
+					Common::Point(btn._bounds.left, btn._bounds.top));
+				win.setBounds(btn._bounds);
+				win.update();
+
+				// Slight delay
+				events.updateGameCounter();
+				events.wait(2);
+
+				// Redraw button in it's original non-depressed form
+				btn._sprites->draw(0, btnIndex * 2,
+					Common::Point(btn._bounds.left, btn._bounds.top));
+				win.setBounds(btn._bounds);
+				win.update();
+				break;
+			}
+		}
+
+		return true;
 	}
 
 	return false;
@@ -124,6 +152,14 @@ bool ButtonContainer::doScroll(bool rollUp, bool fadeIn) {
 	}
 }
 
+void ButtonContainer::loadStrings(const Common::String &name) {
+	File f(name);
+	_textStrings.clear();
+	while (f.pos() < f.size())
+		_textStrings.push_back(f.readString());
+	f.close();
+}
+
 /*------------------------------------------------------------------------*/
 
 void SettingsBaseDialog::showContents(SpriteResource &title1, bool waitFlag) {
@@ -141,18 +177,19 @@ void CreditsScreen::show(XeenEngine *vm) {
 
 void CreditsScreen::execute() {
 	Screen &screen = *_vm->_screen;
+	Windows &windows = *_vm->_windows;
 	EventsManager &events = *_vm->_events;
 
 	// Handle drawing the credits screen
 	doScroll(true, false);
-	screen._windows[GAME_WINDOW].close();
+	windows[GAME_WINDOW].close();
 
 	screen.loadBackground("marb.raw");
-	screen._windows[0].writeString(Res.CREDITS);
+	windows[0].writeString(Res.CREDITS);
 	doScroll(false, false);
 
 	events.setCursor(0);
-	screen._windows[0].update();
+	windows[0].update();
 	clearButtons();
 
 	// Wait for keypress
@@ -165,8 +202,10 @@ void CreditsScreen::execute() {
 /*------------------------------------------------------------------------*/
 
 void PleaseWait::show(XeenEngine *vm) {
+	Windows &windows = *vm->_windows;
+	Window &w = windows[9];
+
 	if (vm->_mode != MODE_0) {
-		Window &w = vm->_screen->_windows[9];
 		w.open();
 		w.writeString(Res.PLEASE_WAIT);
 		w.update();

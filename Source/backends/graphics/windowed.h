@@ -94,8 +94,8 @@ protected:
 			error("convertVirtualToWindow called without a valid draw rect");
 		}
 
-		return Common::Point(targetX + x * targetWidth / sourceWidth,
-							 targetY + y * targetHeight / sourceHeight);
+		return Common::Point(targetX + (x * targetWidth + sourceWidth / 2) / sourceWidth,
+		                     targetY + (y * targetHeight + sourceHeight / 2) / sourceHeight);
 	}
 
 	/**
@@ -120,8 +120,8 @@ protected:
 		x = CLIP<int>(x, sourceX, sourceMaxX);
 		y = CLIP<int>(y, sourceY, sourceMaxY);
 
-		return Common::Point(((x - sourceX) * targetWidth) / sourceWidth,
-							 ((y - sourceY) * targetHeight) / sourceHeight);
+		return Common::Point(((x - sourceX) * targetWidth + sourceWidth / 2) / sourceWidth,
+		                     ((y - sourceY) * targetHeight + sourceHeight / 2) / sourceHeight);
 	}
 
 	/**
@@ -201,7 +201,7 @@ protected:
 	 * @param x	The new X position of the mouse in virtual screen coordinates.
 	 * @param y	The new Y position of the mouse in virtual screen coordinates.
 	 */
-	void warpMouse(const int x, const int y) {
+	void warpMouse(const int x, const int y) override {
 		// Check active coordinate instead of window coordinate to avoid warping
 		// the mouse if it is still within the same virtual pixel
 		const Common::Point virtualCursor = convertWindowToVirtual(_cursorX, _cursorY);

@@ -26,6 +26,8 @@
 namespace BladeRunner {
 
 class BladeRunnerEngine;
+class SaveFileReadStream;
+class SaveFileWriteStream;
 
 enum PlayerAgenda {
 	kPlayerAgendaPolite = 0,
@@ -39,6 +41,9 @@ class Settings {
 	BladeRunnerEngine *_vm;
 
 	int   _chapter;
+	int   _scene;
+	int   _set;
+	int   _unk0;
 	float _gamma;
 
 	bool  _chapterChanged;
@@ -49,6 +54,8 @@ class Settings {
 	bool  _startingGame;
 	bool  _loadingGame;
 
+	// int   _unk1;
+
 	int   _fullHDFrames;
 	int   _mst3k;
 
@@ -57,6 +64,8 @@ class Settings {
 
 	int   _ammoType;
 	int   _ammoAmounts[3];
+
+	bool  _learyMode;
 
 public:
 	Settings(BladeRunnerEngine *vm);
@@ -75,12 +84,24 @@ public:
 		_newScene = -1;
 	}
 
-	int getNewScene() {
+	int getNewScene() const {
 		return _newScene;
 	}
 
-	int getNewSet() {
+	int getNewSet() const {
 		return _newSet;
+	}
+
+	int getScene() const {
+		return _scene;
+	}
+
+	int getSet() const {
+		return _set;
+	}
+
+	int getChapter() const {
+		return _chapter;
 	}
 
 	void setChapter(int newChapter) {
@@ -92,7 +113,7 @@ public:
 		_loadingGame = loadingGame;
 	}
 
-	bool getLoadingGame() {
+	bool getLoadingGame() const {
 		return _loadingGame;
 	}
 
@@ -102,13 +123,22 @@ public:
 
 	bool openNewScene();
 
-	int getAmmoType();
-	int getAmmoAmount(int ammoType);
-
-	int getDifficulty();
-	int getPlayerAgenda();
-	void setPlayerAgenda(int agenda);
+	int getAmmoType() const;
+	void setAmmoType(int ammoType);
+	int getAmmo(int ammoType) const;
 	void addAmmo(int ammoType, int ammo);
+	void decreaseAmmo();
+
+	int getDifficulty() const;
+
+	int getPlayerAgenda() const;
+	void setPlayerAgenda(int agenda);
+
+	bool getLearyMode() const;
+	void setLearyMode(bool learyMode);
+
+	void save(SaveFileWriteStream &f);
+	void load(SaveFileReadStream &f);
 };
 
 } // End of namespace BladeRunner
