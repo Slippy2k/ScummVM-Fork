@@ -757,12 +757,14 @@ XcodeProvider::ValueList& XcodeProvider::getResourceFiles() const {
 		files.push_back("dists/engine-data/neverhood.dat");
 		files.push_back("dists/engine-data/queen.tbl");
 		files.push_back("dists/engine-data/sky.cpt");
+		files.push_back("dists/engine-data/supernova.dat");
 		files.push_back("dists/engine-data/teenagent.dat");
 		files.push_back("dists/engine-data/titanic.dat");
 		files.push_back("dists/engine-data/tony.dat");
 		files.push_back("dists/engine-data/toon.dat");
 		files.push_back("dists/engine-data/wintermute.zip");
 		files.push_back("dists/engine-data/macventure.dat");
+		files.push_back("dists/engine-data/xeen.ccs");
 		files.push_back("dists/pred.dic");
 		files.push_back("icons/scummvm.icns");
 	}

@@ -22,11 +22,13 @@
 
 #include "xeen/xeen.h"
 #include "xeen/worldofxeen/worldofxeen.h"
+#include "xeen/swordsofxeen/swordsofxeen.h"
 
 #include "base/plugins.h"
 #include "common/savefile.h"
 #include "engines/advancedDetector.h"
 #include "common/system.h"
+#include "common/translation.h"
 
 #define MAX_SAVES 99
 
@@ -63,17 +65,36 @@ Common::Platform XeenEngine::getPlatform() const {
 
 static const PlainGameDescriptor XeenGames[] = {
 	{ "xeen", "Xeen" },
-	{ "clouds", "Clouds of Xeen" },
-	{ "darkside", "Dark Side of Xeen" },
-	{ "worldofxeen", "World of Xeen" },
+	{ "cloudsofxeen", "Might and Magic IV: Clouds of Xeen" },
+	{ "darksideofxeen", "Might and Magic V: Dark Side of Xeen" },
+	{ "worldofxeen", "Might and Magic: World of Xeen" },
+	{ "swordsofxeen", "Might and Magic: Swords of Xeen" },
 	{0, 0}
 };
 
+#define GAMEOPTION_SHOW_ITEM_COSTS	GUIO_GAMEOPTIONS1
+
 #include "xeen/detection_tables.h"
+
+
+static const ADExtraGuiOptionsMap optionsList[] = {
+	{
+		GAMEOPTION_SHOW_ITEM_COSTS,
+		{
+			_s("Show item costs in standard inventory mode"),
+			_s("Shows item costs in standard inventory mode, allowing the value of items to be compared"),
+			"ShowItemCosts",
+			false
+		}
+	},
+
+	AD_EXTRA_GUI_OPTIONS_TERMINATOR
+};
 
 class XeenMetaEngine : public AdvancedMetaEngine {
 public:
-	XeenMetaEngine() : AdvancedMetaEngine(Xeen::gameDescriptions, sizeof(Xeen::XeenGameDescription), XeenGames) {
+	XeenMetaEngine() : AdvancedMetaEngine(Xeen::gameDescriptions, sizeof(Xeen::XeenGameDescription),
+			XeenGames, optionsList) {
 		_maxScanDepth = 3;
 	}
 
@@ -82,7 +103,7 @@ public:
 	}
 
 	virtual const char *getOriginalCopyright() const {
-		return "Xeen Engine (c) ???";
+		return "Xeen Engine (c) 1992-1993 New World Computing, Inc.";
 	}
 
 	virtual bool hasFeature(MetaEngineFeature f) const;
@@ -95,11 +116,14 @@ public:
 
 bool XeenMetaEngine::hasFeature(MetaEngineFeature f) const {
 	return
-	    (f == kSupportsListSaves) ||
+		(f == kSupportsListSaves) ||
 		(f == kSupportsLoadingDuringStartup) ||
 		(f == kSupportsDeleteSave) ||
 		(f == kSavesSupportMetaInfo) ||
-		(f == kSavesSupportThumbnail);
+		(f == kSavesSupportCreationDate) ||
+		(f == kSavesSupportPlayTime) ||
+		(f == kSavesSupportThumbnail) ||
+		(f == kSimpleSavesNames);
 }
 
 bool Xeen::XeenEngine::hasFeature(EngineFeature f) const {
@@ -118,6 +142,9 @@ bool XeenMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGame
 	case Xeen::GType_WorldOfXeen:
 		*engine = new Xeen::WorldOfXeen::WorldOfXeenEngine(syst, gd);
 		break;
+	case Xeen::GType_Swords:
+		*engine = new Xeen::SwordsOfXeen::SwordsOfXeenEngine(syst, gd);
+		break;
 	default:
 		error("Invalid game");
 	}
@@ -129,11 +156,10 @@ SaveStateList XeenMetaEngine::listSaves(const char *target) const {
 	Common::SaveFileManager *saveFileMan = g_system->getSavefileManager();
 	Common::StringArray filenames;
 	Common::String saveDesc;
-	Common::String pattern = Common::String::format("%s.0??", target);
+	Common::String pattern = Common::String::format("%s.###", target);
 	Xeen::XeenSavegameHeader header;
 
 	filenames = saveFileMan->listSavefiles(pattern);
-	sort(filenames.begin(), filenames.end());   // Sort to get the files in numerical order
 
 	SaveStateList saveList;
 	for (Common::StringArray::const_iterator file = filenames.begin(); file != filenames.end(); ++file) {
@@ -144,16 +170,18 @@ SaveStateList XeenMetaEngine::listSaves(const char *target) const {
 			Common::InSaveFile *in = g_system->getSavefileManager()->openForLoading(*file);
 
 			if (in) {
-				Xeen::XeenEngine::readSavegameHeader(in, header);
+				Xeen::SavesManager::readSavegameHeader(in, header);
 				saveList.push_back(SaveStateDescriptor(slot, header._saveName));
 
-				header._thumbnail->free();
+				if (header._thumbnail)
+					header._thumbnail->free();
 				delete header._thumbnail;
 				delete in;
 			}
 		}
 	}
 
+	Common::sort(saveList.begin(), saveList.end(), SaveStateDescriptorSlotComparator());
 	return saveList;
 }
 
@@ -172,7 +200,7 @@ SaveStateDescriptor XeenMetaEngine::querySaveMetaInfos(const char *target, int s
 
 	if (f) {
 		Xeen::XeenSavegameHeader header;
-		Xeen::XeenEngine::readSavegameHeader(f, header);
+		Xeen::SavesManager::readSavegameHeader(f, header);
 		delete f;
 
 		// Create the return descriptor

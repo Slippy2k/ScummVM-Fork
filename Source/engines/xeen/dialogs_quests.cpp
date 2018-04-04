@@ -39,7 +39,7 @@ void Quests::show(XeenEngine *vm) {
 void Quests::execute() {
 	EventsManager &events = *_vm->_events;
 	Party &party = *_vm->_party;
-	Screen &screen = *_vm->_screen;
+	Windows &windows = *_vm->_windows;
 	Mode oldMode = _vm->_mode;
 	int count = 0;
 	bool headerShown = false;
@@ -50,16 +50,16 @@ void Quests::execute() {
 
 	enum { QUEST_ITEMS, CURRENT_QUESTS, AUTO_NOTES } mode = QUEST_ITEMS;
 	bool windowFlag;
-	if (screen._windows[29]._enabled) {
+	if (windows[29]._enabled) {
 		windowFlag = false;
 	} else {
-		screen._windows[29].open();
-		screen._windows[30].open();
+		windows[29].open();
+		windows[30].open();
 		windowFlag = true;
 	}
 
-	screen._windows[29].writeString(Res.QUESTS_DIALOG_TEXT);
-	drawButtons(&screen);
+	windows[29].writeString(Res.QUESTS_DIALOG_TEXT);
+	drawButtons(&windows[0]);
 
 	while (!_vm->shouldQuit()) {
 		Common::String lines[MAX_DIALOG_LINES];
@@ -102,9 +102,9 @@ void Quests::execute() {
 			}
 
 			if (count == 0) {
-				screen._windows[30].writeString(Res.NO_QUEST_ITEMS);
+				windows[30].writeString(Res.NO_QUEST_ITEMS);
 			} else {
-				screen._windows[30].writeString(Common::String::format(Res.QUEST_ITEMS_DATA,
+				windows[30].writeString(Common::String::format(Res.QUEST_ITEMS_DATA,
 					lines[topRow].c_str(), lines[topRow + 1].c_str(),
 					lines[topRow + 2].c_str(), lines[topRow + 3].c_str(),
 					lines[topRow + 4].c_str(), lines[topRow + 5].c_str(),
@@ -121,7 +121,7 @@ void Quests::execute() {
 			count = 0;
 			headerShown = false;
 			for (int idx = 0; idx < TOTAL_QUEST_FLAGS; ++idx) {
-				if (party._quests[idx]) {
+				if (party._questFlags[(idx + 1) / 30][(idx + 1) % 30]) {
 					if (!count && !headerShown && idx < 29) {
 						lines[count++] = Res.CLOUDS_OF_XEEN_LINE;
 					}
@@ -137,7 +137,7 @@ void Quests::execute() {
 			if (count == 0)
 				lines[1] = Res.NO_CURRENT_QUESTS;
 
-			screen._windows[30].writeString(Common::String::format(Res.CURRENT_QUESTS_DATA,
+			windows[30].writeString(Common::String::format(Res.CURRENT_QUESTS_DATA,
 				lines[topRow].c_str(), lines[topRow + 1].c_str(), lines[topRow + 2].c_str()));
 			break;
 
@@ -164,7 +164,7 @@ void Quests::execute() {
 			if (count == 0)
 				lines[1] = Res.NO_AUTO_NOTES;
 
-			screen._windows[30].writeString(Common::String::format(Res.AUTO_NOTES_DATA,
+			windows[30].writeString(Common::String::format(Res.AUTO_NOTES_DATA,
 				lines[topRow].c_str(), lines[topRow + 1].c_str(),
 				lines[topRow + 2].c_str(), lines[topRow + 3].c_str(),
 				lines[topRow + 4].c_str(), lines[topRow + 5].c_str(),
@@ -174,8 +174,8 @@ void Quests::execute() {
 			break;
 		}
 
-		screen._windows[30].writeString("\v000\t000");
-		screen._windows[24].update();
+		windows[30].writeString("\v000\t000");
+		windows[24].update();
 
 		// Key handling
 		_buttonValue = 0;
@@ -226,8 +226,8 @@ void Quests::execute() {
 	}
 
 	if (windowFlag) {
-		screen._windows[30].close();
-		screen._windows[29].close();
+		windows[30].close();
+		windows[29].close();
 	}
 	_vm->_mode = oldMode;
 }
