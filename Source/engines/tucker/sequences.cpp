@@ -50,13 +50,13 @@ void TuckerEngine::handleCreditsSequence() {
 	int counter3 = 0;
 	int num = 0;
 	int imgNum = 0;
-	Location prevLocation = _location;
+	int prevLocationNum = _locationNum;
 	int counter2 = 0;
 	int counter1 = 0;
 	loadCharset2();
 	showCursor(false);
 	stopSounds();
-	_location = kLocationCredits;
+	_locationNum = 74;
 	_flagsTable[236] = 74;
 	uint8 *imgBuf = (uint8 *)malloc(16 * 64000);
 	loadSprC02_01();
@@ -151,7 +151,7 @@ void TuckerEngine::handleCreditsSequence() {
 		}
 	} while (!_quitGame && isSpeechSoundPlaying());
 	free(imgBuf);
-	_location = prevLocation;
+	_locationNum = prevLocationNum;
 	do {
 		if (_fadePaletteCounter > 0) {
 			fadeInPalette();
@@ -185,9 +185,7 @@ void TuckerEngine::handleCongratulationsSequence() {
 }
 
 void TuckerEngine::handleNewPartSequence() {
-	assert(_part != kPartInit);
-
-	Common::String filename;
+	char filename[40];
 
 	showCursor(false);
 	stopSounds();
@@ -199,36 +197,43 @@ void TuckerEngine::handleNewPartSequence() {
 		_inventoryObjectsOffset = 0;
 		_inventoryObjectsCount = 0;
 		addObjectToInventory(30);
-		if (_part == kPartOne || _part == kPartThree) {
+		if (_partNum == 1 || _partNum == 3) {
 			addObjectToInventory(1);
 			addObjectToInventory(0);
 		}
 		_redrawPanelItemsCounter = 0;
 	}
 	_scrollOffset = 0;
-
-	filename = Common::String::format("pt%dbak.pcx", _part);
-	loadImage(filename.c_str(), _quadBackgroundGfxBuf, 1);
-	_spritesCount = 1;
-	clearSprites();
-	Location currentLocation = _location;
-	_location = kLocationNewPart;
-	unloadSprA02_01();
-	unloadSprC02_01();
-	switch (_part) {
-	case kPartOne:
-		filename = "sprites/partone.spr";
+	switch (_partNum) {
+	case 1:
+		strcpy(filename, "pt1bak.pcx");
 		break;
-	case kPartTwo:
-		filename = "sprites/parttwo.spr";
-		break;
-	case kPartThree:
-		filename = "sprites/partthr.spr";
+	case 2:
+		strcpy(filename, "pt2bak.pcx");
 		break;
 	default:
+		strcpy(filename, "pt3bak.pcx");
 		break;
 	}
-	_sprC02Table[1] = loadFile(filename.c_str(), 0);
+	loadImage(filename, _quadBackgroundGfxBuf, 1);
+	_spritesCount = 1;
+	clearSprites();
+	int currentLocation = _locationNum;
+	_locationNum = 98;
+	unloadSprA02_01();
+	unloadSprC02_01();
+	switch (_partNum) {
+	case 1:
+		strcpy(filename, "sprites/partone.spr");
+		break;
+	case 2:
+		strcpy(filename, "sprites/parttwo.spr");
+		break;
+	default:
+		strcpy(filename, "sprites/partthr.spr");
+		break;
+	}
+	_sprC02Table[1] = loadFile(filename, 0);
 	startSpeechSound(9000, 60);
 	_fadePaletteCounter = 0;
 	do {
@@ -260,21 +265,29 @@ void TuckerEngine::handleNewPartSequence() {
 		redrawScreen(0);
 		waitForTimer(3);
 	} while (_fadePaletteCounter > 0 && !_quitGame);
-	_location = currentLocation;
+	_locationNum = currentLocation;
 	showCursor(true);
 }
 
 void TuckerEngine::handleMeanwhileSequence() {
-	assert(_part != kPartInit);
-
-	Common::String filename;
+	char filename[40];
 	uint8 backupPalette[256 * 3];
 	memcpy(backupPalette, _currentPalette, 256 * 3);
-	filename = Common::String::format("meanw%02d.pcx", _part);
-	if (_flagsTable[215] == 0 && _flagsTable[231] == 1) {
-		filename = "loc80.pcx";
+	switch (_partNum) {
+	case 1:
+		strcpy(filename, "meanw01.pcx");
+		break;
+	case 2:
+		strcpy(filename, "meanw02.pcx");
+		break;
+	default:
+		strcpy(filename, "meanw03.pcx");
+		break;
 	}
-	loadImage(filename.c_str(), _quadBackgroundGfxBuf + 89600, 1);
+	if (_flagsTable[215] == 0 && _flagsTable[231] == 1) {
+		strcpy(filename, "loc80.pcx");
+	}
+	loadImage(filename, _quadBackgroundGfxBuf + 89600, 1);
 	showCursor(false);
 	_fadePaletteCounter = 0;
 	for (int i = 0; i < 60 && !_quitGame; ++i) {
@@ -309,7 +322,7 @@ void TuckerEngine::handleMeanwhileSequence() {
 void TuckerEngine::handleMapSequence() {
 	loadImage("map2.pcx", _quadBackgroundGfxBuf + 89600, 0);
 	loadImage("map1.pcx", _loadTempBuf, 1);
-	_selectedObject._locationObjectLocation = kLocationNone;
+	_selectedObject._locationObjectLocationNum = 0;
 	if (_flagsTable[7] > 0) {
 		copyMapRect(0, 0, 140, 86);
 	}
@@ -334,45 +347,45 @@ void TuckerEngine::handleMapSequence() {
 		_fullRedraw = true;
 		if (_flagsTable[7] > 0 && _mousePosX > 30 && _mousePosX < 86 && _mousePosY > 36 && _mousePosY < 86) {
 			textNum = 13;
-			_nextLocation = (_part == kPartOne) ? kLocationSeedyStreet : kLocationSeedyStreetPartThree;
+			_nextLocationNum = (_partNum == 1) ? 3 : 65;
 			xPos = 620;
 			yPos = 130;
 		} else if (_flagsTable[7] > 1 && _mousePosX > 60 && _mousePosX < 120 && _mousePosY > 120 && _mousePosY < 170) {
 			textNum = 14;
-			_nextLocation = (_part == kPartOne) ? kLocationMall : kLocationMallPartThree;
+			_nextLocationNum = (_partNum == 1) ? 9 : 66;
 			xPos = 344;
 			yPos = 120;
 		} else if (_flagsTable[7] > 2 && _mousePosX > 160 && _mousePosX < 210 && _mousePosY > 110 && _mousePosY < 160) {
 			textNum = 15;
-			_nextLocation = (_part == kPartOne) ? kLocationPark : kLocationParkPartThree;
+			_nextLocationNum = (_partNum == 1) ? 16 : 61;
 			xPos = 590;
 			yPos = 130;
 		} else if ((_flagsTable[7] == 4 || _flagsTable[7] == 6) && _mousePosX > 150 && _mousePosX < 200 && _mousePosY > 20 && _mousePosY < 70) {
 			textNum = 16;
-			_nextLocation = (_part == kPartOne) ? kLocationOutsideMuseum : kLocationOutsideMuseumPartThree;
+			_nextLocationNum = (_partNum == 1) ? 20 : 68;
 			xPos = 20;
 			yPos = 130;
 		} else if (_flagsTable[120] == 1 && _mousePosX > 240 && _mousePosX < 290 && _mousePosY > 35 && _mousePosY < 90) {
 			textNum = 17;
-			_nextLocation = (_part == kPartOne) ? kLocationDocks : kLocationDocksPartThree;
+			_nextLocationNum = (_partNum == 1) ? 19 : 62;
 			xPos = 20;
 			yPos = 124;
 		} else if (_mousePosX > 135 && _mousePosX < 185 && _mousePosY > 170 && _mousePosY < 200) {
 			textNum = 18;
-			_nextLocation = _location;
+			_nextLocationNum = _locationNum;
 			if (!_noPositionChangeAfterMap) {
 				xPos = _xPosCurrent;
 				yPos = _yPosCurrent;
-			} else if (_location == kLocationSeedyStreet || _location == kLocationSeedyStreetPartThree) {
+			} else if (_locationNum == 3 || _locationNum == 65) {
 				xPos = 620;
 				yPos = 130;
-			} else if (_location == kLocationMall || _location == kLocationMallPartThree) {
+			} else if (_locationNum == 9 || _locationNum == 66) {
 				xPos = 344;
 				yPos = 120;
-			} else if (_location == kLocationPark || _location == kLocationParkPartThree) {
+			} else if (_locationNum == 16 || _locationNum == 61) {
 				xPos = 590;
 				yPos = 130;
-			} else if (_location == kLocationOutsideMuseum || _location == kLocationOutsideMuseumPartThree) {
+			} else if (_locationNum == 20 || _locationNum == 68) {
 				xPos = 20;
 				yPos = 130;
 			} else {
@@ -398,14 +411,14 @@ void TuckerEngine::handleMapSequence() {
 		--_fadePaletteCounter;
 	}
 	_mouseClick = 1;
-	if (_nextLocation == kLocationMall && _noPositionChangeAfterMap) {
+	if (_nextLocationNum == 9 && _noPositionChangeAfterMap) {
 		_backgroundSpriteCurrentAnimation = 2;
 		_backgroundSpriteCurrentFrame = 0;
-		setCursorState(kCursorStateDisabledHidden);
-	} else if (_nextLocation == kLocationMallPartThree && _noPositionChangeAfterMap) {
+		setCursorType(2);
+	} else if (_nextLocationNum == 66 && _noPositionChangeAfterMap) {
 		_backgroundSpriteCurrentAnimation = 1;
 		_backgroundSpriteCurrentFrame = 0;
-		setCursorState(kCursorStateDisabledHidden);
+		setCursorType(2);
 	}
 	_noPositionChangeAfterMap = false;
 	_xPosCurrent = xPos;
@@ -423,21 +436,21 @@ void TuckerEngine::copyMapRect(int x, int y, int w, int h) {
 }
 
 bool TuckerEngine::handleSpecialObjectSelectionSequence() {
-	Common::String filename;
-	if (_part == kPartOne && _selectedObjectNum == 6) {
-		filename = "news1.pcx";
+	char filename[40];
+	if (_partNum == 1 && _selectedObjectNum == 6) {
+		strcpy(filename, "news1.pcx");
 		_flagsTable[7] = 4;
-	} else if (_part == kPartThree && _selectedObjectNum == 45) {
-		filename = "profnote.pcx";
-	} else if (_part == kPartOne && _selectedObjectNum == 26) {
-		filename = "photo.pcx";
-	} else if (_part == kPartThree && _selectedObjectNum == 39) {
-		filename = "news2.pcx";
+	} else if (_partNum == 3 && _selectedObjectNum == 45) {
+		strcpy(filename, "profnote.pcx");
+	} else if (_partNum == 1 && _selectedObjectNum == 26) {
+		strcpy(filename, "photo.pcx");
+	} else if (_partNum == 3 && _selectedObjectNum == 39) {
+		strcpy(filename, "news2.pcx");
 		_flagsTable[135] = 1;
 	} else if (_currentInfoString1SourceType == 0 && _currentActionObj1Num == 259) {
-		filename = "postit.pcx";
+		strcpy(filename, "postit.pcx");
 	} else if (_currentInfoString1SourceType == 1 && _currentActionObj1Num == 91) {
-		filename = "memo.pcx";
+		strcpy(filename, "memo.pcx");
 	} else {
 		return false;
 	}
@@ -447,7 +460,7 @@ bool TuckerEngine::handleSpecialObjectSelectionSequence() {
 		--_fadePaletteCounter;
 	}
 	_mouseClick = 1;
-	loadImage(filename.c_str(), _quadBackgroundGfxBuf, 1);
+	loadImage(filename, _quadBackgroundGfxBuf, 1);
 	_fadePaletteCounter = 0;
 	while (!_quitGame) {
 		waitForTimer(2);
@@ -461,7 +474,7 @@ bool TuckerEngine::handleSpecialObjectSelectionSequence() {
 		if (!_leftMouseButtonPressed && _mouseClick == 1) {
 			_mouseClick = 0;
 		}
-		if (_part == kPartThree && _selectedObjectNum == 45) {
+		if (_partNum == 3 && _selectedObjectNum == 45) {
 			for (int i = 0; i < 13; ++i) {
 				const int offset = _dataTable[204 + i]._yDest * 640 + _dataTable[204 + i]._xDest;
 				static const int itemsTable[] = { 15, 44, 25, 19, 21, 24, 12, 27, 20, 29, 35, 23, 3 };

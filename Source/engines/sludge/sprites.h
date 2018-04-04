@@ -42,8 +42,15 @@ public:
 	byte originalRed, originalGreen, originalBlue, total;
 
 	SpritePalette() { init(); }
+
 	~SpritePalette() { kill(); }
 
+	void reset() {
+		kill();
+		init();
+	}
+
+private:
 	void init() {
 		pal = nullptr;
 		r = g = b = nullptr;
@@ -52,29 +59,15 @@ public:
 	}
 
 	void kill() {
-		if (pal) {
+		if (pal)
 			delete[] pal;
-			pal = nullptr;
-		}
-		if (r) {
+		if (r)
 			delete[] r;
-			r = nullptr;
-		}
-		if (g) {
+		if (g)
 			delete[] g;
-			g = nullptr;
-		}
-		if (b) {
+		if (b)
 			delete[] b;
-			b = nullptr;
-		}
 	}
-
-	void setColor(byte red, byte green, byte blue) {
-			originalRed = red;
-			originalGreen = green;
-			originalBlue = blue;
-		}
 };
 
 struct SpriteBank {

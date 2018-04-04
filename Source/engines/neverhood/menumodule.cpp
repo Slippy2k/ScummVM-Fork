@@ -870,7 +870,7 @@ void SavegameListBox::pageDown() {
 }
 
 int GameStateMenu::scummVMSaveLoadDialog(bool isSave, Common::String &saveDesc) {
-	const Plugin *plugin = nullptr;
+	const EnginePlugin *plugin = NULL;
 	EngineMan.findGame(ConfMan.get("gameid"), &plugin);
 	GUI::SaveLoadChooser *dialog;
 	Common::String desc;

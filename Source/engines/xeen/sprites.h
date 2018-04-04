@@ -35,13 +35,10 @@ namespace Xeen {
 class XeenEngine;
 class Window;
 
-enum {
-	SCALE_MASK = 0x7FFF, SCALE_ENLARGE = 0x8000
-};
-
 enum SpriteFlags {
-	SPRFLAG_800 = 0x800, SPRFLAG_SCENE_CLIPPED = 0x2000, SPRFLAG_BOTTOM_CLIPPED = 0x4000,
-	SPRFLAG_HORIZ_FLIPPED = 0x8000, SPRFLAG_RESIZE = 0x10000
+	SPRFLAG_800 = 0x800, SPRFLAG_SCENE_CLIPPED = 0x2000,
+	SPRFLAG_4000 = 0x4000, SPRFLAG_HORIZ_FLIPPED = 0x8000,
+	SPRFLAG_RESIZE = 0x10000
 };
 
 class SpriteResource {
@@ -52,9 +49,8 @@ private:
 	Common::Array<IndexEntry> _index;
 	int32 _filesize;
 	byte *_data;
+	bool _lineDist[320];
 	int _scaledWidth, _scaledHeight;
-	Common::String _filename;
-	static int _clippedBottom;
 
 	/**
 	 * Load a sprite resource from a stream
@@ -65,19 +61,13 @@ private:
 	 * Draw the sprite onto the given surface
 	 */
 	void draw(XSurface &dest, int frame, const Common::Point &destPos,
-		const Common::Rect &bounds, uint flags = 0, int scale = 0);
-
-	/**
-	 * Draw the sprite onto a given window
-	 */
-	void draw(int windowNum, int frame, const Common::Point &destPos,
-		const Common::Rect &bounds, uint flags = 0, int scale = 0);
+		const Common::Rect &bounds, int flags = 0, int scale = 0);
 
 	/**
 	 * Draw a sprite frame based on a passed offset into the data stream
 	 */
 	void drawOffset(XSurface &dest, uint16 offset, const Common::Point &pt,
-		const Common::Rect &clipRect, uint flags, int scale);
+		const Common::Rect &clipRect, int flags, int scale);
 
 	/**
 	 * Scale a co-ordinate value based on the passed scaling mask
@@ -86,7 +76,6 @@ private:
 public:
 	SpriteResource();
 	SpriteResource(const Common::String &filename);
-	SpriteResource(const Common::String &filename, int ccMode);
 
 	virtual ~SpriteResource();
 
@@ -103,83 +92,27 @@ public:
 	/**
 	 * Load a sprite resource from a given file and archive
 	 */
-	void load(const Common::String &filename, int ccMode);
+	void load(const Common::String &filename, ArchiveType archiveType);
 
 	/**
 	 * Clears the sprite resource
 	 */
 	void clear();
 
-	/**
-	 * Draw a sprite onto a surface
-	 * @param dest		Destination surface
-	 * @param frame		Frame number
-	 * @param destPos	Destination position
-	 * @param flags		Flags
-	 * @param scale		Scale: 0=No scale, SCALE_ENLARGE=Enlarge it
-	 *					1..15   -> reduces the sprite: the higher, the smaller it'll be
-	 */
 	void draw(XSurface &dest, int frame, const Common::Point &destPos,
-		uint flags = 0, int scale = 0);
+		int flags = 0, int scale = 0);
 
-	/**
-	 * Draw a sprite onto a specific window
-	 * @param dest		Destination window
-	 * @param frame		Frame number
-	 * @param destPos	Destination position
-	 * @param flags		Flags
-	 * @param scale		Scale: 0=No scale, SCALE_ENLARGE=Enlarge it
-	 *					1..15   -> reduces the sprite: the higher, the smaller it'll be
-	 */
 	void draw(Window &dest, int frame, const Common::Point &destPos,
-		uint flags = 0, int scale = 0);
-
-	/**
-	 * Draw a sprite onto a given window
-	 * @param windowIndex	Destination window number
-	 * @param frame		Frame number
-	 * @param destPos	Destination position
-	 * @param flags		Flags
-	 * @param scale		Scale: 0=No scale, SCALE_ENLARGE=Enlarge it
-	 *					1..15   -> reduces the sprite: the higher, the smaller it'll be
-	 */
-	void draw(int windowIndex, int frame, const Common::Point &destPos,
-		uint flags = 0, int scale = 0);
+		int flags = 0, int scale = 0);
 
 	/**
 	 * Draw the sprite onto the given surface
-	 * @param dest		Destination surface
-	 * @param frame		Frame number
 	 */
 	void draw(XSurface &dest, int frame);
 
-	/**
-	 * Draw the sprite onto the given window
-	 * @param windowIndex	Destination window number
-	 * @param frame			Frame number
-	 */
-	void draw(int windowIndex, int frame);
+	int size() const { return _index.size(); }
 
-	/**
-	 * Gets the size of a sprite
-	 */
-	Common::Point getFrameSize(int frame) const;
-
-	/**
-	 * Returns the number of frames the sprite resource has
-	 */
-	size_t size() const { return _index.size(); }
-
-	/**
-	 * Returns true if the sprite resource is empty (ie. nothing is loaded)
-	 */
 	bool empty() const { return _index.size() == 0; }
-
-	/**
-	 * Set the bottom Y position where sprites are clipped if SPRFLAG_BOTTOM_CLIPPED
-	 * is applied
-	 */
-	static void setClippedBottom(int y) { _clippedBottom = y; }
 };
 
 } // End of namespace Xeen

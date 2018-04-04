@@ -37,8 +37,8 @@ namespace MystStacks {
 
 class MakingOf : public MystScriptParser {
 public:
-	explicit MakingOf(MohawkEngine_Myst *vm);
-	~MakingOf() override;
+	MakingOf(MohawkEngine_Myst *vm);
+	~MakingOf();
 
 	void disablePersistentScripts() override;
 	void runPersistentScripts() override;

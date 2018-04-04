@@ -36,7 +36,7 @@ void QuickReferenceDialog::execute() {
 	Combat &combat = *_vm->_combat;
 	EventsManager &events = *_vm->_events;
 	Party &party = *_vm->_party;
-	Windows &windows = *_vm->_windows;
+	Screen &screen = *_vm->_screen;
 	Common::String lines[8];
 
 	events.setCursor(0);
@@ -68,7 +68,7 @@ void QuickReferenceDialog::execute() {
 		food, food == 1 ? "" : "s"
 	);
 
-	Window &w = windows[24];
+	Window &w = screen._windows[24];
 	bool windowOpen = w._enabled;
 	if (!windowOpen)
 		w.open();

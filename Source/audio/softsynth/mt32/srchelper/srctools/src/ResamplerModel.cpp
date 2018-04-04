@@ -17,12 +17,12 @@
 #include <cmath>
 #include <cstddef>
 
-#include "../include/ResamplerModel.h"
+#include "ResamplerModel.h"
 
-#include "../include/ResamplerStage.h"
-#include "../include/SincResampler.h"
-#include "../include/IIR2xResampler.h"
-#include "../include/LinearResampler.h"
+#include "ResamplerStage.h"
+#include "SincResampler.h"
+#include "IIR2xResampler.h"
+#include "LinearResampler.h"
 
 namespace SRCTools {
 

@@ -24,7 +24,6 @@
 
 #include "common/file.h"
 #include "common/memstream.h"
-#include "common/ptr.h"
 
 #include "fullpipe/objects.h"
 #include "fullpipe/motion.h"
@@ -45,6 +44,22 @@ bool CObject::loadFile(const Common::String &fname) {
 	return load(archive);
 }
 
+bool ObList::load(MfcArchive &file) {
+	debugC(5, kDebugLoading, "ObList::load()");
+	int count = file.readCount();
+
+	debugC(9, kDebugLoading, "ObList::count: %d:", count);
+
+	for (int i = 0; i < count; i++) {
+		debugC(9, kDebugLoading, "ObList::[%d]", i);
+		CObject *t = file.readClass();
+
+		push_back(t);
+	}
+
+	return true;
+}
+
 bool ObArray::load(MfcArchive &file) {
 	debugC(5, kDebugLoading, "ObArray::load()");
 	int count = file.readCount();
@@ -52,7 +67,7 @@ bool ObArray::load(MfcArchive &file) {
 	resize(count);
 
 	for (int i = 0; i < count; i++) {
-		CObject *t = file.readClass<CObject>();
+		CObject *t = file.readClass();
 
 		push_back(*t);
 	}
@@ -151,7 +166,7 @@ void MemoryObject::loadFile(const Common::String &filename) {
 		if (g_fp->_currArchive != _libHandle && _libHandle)
 			g_fp->_currArchive = _libHandle;
 
-		Common::ScopedPtr<Common::SeekableReadStream> s(g_fp->_currArchive->createReadStreamForMember(filename));
+		Common::SeekableReadStream *s = g_fp->_currArchive->createReadStreamForMember(filename);
 
 		if (s) {
 			assert(s->size() > 0);
@@ -161,6 +176,8 @@ void MemoryObject::loadFile(const Common::String &filename) {
 			debugC(5, kDebugLoading, "Loading %s (%d bytes)", filename.c_str(), _dataSize);
 			_data = (byte *)calloc(_dataSize, 1);
 			s->read(_data, _dataSize);
+
+			delete s;
 		} else {
 			// We have no object to read. This is fine
 		}
@@ -363,7 +380,7 @@ void MfcArchive::init() {
 	_objectIdMap.push_back(kNullObject);
 }
 
-CObject *MfcArchive::readBaseClass() {
+CObject *MfcArchive::readClass() {
 	bool isCopyReturned;
 	CObject *res = parseClass(&isCopyReturned);
 
@@ -544,45 +561,6 @@ byte *transCyrillic(const Common::String &str) {
 	tmp[i] = 0;
 
 	return tmp;
-}
-
-void FullpipeEngine::loadGameObjH() {
-	Common::File file;
-
-	if (!file.open("gameobj.h"))
-		return;
-
-	while(true) {
-		Common::String s = file.readLine();
-
-		if (file.eos())
-			break;
-
-		if (!s.hasPrefix("#define ")) {
-			warning("Bad read: <%s>", s.c_str());
-			continue;
-		}
-
-		int cnt = 0;
-		const char *ptr = &s.c_str()[8]; // Skip '#define ''
-
-		while (*ptr && *ptr != ' ') {
-			cnt++;
-			ptr++;
-		}
-
-		Common::String val(&s.c_str()[8], cnt);
-		int key = strtol(ptr, NULL, 10);
-
-		_gameObjH[(uint16)key] = val;
-	}
-}
-
-Common::String FullpipeEngine::gameIdToStr(uint16 id) {
-	if (_gameObjH.contains(id))
-		return _gameObjH[id];
-
-	return Common::String::format("%d", id);
 }
 
 } // End of namespace Fullpipe

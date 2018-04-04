@@ -49,11 +49,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#ifdef HAS_POSIX_SPAWN
-#include <spawn.h>
-#endif
-extern char **environ;
-
 OSystem_POSIX::OSystem_POSIX(Common::String baseConfigName)
 	:
 	_baseConfigName(baseConfigName) {
@@ -87,12 +82,8 @@ void OSystem_POSIX::initBackend() {
 }
 
 bool OSystem_POSIX::hasFeature(Feature f) {
-	if (f == kFeatureDisplayLogFile)
+	if (f == kFeatureDisplayLogFile || f == kFeatureOpenUrl)
 		return true;
-#ifdef HAS_POSIX_SPAWN
-	if (f == kFeatureOpenUrl)
-		return true;
-#endif
 	return OSystem_SDL::hasFeature(f);
 }
 
@@ -275,7 +266,6 @@ bool OSystem_POSIX::displayLogFile() {
 }
 
 bool OSystem_POSIX::openUrl(const Common::String &url) {
-#ifdef HAS_POSIX_SPAWN
 	// inspired by Qt's "qdesktopservices_x11.cpp"
 
 	// try "standards"
@@ -289,7 +279,7 @@ bool OSystem_POSIX::openUrl(const Common::String &url) {
 	// try desktop environment specific tools
 	if (launchBrowser("gnome-open", url)) // gnome
 		return true;
-	if (launchBrowser("kfmclient", url)) // kde
+	if (launchBrowser("kfmclient openURL", url)) // kde
 		return true;
 	if (launchBrowser("exo-open", url)) // xfce
 		return true;
@@ -310,32 +300,16 @@ bool OSystem_POSIX::openUrl(const Common::String &url) {
 
 	warning("openUrl() (POSIX) failed to open URL");
 	return false;
-#else
-	return false;
-#endif
 }
 
-bool OSystem_POSIX::launchBrowser(const Common::String &client, const Common::String &url) {
-#ifdef HAS_POSIX_SPAWN
-	pid_t pid;
-	const char *argv[] = {
-		client.c_str(),
-		url.c_str(),
-		NULL,
-		NULL
-	};
-	if (client == "kfmclient") {
-		argv[2] = argv[1];
-		argv[1] = "openURL";
-	}
-	if (posix_spawnp(&pid, client.c_str(), NULL, NULL, const_cast<char **>(argv), environ) != 0) {
-		return false;
-	}
-	return (waitpid(pid, NULL, WNOHANG) != -1);
-#else
-	return false;
-#endif
+bool OSystem_POSIX::launchBrowser(const Common::String& client, const Common::String &url) {
+	// FIXME: system's input must be heavily escaped
+	// well, when url's specified by user
+	// it's OK now (urls are hardcoded somewhere in GUI)
+	Common::String cmd = client + " " + url;
+	return (system(cmd.c_str()) != -1);
 }
+
 
 AudioCDManager *OSystem_POSIX::createAudioCDManager() {
 #ifdef USE_LINUXCD

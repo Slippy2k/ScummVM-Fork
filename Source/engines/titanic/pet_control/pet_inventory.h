@@ -38,6 +38,7 @@ private:
 	CTextControl _text;
 	CPetInventoryGlyphs _items;
 	CGameObject *_itemBackgrounds[46];
+	CGameObject *_itemGlyphs[46];
 	CGameObject *_movie;
 	bool _isLoading;
 	int _titaniaBitFlags;

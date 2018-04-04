@@ -323,7 +323,7 @@ void LauncherDialog::addGame() {
 				selectTarget(newTarget);
 			}
 
-			g_gui.scheduleTopDialogRedraw();
+			draw();
 		}
 
 		// We need to update the buttons here, so "Mass add" will revert to "Add game"
@@ -427,7 +427,7 @@ void LauncherDialog::removeGame(int item) {
 
 		// Update the ListWidget and force a redraw
 		updateListing();
-		g_gui.scheduleTopDialogRedraw();
+		draw();
 	}
 }
 
@@ -452,7 +452,7 @@ void LauncherDialog::editGame(int item) {
 		// Update the ListWidget, reselect the edited game and force a redraw
 		updateListing();
 		selectTarget(editDialog.getDomain());
-		g_gui.scheduleTopDialogRedraw();
+		draw();
 	}
 }
 
@@ -504,7 +504,7 @@ void LauncherDialog::loadGame(int item) {
 	if (gameId.empty())
 		gameId = _domains[item];
 
-	const Plugin *plugin = nullptr;
+	const EnginePlugin *plugin = 0;
 
 	EngineMan.findGame(gameId, &plugin);
 
@@ -512,9 +512,8 @@ void LauncherDialog::loadGame(int item) {
 	target.toLowercase();
 
 	if (plugin) {
-		const MetaEngine &metaEngine = plugin->get<MetaEngine>();
-		if (metaEngine.hasFeature(MetaEngine::kSupportsListSaves) &&
-			metaEngine.hasFeature(MetaEngine::kSupportsLoadingDuringStartup)) {
+		if ((*plugin)->hasFeature(MetaEngine::kSupportsListSaves) &&
+			(*plugin)->hasFeature(MetaEngine::kSupportsLoadingDuringStartup)) {
 			int slot = _loadDialog->runModalWithPluginAndTarget(plugin, target);
 			if (slot >= 0) {
 				ConfMan.setActiveDomain(_domains[item]);
@@ -614,7 +613,7 @@ bool LauncherDialog::doGameDetection(const Common::String &path) {
 			// Update the ListWidget, select the new item, and force a redraw
 			updateListing();
 			selectTarget(editDialog.getDomain());
-			g_gui.scheduleTopDialogRedraw();
+			draw();
 		} else {
 			// User aborted, remove the the new domain again
 			ConfMan.removeGameDomain(domain);
@@ -688,15 +687,15 @@ void LauncherDialog::updateButtons() {
 	bool enable = (_list->getSelected() >= 0);
 	if (enable != _startButton->isEnabled()) {
 		_startButton->setEnabled(enable);
-		_startButton->markAsDirty();
+		_startButton->draw();
 	}
 	if (enable != _editButton->isEnabled()) {
 		_editButton->setEnabled(enable);
-		_editButton->markAsDirty();
+		_editButton->draw();
 	}
 	if (enable != _removeButton->isEnabled()) {
 		_removeButton->setEnabled(enable);
-		_removeButton->markAsDirty();
+		_removeButton->draw();
 	}
 
 	int item = _list->getSelected();
@@ -707,7 +706,7 @@ void LauncherDialog::updateButtons() {
 
 	if (en != _loadButton->isEnabled()) {
 		_loadButton->setEnabled(en);
-		_loadButton->markAsDirty();
+		_loadButton->draw();
 	}
 	switchButtonsText(_addButton, "~A~dd Game...", _s("Mass Add..."));
 #ifdef ENABLE_EVENTRECORDER

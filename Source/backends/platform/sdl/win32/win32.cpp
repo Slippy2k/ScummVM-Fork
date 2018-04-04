@@ -73,6 +73,8 @@ void OSystem_Win32::init() {
 }
 
 #if defined (WIN32)
+	#define STDOUT_FILE	TEXT("stdout.txt")
+	#define STDERR_FILE	TEXT("stderr.txt")
 	#ifndef min
 		#define min(a,b) ((a)<(b)?(a):(b))
 	#endif
@@ -124,12 +126,12 @@ static void OpenConsole( HANDLE hConsole, SHORT xSize, SHORT ySize, SHORT yTop )
 	
 
 	// If the Current Buffer *is* the Size we want, Don't do anything!	
-	/* ======================== Appdata <> Currewnt Directory ==========================================, Marty */
-		
-
-
-	/* ======================== ============================= ==========================================, Marty */		
-				
+				fclose(stdin);
+				fclose(stdout);
+				fclose(stderr);
+				freopen("CONIN$","r",stdin);
+				freopen("CONOUT$","w",stdout);
+				freopen("CONOUT$","w",stderr);
 	SetConsoleTitle("ScuummVM: Status Window");		
 	
 	fdwMode = ENABLE_WINDOW_INPUT    |
@@ -164,26 +166,23 @@ void OSystem_Win32::initBackend() {
 	// Enable or disable the window console window
 	if (ConfMan.getBool("console")) {
 			if (AllocConsole())
-			{			
-				freopen("CONIN$","r",stdin);
-				freopen("CONOUT$","w",stdout);
-				freopen("CONOUT$","w",stderr);		
+			{				
 				OpenConsole(GetStdHandle(STD_OUTPUT_HANDLE),70,50,0);
 			}
 	} else {
 		FreeConsole();
 		
-		// /* Redirect standard input and standard output */
-		// if(freopen(STDOUT_FILE, "w", stdout) == NULL){
-			// // No stdout so don't write messages
-			// no_stdout = true; 
-		// }
-		// freopen(STDERR_FILE, "w", stderr);
-		// setvbuf(stdout, NULL, _IOLBF, BUFSIZ);	/* Line buffered */
-		// setbuf(stderr, NULL);		    		/* No buffering */		
+		/* Redirect standard input and standard output */
+		if(freopen(STDOUT_FILE, "w", stdout) == NULL){
+			// No stdout so don't write messages
+			no_stdout = true; 
+		}
+		freopen(STDERR_FILE, "w", stderr);
+		setvbuf(stdout, NULL, _IOLBF, BUFSIZ);	/* Line buffered */
+		setbuf(stderr, NULL);		    		/* No buffering */		
 	}
 	
-	//SetConsoleCtrlHandler((PHANDLER_ROUTINE) ConsoleEventHandler,TRUE);
+	SetConsoleCtrlHandler((PHANDLER_ROUTINE) ConsoleEventHandler,TRUE);
 	// Create the savefile manager
 	if (_savefileManager == 0)
 		_savefileManager = new WindowsSaveFileManager();
@@ -401,9 +400,9 @@ Common::WriteStream *OSystem_Win32::createLogFile() {
 	} else {	
 		strcat(logFile, "\\DATA");
 		CreateDirectory(logFile, NULL);	
-		strcat(logFile, "\\SCUMMVM");
+		strcat(logFile, "\\DATA\\SCUMMVM");
 		CreateDirectory(logFile, NULL);
-		strcat(logFile, "\\LOGS");
+		strcat(logFile, "\\DATA\\SCUMMVM\\LOGS");
 		CreateDirectory(logFile, NULL);
 		strcat(logFile, "\\SCUMMVM.LOG");
 	}

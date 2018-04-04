@@ -21,7 +21,6 @@
  */
 
 #include "gui/remotebrowser.h"
-#include "gui/gui-manager.h"
 #include "gui/widgets/list.h"
 
 #include "common/config-manager.h"
@@ -29,9 +28,9 @@
 #include "common/algorithm.h"
 
 #include "common/translation.h"
-#include "backends/networking/curl/request.h"
-#include "backends/cloud/storage.h"
-#include "backends/cloud/cloudmanager.h"
+#include <backends/networking/curl/request.h>
+#include <backends/cloud/storage.h>
+#include <backends/cloud/cloudmanager.h>
 #include "message.h"
 
 namespace GUI {
@@ -163,7 +162,7 @@ void RemoteBrowserDialog::updateListing() {
 	_fileList->setEnabled(!_navigationLocked);
 
 	// Finally, redraw
-	g_gui.scheduleTopDialogRedraw();
+	draw();
 }
 
 void RemoteBrowserDialog::goUp() {

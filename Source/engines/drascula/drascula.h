@@ -54,7 +54,7 @@
  */
 namespace Drascula {
 
-#define DRASCULA_DAT_VER 6
+#define DRASCULA_DAT_VER 5
 #define DATAALIGNMENT 4
 
 enum DrasculaGameFeatures {
@@ -66,8 +66,7 @@ enum Languages {
 	kSpanish = 1,
 	kGerman = 2,
 	kFrench = 3,
-	kItalian = 4,
-	kRussian = 5
+	kItalian = 4
 };
 
 enum Verbs {

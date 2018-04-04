@@ -17,7 +17,7 @@
 #include <cmath>
 #include <cstring>
 
-#include "../include/FIRResampler.h"
+#include "FIRResampler.h"
 
 using namespace SRCTools;
 

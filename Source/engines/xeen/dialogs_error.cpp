@@ -34,9 +34,9 @@ void ErrorDialog::show(XeenEngine *vm, const Common::String &msg, ErrorWaitType 
 }
 
 void ErrorDialog::execute(const Common::String &msg, ErrorWaitType waitType) {
+	Screen &screen = *_vm->_screen;
 	EventsManager &events = *_vm->_events;
-	Windows &windows = *_vm->_windows;
-	Window &w = windows[6];
+	Window &w = screen._windows[6];
 
 	w.open();
 	w.writeString(msg);
@@ -94,8 +94,7 @@ void CantCast::execute(int spellId, int componentNum) {
 	EventsManager &events = *_vm->_events;
 	Sound &sound = *_vm->_sound;
 	Spells &spells = *_vm->_spells;
-	Windows &windows = *_vm->_windows;
-	Window &w = windows[6];
+	Window &w = _vm->_screen->_windows[6];
 	Mode oldMode = _vm->_mode;
 	_vm->_mode = MODE_FF;
 

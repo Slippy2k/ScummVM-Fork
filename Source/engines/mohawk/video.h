@@ -237,7 +237,7 @@ typedef Common::SharedPtr<VideoEntry> VideoEntryPtr;
 
 class VideoManager {
 public:
-	explicit VideoManager(MohawkEngine *vm);
+	VideoManager(MohawkEngine *vm);
 	virtual ~VideoManager();
 
 	// Generic movie functions

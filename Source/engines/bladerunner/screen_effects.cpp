@@ -26,8 +26,7 @@
 
 namespace BladeRunner {
 
-ScreenEffects::ScreenEffects(BladeRunnerEngine *vm, int size) {
-	_vm = vm;
+ScreenEffects::ScreenEffects(BladeRunnerEngine *vm, int size) : _vm(vm) {
 	_dataSize = size;
 	_data = new uint8[size];
 	_entries.reserve(8);
@@ -38,17 +37,17 @@ ScreenEffects::~ScreenEffects() {
 }
 
 void ScreenEffects::readVqa(Common::SeekableReadStream *stream) {
-	uint8 *dataPtr = _data;
+	uint8* dataPtr = _data;
 	int dataSize   = _dataSize;
 
-	int entryCount = stream->readUint32LE();
+	int entriesCount = stream->readUint32LE();
 
-	if (entryCount == 0) {
+	if (entriesCount == 0) {
 		return;
 	}
 
-	entryCount = MIN(entryCount, 7);
-	_entries.resize(entryCount);
+	entriesCount = MIN(entriesCount, 7);
+	_entries.resize(entriesCount);
 
 	for (Common::Array<Entry>::iterator entry = _entries.begin(); entry != _entries.end(); entry++) {
 		stream->read(&entry->palette, sizeof(Color256) * 16);
@@ -121,12 +120,12 @@ void ScreenEffects::readVqa(Common::SeekableReadStream *stream) {
 //	return false;
 //}
 
-void ScreenEffects::getColor(Color256 *outColor, uint16 x, uint16 y, uint16 z) const {
+void ScreenEffects::getColor(Color256 *outColor, uint16 x, uint16 y, uint16 z) {
 	Color256 color = { 0, 0, 0 };
-	for (Common::Array<const Entry>::iterator entry = _entries.begin(); entry != _entries.end(); entry++) {
+	for (Common::Array<Entry>::iterator entry = _entries.begin(); entry != _entries.end(); entry++) {
 		uint16 x1 = (x / 2) - entry->x;
 		uint16 y1 = (y / 2) - entry->y;
-		if (x1 < entry->width && y1 < entry->height && z > entry->z) {
+		if ( x1 < entry->width && y1 < entry->height && z > entry->z) {
 			int colorIndex = entry->data[y1 * entry->width + x1];
 			Color256 entryColor = entry->palette[colorIndex];
 			color.r += entryColor.r;

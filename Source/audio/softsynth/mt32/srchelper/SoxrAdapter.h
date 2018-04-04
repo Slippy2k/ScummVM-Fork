@@ -14,20 +14,18 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef MT32EMU_SOXR_ADAPTER_H
-#define MT32EMU_SOXR_ADAPTER_H
+#ifndef SOXR_ADAPTER_H
+#define SOXR_ADAPTER_H
 
 #include <soxr.h>
 
-#include "../Enumerations.h"
+#include "../SampleRateConverter.h"
 
 namespace MT32Emu {
 
-class Synth;
-
 class SoxrAdapter {
 public:
-	SoxrAdapter(Synth &synth, double targetSampleRate, SamplerateConversionQuality quality);
+	SoxrAdapter(Synth &synth, double targetSampleRate, SampleRateConverter::Quality quality);
 	~SoxrAdapter();
 
 	void getOutputSamples(float *buffer, unsigned int length);
@@ -42,4 +40,4 @@ private:
 
 } // namespace MT32Emu
 
-#endif // MT32EMU_SOXR_ADAPTER_H
+#endif // SOXR_ADAPTER_H

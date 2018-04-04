@@ -208,7 +208,7 @@ bool GuiManager::loadNewTheme(Common::String id, ThemeEngine::GraphicsMode gfx, 
 void GuiManager::redraw() {
 	ThemeEngine::ShadingStyle shading;
 
-	if (_dialogStack.empty())
+	if (_redrawStatus == kRedrawDisabled || _dialogStack.empty())
 		return;
 
 	shading = (ThemeEngine::ShadingStyle)xmlEval()->getVar("Dialog." + _dialogStack.top()->_name + ".Shading", 0);
@@ -224,42 +224,25 @@ void GuiManager::redraw() {
 		case kRedrawFull:
 		case kRedrawTopDialog:
 			_theme->clearAll();
-			_theme->drawToBackbuffer();
+			_theme->openDialog(true, ThemeEngine::kShadingNone);
 
-			for (DialogStack::size_type i = 0; i < _dialogStack.size() - 1; i++) {
-				_dialogStack[i]->drawDialog(kDrawLayerBackground);
-				_dialogStack[i]->drawDialog(kDrawLayerForeground);
-			}
+			for (DialogStack::size_type i = 0; i < _dialogStack.size() - 1; i++)
+				_dialogStack[i]->drawDialog();
+
+			_theme->finishBuffering();
 
 			// fall through
 
 		case kRedrawOpenDialog:
-			// This case is an optimization to avoid redrawing the whole dialog
-			// stack when opening a new dialog.
-
-			_theme->drawToBackbuffer();
-
-			if (_redrawStatus == kRedrawOpenDialog && _dialogStack.size() > 1) {
-				Dialog *previousDialog = _dialogStack[_dialogStack.size() - 2];
-				previousDialog->drawDialog(kDrawLayerForeground);
-			}
-
-			_theme->applyScreenShading(shading);
-			_dialogStack.top()->drawDialog(kDrawLayerBackground);
-
-			_theme->drawToScreen();
-			_theme->copyBackBufferToScreen();
-
-			_dialogStack.top()->drawDialog(kDrawLayerForeground);
+			_theme->updateScreen(false);
+			_theme->openDialog(true, shading);
+			_dialogStack.top()->drawDialog();
+			_theme->finishBuffering();
 			break;
 
 		default:
-			break;
+			return;
 	}
-
-	// Redraw the widgets that are marked as dirty
-	_theme->drawToScreen();
-	_dialogStack.top()->drawWidgets();
 
 	_theme->updateScreen();
 	_redrawStatus = kRedrawDisabled;
@@ -316,10 +299,11 @@ void GuiManager::runLoop() {
 	}
 
 	Common::EventManager *eventMan = _system->getEventManager();
-	const uint32 targetFrameDuration = 1000 / 60;
+	uint32 lastRedraw = 0;
+	const uint32 waitTime = 1000 / 60;
 
 	while (!_dialogStack.empty() && activeDialog == getTopDialog() && !eventMan->shouldQuit()) {
-		uint32 frameStartTime = _system->getMillis(true);
+		redraw();
 
 		// Don't "tickle" the dialog until the theme has had a chance
 		// to re-allocate buffers in case of a scaler change.
@@ -328,6 +312,14 @@ void GuiManager::runLoop() {
 
 		if (_useStdCursor)
 			animateCursor();
+//		_theme->updateScreen();
+//		_system->updateScreen();
+
+		if (lastRedraw + waitTime < _system->getMillis(true)) {
+			lastRedraw = _system->getMillis(true);
+			_theme->updateScreen();
+			_system->updateScreen();
+		}
 
 		Common::Event event;
 
@@ -357,6 +349,13 @@ void GuiManager::runLoop() {
 			}
 
 			processEvent(event, activeDialog);
+
+
+			if (lastRedraw + waitTime < _system->getMillis(true)) {
+				lastRedraw = _system->getMillis(true);
+				_theme->updateScreen();
+				_system->updateScreen();
+			}
 		}
 
 		// Delete GuiObject that have been added to the trash for a delayed deletion
@@ -380,14 +379,8 @@ void GuiManager::runLoop() {
 			}
 		}
 
-		redraw();
-
-		// Delay until the allocated frame time is elapsed to match the target frame rate
-		uint32 actualFrameDuration = _system->getMillis(true) - frameStartTime;
-		if (actualFrameDuration < targetFrameDuration) {
-			_system->delayMillis(targetFrameDuration - actualFrameDuration);
-		}
-		_system->updateScreen();
+		// Delay for a moment
+		_system->delayMillis(10);
 	}
 
 	// WORKAROUND: When quitting we might not properly close the dialogs on
@@ -604,8 +597,10 @@ void GuiManager::processEvent(const Common::Event &event, Dialog *const activeDi
 	}
 }
 
-void GuiManager::scheduleTopDialogRedraw() {
-	_redrawStatus = kRedrawTopDialog;
+void GuiManager::doFullRedraw() {
+	_redrawStatus = kRedrawFull;
+	redraw();
+	_system->updateScreen();
 }
 
 void GuiManager::giveFocusToDialog(Dialog *dialog) {

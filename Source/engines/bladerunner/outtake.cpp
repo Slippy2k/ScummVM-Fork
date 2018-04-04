@@ -37,14 +37,13 @@ void OuttakePlayer::play(const Common::String &name, bool noLocalization, int co
 		return;
 	}
 
-	Common::String resName = name;
-	if (!noLocalization) {
-		resName = resName + "_" + _vm->_languageCode;
-	}
+	Common::String resName;
+	if (noLocalization)
+		resName = name + ".VQA";
+	else
+		resName = name + "_E.VQA";
 
-	resName = resName + ".VQA";
-
-	VQAPlayer vqa_player(_vm, &_vm->_surfaceFront);
+	VQAPlayer vqa_player(_vm, &_vm->_surfaceGame);
 
 	vqa_player.open(resName);
 
@@ -60,7 +59,7 @@ void OuttakePlayer::play(const Common::String &name, bool noLocalization, int co
 			break;
 
 		if (frame >= 0) {
-			_vm->blitToScreen(_vm->_surfaceFront);
+			_vm->blitToScreen(_vm->_surfaceGame);
 		}
 
 		_vm->_system->delayMillis(10);

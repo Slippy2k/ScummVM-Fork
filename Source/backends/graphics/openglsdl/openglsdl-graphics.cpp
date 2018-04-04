@@ -481,8 +481,7 @@ bool OpenGLSdlGraphicsManager::setupMode(uint width, uint height) {
 		// a chance to save the window size. That way if the user switches back
 		// to windowed mode, the window manager has a window size to apply instead
 		// of leaving the window at the fullscreen resolution size.
-		const char *driver = SDL_GetCurrentVideoDriver();
-		if (!_window->getSDLWindow() && driver && strcmp(driver, "x11") == 0) {
+		if (!_window->getSDLWindow()) {
 			_window->createOrUpdateWindow(width, height, flags);
 		}
 

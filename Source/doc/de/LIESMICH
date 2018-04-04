@@ -988,8 +988,6 @@ Bild unten: Nach unten sehen
 Leertaste: Spiel pausieren
 ESC: Zwischensequenz überspringen
 F5: Menü
-Strg-o: Spiel laden
-Strg-s: Spiel speichern
 
 
 3.18) Hinweise zu Simon the Sorcerer 1 und 2:
@@ -1007,15 +1005,6 @@ Rechte Maustaste: Bearbeite Raum-Symbole und schnelle Übergänge
 Mausrad: Durch Items (Inventar, etc) und Konversations-Log scrollen
 Pfeiltasten: Bewegung. Pfeil nach unten/zurück ist nur verfügbar, wenn die aktuelle
 Ansicht die Bewegung nach unten explizit verfügbar hat.
-
-Funktionstasten:
-F1: Zum Chat-O-Mat umschalten
-F2: Zum persönlichen Gepäck umschalten
-F3: Zum Remote Thingummy umschalten
-F4: Zum Designer-Raum umschalten (Zeichen-Liste)
-F5: Spiel speichern (GMM)
-F6: Zum echten Leben wechseln
-F7: Spiel laden (GMM)
 
 Steuerung für das Starfield-Puzzle am Ende des Spiels:
 Tab: Zwischen Sternenkarte und Himmelslandschaft umschalten
@@ -1330,7 +1319,8 @@ Zork: Der Großinquisitor
 Alle Versionen
 
 Laden Sie das Liberation(tm)-Schriftartenpaket unter
-https://releases.pagure.org/liberation-fonts/liberation-fonts-ttf-2.00.1.tar.gz
+https://fedorahosted.org/releases/l/i/liberation-fonts/liberation-fonts-ttf-
+2.00.1.tar.gz
 herunter und entpacken Sie alle ttf-Dateien in ScummVMs Extras-Pfad.
 Alternativ können Sie auch das GNU FreeFont TTF-Paket unter
 https://ftp.gnu.org/gnu/freefont/freefont-ttf.zip
@@ -2076,9 +2066,7 @@ den Originalversionen verwendet werden.
     - Benennen Sie die Spielstanddatei in „simon2.xxx“ um.
 
   Starship Titanic
-    - Benennen Sie für Spielstände der englischen Version die Spielstanddatei in "titanic-win.xxx"
-      und für Spielstände der deutschen Version in "titanic-win-de.xxx" um.
-    - Spielstand-Dateien sind nicht zwischen den unterschiedlichen Sprachversionen austauschbar.
+    - Benennen Sie die Spielstanddatei in "titanic-win.xxx" um.
 
   Floyd - Es gibt noch Helden
     - Benennen Sie die Spielstanddatei in „feeble.xxx“ um.

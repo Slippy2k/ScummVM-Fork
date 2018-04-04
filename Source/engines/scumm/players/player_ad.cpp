@@ -24,6 +24,7 @@
 #include "scumm/imuse/imuse.h"
 #include "scumm/scumm.h"
 #include "scumm/resource.h"
+#include "scumm/saveload.h"
 
 #include "audio/fmopl.h"
 #include "audio/mixer.h"
@@ -190,27 +191,27 @@ int Player_AD::getSoundStatus(int sound) const {
 	return false;
 }
 
-void Player_AD::saveLoadWithSerializer(Common::Serializer &s) {
+void Player_AD::saveLoadWithSerializer(Serializer *ser) {
 	Common::StackLock lock(_mutex);
 
-	if (s.getVersion() < VER(95)) {
+	if (ser->getVersion() < VER(95)) {
 		IMuse *dummyImuse = IMuse::create(_vm->_system, NULL, NULL);
-		dummyImuse->saveLoadIMuse(s, _vm, false);
+		dummyImuse->save_or_load(ser, _vm, false);
 		delete dummyImuse;
 		return;
 	}
 
-	if (s.getVersion() >= VER(96)) {
+	if (ser->getVersion() >= VER(96)) {
 		int32 res[4] = {
 			_musicResource, _sfx[0].resource, _sfx[1].resource, _sfx[2].resource
 		};
 
 		// The first thing we save is a list of sound resources being played
 		// at the moment.
-		s.syncArray(res, 4, Common::Serializer::Sint32LE);
+		ser->saveLoadArrayOf(res, 4, sizeof(res[0]), sleInt32);
 
 		// If we are loading start the music again at this point.
-		if (s.isLoading()) {
+		if (ser->isLoading()) {
 			if (res[0] != -1) {
 				startSound(res[0]);
 			}
@@ -218,21 +219,26 @@ void Player_AD::saveLoadWithSerializer(Common::Serializer &s) {
 
 		uint32 musicOffset = _curOffset;
 
-		s.syncAsSint32LE(_engineMusicTimer, VER(96));
-		s.syncAsUint32LE(_musicTimer, VER(96));
-		s.syncAsUint32LE(_internalMusicTimer, VER(96));
-		s.syncAsUint32LE(_curOffset, VER(96));
-		s.syncAsUint32LE(_nextEventTimer, VER(96));
+		static const SaveLoadEntry musicData[] = {
+			MKLINE(Player_AD, _engineMusicTimer, sleInt32, VER(96)),
+			MKLINE(Player_AD, _musicTimer, sleUint32, VER(96)),
+			MKLINE(Player_AD, _internalMusicTimer, sleUint32, VER(96)),
+			MKLINE(Player_AD, _curOffset, sleUint32, VER(96)),
+			MKLINE(Player_AD, _nextEventTimer, sleUint32, VER(96)),
+			MKEND()
+		};
+
+		ser->saveLoadEntries(this, musicData);
 
 		// We seek back to the old music position.
-		if (s.isLoading()) {
+		if (ser->isLoading()) {
 			SWAP(musicOffset, _curOffset);
 			musicSeekTo(musicOffset);
 		}
 
 		// Finally start up the SFX. This makes sure that they are not
 		// accidently stopped while seeking to the old music position.
-		if (s.isLoading()) {
+		if (ser->isLoading()) {
 			for (int i = 1; i < ARRAYSIZE(res); ++i) {
 				if (res[i] != -1) {
 					startSound(res[i]);

@@ -20,7 +20,9 @@
  *
  */
 
+
 #include "scumm/scumm.h"
+#include "scumm/saveload.h"
 #include "scumm/imuse/instrument.h"
 #include "audio/mididrv.h"
 
@@ -130,8 +132,8 @@ private:
 
 public:
 	Instrument_Program(byte program, bool mt32);
-	Instrument_Program(Common::Serializer &s);
-	void saveLoadWithSerializer(Common::Serializer &s);
+	Instrument_Program(Serializer *s);
+	void saveOrLoad(Serializer *s);
 	void send(MidiChannel *mc);
 	void copy_to(Instrument *dest) { dest->program(_program, _mt32); }
 	bool is_valid() {
@@ -176,8 +178,8 @@ private:
 
 public:
 	Instrument_AdLib(const byte *data);
-	Instrument_AdLib(Common::Serializer &s);
-	void saveLoadWithSerializer(Common::Serializer &s);
+	Instrument_AdLib(Serializer *s);
+	void saveOrLoad(Serializer *s);
 	void send(MidiChannel *mc);
 	void copy_to(Instrument *dest) { dest->adlib((byte *)&_instrument); }
 	bool is_valid() { return true; }
@@ -257,8 +259,8 @@ private:
 
 public:
 	Instrument_Roland(const byte *data);
-	Instrument_Roland(Common::Serializer &s);
-	void saveLoadWithSerializer(Common::Serializer &s);
+	Instrument_Roland(Serializer *s);
+	void saveOrLoad(Serializer *s);
 	void send(MidiChannel *mc);
 	void copy_to(Instrument *dest) { dest->roland((byte *)&_instrument); }
 	bool is_valid() { return (_native_mt32 ? true : (_instrument_name[0] != '\0')); }
@@ -267,8 +269,8 @@ public:
 class Instrument_PcSpk : public InstrumentInternal {
 public:
 	Instrument_PcSpk(const byte *data);
-	Instrument_PcSpk(Common::Serializer &s);
-	void saveLoadWithSerializer(Common::Serializer &s);
+	Instrument_PcSpk(Serializer *s);
+	void saveOrLoad(Serializer *s);
 	void send(MidiChannel *mc);
 	void copy_to(Instrument *dest) { dest->pcspk((byte *)&_instrument); }
 	bool is_valid() { return true; }
@@ -283,8 +285,8 @@ private:
 
 public:
 	Instrument_MacSfx(byte program);
-	Instrument_MacSfx(Common::Serializer &s);
-	void saveLoadWithSerializer(Common::Serializer &s);
+	Instrument_MacSfx(Serializer *s);
+	void saveOrLoad(Serializer *s);
 	void send(MidiChannel *mc);
 	void copy_to(Instrument *dest) { dest->macSfx(_program); }
 	bool is_valid() {
@@ -348,14 +350,14 @@ void Instrument::macSfx(byte prog) {
 	_instrument = new Instrument_MacSfx(prog);
 }
 
-void Instrument::saveLoadWithSerializer(Common::Serializer &s) {
-	if (s.isSaving()) {
-		s.syncAsByte(_type);
+void Instrument::saveOrLoad(Serializer *s) {
+	if (s->isSaving()) {
+		s->saveByte(_type);
 		if (_instrument)
-			_instrument->saveLoadWithSerializer(s);
+			_instrument->saveOrLoad(s);
 	} else {
 		clear();
-		s.syncAsByte(_type);
+		_type = s->loadByte();
 		switch (_type) {
 		case itNone:
 			break;
@@ -394,21 +396,20 @@ Instrument_Program::Instrument_Program(byte program, bool mt32) :
 		_program = 255;
 }
 
-Instrument_Program::Instrument_Program(Common::Serializer &s) {
+Instrument_Program::Instrument_Program(Serializer *s) {
 	_program = 255;
 	_mt32 = false;
-	if (!s.isSaving())
-		saveLoadWithSerializer(s);
+	if (!s->isSaving())
+		saveOrLoad(s);
 }
 
-void Instrument_Program::saveLoadWithSerializer(Common::Serializer &s) {
-	s.syncAsByte(_program);
-	if (s.isSaving()) {
-		s.syncAsByte(_mt32);
+void Instrument_Program::saveOrLoad(Serializer *s) {
+	if (s->isSaving()) {
+		s->saveByte(_program);
+		s->saveByte(_mt32 ? 1 : 0);
 	} else {
-		byte tmp;
-		s.syncAsByte(tmp);
-		_mt32 = (tmp > 0);
+		_program = s->loadByte();
+		_mt32 = (s->loadByte() > 0);
 	}
 }
 
@@ -433,15 +434,18 @@ Instrument_AdLib::Instrument_AdLib(const byte *data) {
 	memcpy(&_instrument, data, sizeof(_instrument));
 }
 
-Instrument_AdLib::Instrument_AdLib(Common::Serializer &s) {
-	if (!s.isSaving())
-		saveLoadWithSerializer(s);
+Instrument_AdLib::Instrument_AdLib(Serializer *s) {
+	if (!s->isSaving())
+		saveOrLoad(s);
 	else
 		memset(&_instrument, 0, sizeof(_instrument));
 }
 
-void Instrument_AdLib::saveLoadWithSerializer(Common::Serializer &s) {
-	s.syncBytes((byte *)(&_instrument), sizeof(_instrument));
+void Instrument_AdLib::saveOrLoad(Serializer *s) {
+	if (s->isSaving())
+		s->saveBytes(&_instrument, sizeof(_instrument));
+	else
+		s->loadBytes(&_instrument, sizeof(_instrument));
 }
 
 void Instrument_AdLib::send(MidiChannel *mc) {
@@ -464,24 +468,26 @@ Instrument_Roland::Instrument_Roland(const byte *data) {
 	}
 }
 
-Instrument_Roland::Instrument_Roland(Common::Serializer &s) {
+Instrument_Roland::Instrument_Roland(Serializer *s) {
 	_instrument_name[0] = '\0';
-	if (!s.isSaving())
-		saveLoadWithSerializer(s);
+	if (!s->isSaving())
+		saveOrLoad(s);
 	else
 		memset(&_instrument, 0, sizeof(_instrument));
 }
 
-void Instrument_Roland::saveLoadWithSerializer(Common::Serializer &s) {
-	s.syncBytes((byte *)(&_instrument), sizeof(_instrument));
-	if (!s.isSaving()) {
+void Instrument_Roland::saveOrLoad(Serializer *s) {
+	if (s->isSaving()) {
+		s->saveBytes(&_instrument, sizeof(_instrument));
+	} else {
+		s->loadBytes(&_instrument, sizeof(_instrument));
 		memcpy(&_instrument_name, &_instrument.common.name, sizeof(_instrument.common.name));
 		_instrument_name[10] = '\0';
 		if (!_native_mt32 && getEquivalentGM() >= 128) {
 			debug(2, "MT-32 custom instrument \"%s\" not supported", _instrument_name);
 			_instrument_name[0] = '\0';
 		}
-	}
+	} // end if
 }
 
 void Instrument_Roland::send(MidiChannel *mc) {
@@ -532,15 +538,18 @@ Instrument_PcSpk::Instrument_PcSpk(const byte *data) {
 	memcpy(_instrument, data, sizeof(_instrument));
 }
 
-Instrument_PcSpk::Instrument_PcSpk(Common::Serializer &s) {
-	if (!s.isSaving())
-		saveLoadWithSerializer(s);
+Instrument_PcSpk::Instrument_PcSpk(Serializer *s) {
+	if (!s->isSaving())
+		saveOrLoad(s);
 	else
 		memset(_instrument, 0, sizeof(_instrument));
 }
 
-void Instrument_PcSpk::saveLoadWithSerializer(Common::Serializer &s) {
-	s.syncBytes(_instrument, sizeof(_instrument));
+void Instrument_PcSpk::saveOrLoad(Serializer *s) {
+	if (s->isSaving())
+		s->saveBytes(_instrument, sizeof(_instrument));
+	else
+		s->loadBytes(_instrument, sizeof(_instrument));
 }
 
 void Instrument_PcSpk::send(MidiChannel *mc) {
@@ -560,15 +569,19 @@ Instrument_MacSfx::Instrument_MacSfx(byte program) :
 	}
 }
 
-Instrument_MacSfx::Instrument_MacSfx(Common::Serializer &s) {
+Instrument_MacSfx::Instrument_MacSfx(Serializer *s) {
 	_program = 255;
-	if (!s.isSaving()) {
-		saveLoadWithSerializer(s);
+	if (!s->isSaving()) {
+		saveOrLoad(s);
 	}
 }
 
-void Instrument_MacSfx::saveLoadWithSerializer(Common::Serializer &s) {
-	s.syncAsByte(_program);
+void Instrument_MacSfx::saveOrLoad(Serializer *s) {
+	if (s->isSaving()) {
+		s->saveByte(_program);
+	} else {
+		_program = s->loadByte();
+	}
 }
 
 void Instrument_MacSfx::send(MidiChannel *mc) {

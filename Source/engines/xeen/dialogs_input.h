@@ -32,25 +32,18 @@ namespace Xeen {
 class Input : public ButtonContainer {
 private:
 	/**
-	 * Draws the text input and cursor and waits until the user presses a key
+	 * Draws the cursor and waits until the user presses a key
 	 */
-	Common::KeyCode waitForKey(const Common::String &msg);
-
-	/**
-	 * Animates the box text cursor
-	 */
-	void animateCursor();
+	Common::KeyCode doCursor(const Common::String &msg);
 protected:
 	Window *_window;
-	int _cursorAnimIndex;
 
 	/**
 	 * Allows the user to enter a string
 	 */
 	int getString(Common::String &line, uint maxLen, int maxWidth, bool isNumeric);
 
-	Input(XeenEngine *vm, Window *window) : ButtonContainer(vm),
-		_window(window), _cursorAnimIndex(0) {}
+	Input(XeenEngine *vm, Window *window) : ButtonContainer(vm), _window(window) {}
 public:
 	static int show(XeenEngine *vm, Window *window, Common::String &line,
 		uint maxLen, int maxWidth, bool isNumeric = false);

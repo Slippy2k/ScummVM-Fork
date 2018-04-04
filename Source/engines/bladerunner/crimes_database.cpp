@@ -24,38 +24,36 @@
 
 #include "bladerunner/bladerunner.h"
 
-#include "bladerunner/savefile.h"
 #include "bladerunner/text_resource.h"
 
 namespace BladeRunner {
 
-CrimesDatabase::CrimesDatabase(BladeRunnerEngine *vm, const Common::String &cluesResource, int crimeCount) {
-	_crimeCount = crimeCount;
+CrimesDatabase::CrimesDatabase(BladeRunnerEngine *vm, const char *cluesResource, int crimesCount) : _crimesCount(crimesCount) {
+	// reset();
 
-	_crimes.resize(_crimeCount);
-	_assetTypes.resize(_crimeCount);
+	_crimes     = new int[_crimesCount];
+	_assetTypes = new int[_crimesCount];
 
 	_cluesText = new TextResource(vm);
-	if (!_cluesText->open(cluesResource)) {
-		delete _cluesText;
-		return;
-	}
+	_cluesText->open(cluesResource);
 
-	for (int i = 0; i != _crimeCount; ++i) {
+	for (int i = 0; i != _crimesCount; ++i) {
 		_crimes[i] = -1;
 		_assetTypes[i] = -1;
 	}
 }
 
 CrimesDatabase::~CrimesDatabase() {
-	delete _cluesText;
+	delete   _cluesText;
+	delete[] _assetTypes;
+	delete[] _crimes;
 }
 
 void CrimesDatabase::setCrime(int clueId, int crimeId) {
 	_crimes[clueId] = crimeId;
 }
 
-int CrimesDatabase::getCrime(int clueId) const {
+int CrimesDatabase::getCrime(int clueId) {
 	return _crimes[clueId];
 }
 
@@ -63,25 +61,12 @@ void CrimesDatabase::setAssetType(int clueId, int assetType) {
 	_assetTypes[clueId] = assetType;
 }
 
-int CrimesDatabase::getAssetType(int clueId) const {
+int CrimesDatabase::getAssetType(int clueId) {
 	return _assetTypes[clueId];
 }
 
-const char *CrimesDatabase::getClueText(int clueId) const {
+const char *CrimesDatabase::getClueText(int clueId) {
 	return _cluesText->getText(clueId);
-}
-
-void CrimesDatabase::save(SaveFileWriteStream &f) {
-	for (int i = 0; i < _crimeCount; ++i) {
-		uint8 c = _crimes[i];
-		f.writeByte(c);
-	}
-}
-
-void CrimesDatabase::load(SaveFileReadStream &f) {
-	for (int i = 0; i < _crimeCount; ++i) {
-		_crimes[i] = f.readByte();
-	}
 }
 
 } // End of namespace BladeRunner

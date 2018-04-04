@@ -31,12 +31,7 @@
 namespace Mohawk {
 namespace MystStacks {
 
-Intro::Intro(MohawkEngine_Myst *vm) :
-		MystScriptParser(vm),
-		_introMoviesRunning(false),
-		_introStep(0),
-		_linkBookRunning(false),
-		_linkBookMovie(nullptr) {
+Intro::Intro(MohawkEngine_Myst *vm) : MystScriptParser(vm) {
 	setupOpcodes();
 }
 

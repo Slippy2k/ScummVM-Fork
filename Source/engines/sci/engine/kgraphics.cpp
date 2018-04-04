@@ -1073,7 +1073,6 @@ reg_t kSetPort(EngineState *s, int argc, reg_t *argv) {
 
 	case 7:
 		initPriorityBandsFlag = true;
-		// fall through
 	case 6:
 		picRect.top = argv[0].toSint16();
 		picRect.left = argv[1].toSint16();

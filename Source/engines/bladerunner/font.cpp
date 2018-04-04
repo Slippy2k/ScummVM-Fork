@@ -28,8 +28,7 @@
 
 namespace BladeRunner {
 
-Font::Font(BladeRunnerEngine *vm) {
-	_vm = vm;
+Font::Font(BladeRunnerEngine *vm) : _vm(vm) {
 	reset();
 }
 
@@ -63,11 +62,11 @@ bool Font::open(const Common::String &fileName, int screenWidth, int screenHeigh
 	}
 
 	for (int i = 0; i < _characterCount; i++) {
-		_characters[i].x = stream->readUint32LE();
-		_characters[i].y = stream->readUint32LE();
-		_characters[i].width = stream->readUint32LE();
-		_characters[i].height = stream->readUint32LE();
-		_characters[i].dataOffset = stream->readUint32LE();
+		_characters[i]._x = stream->readUint32LE();
+		_characters[i]._y = stream->readUint32LE();
+		_characters[i]._width = stream->readUint32LE();
+		_characters[i]._height = stream->readUint32LE();
+		_characters[i]._dataOffset = stream->readUint32LE();
 	}
 	for (int i = 0; i < _dataSize; i++) {
 		_data[i] = stream->readUint16LE();
@@ -96,7 +95,7 @@ void Font::setColor(uint16 color) {
 	}
 }
 
-void Font::draw(const Common::String &text, Graphics::Surface &surface, int x, int y) const {
+void Font::draw(const Common::String &text, Graphics::Surface &surface, int x, int y) {
 	if (!_data) {
 		return;
 	}
@@ -104,10 +103,10 @@ void Font::draw(const Common::String &text, Graphics::Surface &surface, int x, i
 	x = CLIP(x, 0, _screenWidth - getTextWidth(text) + 1);
 	y = CLIP(y, 0, _screenHeight - _maxHeight);
 
-	const uint8 *character = (const uint8 *)text.c_str();
+	const char *character = text.c_str();
 	while (*character != 0) {
 		drawCharacter(*character, surface, x, y);
-		x += _spacing1 + _characters[*character + 1].width;
+		x += _spacing1 + _characters[*character + 1]._width;
 		character++;
 	}
 
@@ -120,16 +119,8 @@ void Font::drawColor(const Common::String &text, Graphics::Surface &surface, int
 	draw(text, surface, x, y);
 }
 
-void Font::drawNumber(int num, Graphics::Surface &surface, int x, int y) const {
-	char buffer[20];
-
-	snprintf(buffer, 20, "%d", num);
-
-	draw(buffer, surface, x, y);
-}
-
-int Font::getTextWidth(const Common::String &text) const {
-	const uint8 *character = (const uint8 *)text.c_str();
+int Font::getTextWidth(const Common::String &text) {
+	const char *character = text.c_str();
 
 	if (!_data) {
 		return 0;
@@ -139,13 +130,13 @@ int Font::getTextWidth(const Common::String &text) const {
 		return 0;
 	}
 	while (*character != 0) {
-		totalWidth += _spacing1 + _characters[*character + 1].width;
+		totalWidth += _spacing1 + _characters[*character + 1]._width;
 		character++;
 	}
 	return totalWidth - _spacing1;
 }
 
-int Font::getTextHeight(const Common::String &text) const {
+int Font::getTextHeight(const Common::String &text) {
 	return _maxHeight;
 }
 
@@ -162,7 +153,7 @@ void Font::reset() {
 	_color = 0x7FFF;
 	_intersperse = 0;
 
-	memset(_characters, 0, 256 * sizeof(Character));
+	memset(_characters, 0, 256 * sizeof(FontCharacter));
 }
 
 void Font::replaceColor(uint16 oldColor, uint16 newColor) {
@@ -176,16 +167,16 @@ void Font::replaceColor(uint16 oldColor, uint16 newColor) {
 	}
 }
 
-void Font::drawCharacter(const uint8 character, Graphics::Surface &surface, int x, int y) const {
-	uint8 characterIndex = character + 1;
+void Font::drawCharacter(const char character, Graphics::Surface &surface, int x, int y) {
+	uint8 characterIndex = (uint8)character + 1;
 	if (x < 0 || x >= _screenWidth || y < 0 || y >= _screenHeight || !_data || characterIndex >= _characterCount) {
 		return;
 	}
 
-	uint16 *dstPtr = (uint16 *)surface.getBasePtr(x + _characters[characterIndex].x, y + _characters[characterIndex].y);
-	uint16 *srcPtr = &_data[_characters[characterIndex].dataOffset];
-	int width = _characters[characterIndex].width;
-	int height = _characters[characterIndex].height;
+	uint16 *dstPtr = (uint16*)surface.getBasePtr(x + _characters[characterIndex]._x, y + _characters[characterIndex]._y);
+	uint16 *srcPtr = &_data[_characters[characterIndex]._dataOffset];
+	int width = _characters[characterIndex]._width;
+	int height = _characters[characterIndex]._height;
 	if (_intersperse && y & 1) {
 		dstPtr += surface.pitch / 2;
 	}
@@ -212,5 +203,4 @@ void Font::drawCharacter(const uint8 character, Graphics::Surface &surface, int 
 		currentY++;
 	}
 }
-
 } // End of namespace BladeRunner

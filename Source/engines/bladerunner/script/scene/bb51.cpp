@@ -20,7 +20,7 @@
  *
  */
 
-#include "bladerunner/script/scene_script.h"
+#include "bladerunner/script/scene.h"
 
 namespace BladeRunner {
 
@@ -85,7 +85,7 @@ bool SceneScriptBB51::ClickedOnExit(int exitId) {
 			Ambient_Sounds_Remove_All_Non_Looping_Sounds(1);
 			Ambient_Sounds_Remove_All_Looping_Sounds(1);
 			Game_Flag_Set(394);
-			Set_Enter(1, kSceneBB06);
+			Set_Enter(1, 7);
 		}
 		return true;
 	}
@@ -94,7 +94,7 @@ bool SceneScriptBB51::ClickedOnExit(int exitId) {
 			Ambient_Sounds_Remove_All_Non_Looping_Sounds(1);
 			Ambient_Sounds_Remove_All_Looping_Sounds(1);
 			Game_Flag_Set(395);
-			Set_Enter(1, kSceneBB06);
+			Set_Enter(1, 7);
 		}
 		return true;
 	}

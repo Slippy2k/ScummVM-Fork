@@ -32,7 +32,7 @@
 #include "backends/fs/psp2/psp2-fs-factory.h"
 
 AbstractFSNode *PSP2FilesystemFactory::makeRootFileNode() const {
-	return new POSIXFilesystemNode("/");
+	return new POSIXFilesystemNode("ux0:");
 }
 
 AbstractFSNode *PSP2FilesystemFactory::makeCurrentDirectoryFileNode() const {

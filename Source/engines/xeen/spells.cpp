@@ -21,8 +21,8 @@
  */
 
 #include "xeen/spells.h"
-#include "xeen/dialogs/dialogs_items.h"
-#include "xeen/dialogs/dialogs_spells.h"
+#include "xeen/dialogs_items.h"
+#include "xeen/dialogs_spells.h"
 #include "xeen/files.h"
 #include "xeen/resources.h"
 #include "xeen/xeen.h"
@@ -36,7 +36,7 @@ Spells::Spells(XeenEngine *vm) : _vm(vm) {
 }
 
 void Spells::load() {
-	File f1((g_vm->getGameID() == GType_Clouds) ? "spells.cld" : "spells.xen", 1);
+	File f1("spells.xen");
 	while (f1.pos() < f1.size())
 		_spellNames.push_back(f1.readString());
 	f1.close();
@@ -93,49 +93,47 @@ void Spells::spellFailed() {
 }
 
 void Spells::castItemSpell(int itemSpellId) {
-	assert(itemSpellId != 0);
-
 	switch (itemSpellId) {
-	case 16:
+	case 15:
 		if (_vm->_mode == MODE_COMBAT) {
 			NotWhileEngaged::show(_vm, MS_Jump);
 			return;
 		}
 		break;
-	case 21:
+	case 20:
 		if (_vm->_mode == MODE_COMBAT) {
 			NotWhileEngaged::show(_vm, MS_WizardEye);
 			return;
 		}
 		break;
-	case 28:
+	case 27:
 		if (_vm->_mode == MODE_COMBAT) {
 			NotWhileEngaged::show(_vm, MS_LloydsBeacon);
 			return;
 		}
 		break;
-	case 33:
+	case 32:
 		frostbite2();
 		break;
-	case 42:
+	case 41:
 		if (_vm->_mode == MODE_COMBAT) {
 			NotWhileEngaged::show(_vm, MS_Teleport);
 			return;
 		}
 		break;
-	case 48:
+	case 47:
 		if (_vm->_mode == MODE_COMBAT) {
 			NotWhileEngaged::show(_vm, MS_SuperShelter);
 			return;
 		}
 		break;
-	case 55:
+	case 54:
 		if (_vm->_mode == MODE_COMBAT) {
 			NotWhileEngaged::show(_vm, MS_TownPortal);
 			return;
 		}
 		break;
-	case 58:
+	case 57:
 		if (_vm->_mode == MODE_COMBAT) {
 			NotWhileEngaged::show(_vm, MS_Etheralize);
 			return;
@@ -145,8 +143,8 @@ void Spells::castItemSpell(int itemSpellId) {
 		break;
 	}
 
-	static const MagicSpell spells[74] = {
-		NO_SPELL, MS_Light, MS_Awaken, MS_MagicArrow, MS_FirstAid, MS_FlyingFist,
+	static const MagicSpell spells[73] = {
+		MS_Light, MS_Awaken, MS_MagicArrow, MS_FirstAid, MS_FlyingFist,
 		MS_EnergyBlast, MS_Sleep, MS_Revitalize, MS_CureWounds, MS_Sparks,
 		MS_Shrapmetal, MS_InsectSpray, MS_ToxicCloud, MS_ProtFromElements, MS_Pain,
 		MS_Jump, MS_BeastMaster, MS_Clairvoyance, MS_TurnUndead, MS_Levitate,
@@ -432,13 +430,13 @@ void Spells::detectMonster() {
 	Interface &intf = *_vm->_interface;
 	Map &map = *_vm->_map;
 	Party &party = *_vm->_party;
+	Screen &screen = *_vm->_screen;
 	Sound &sound = *_vm->_sound;
-	Windows &windows = *_vm->_windows;
-	Window &w = windows[19];
-	int ccNum = _vm->_files->_ccNum;
+	Window &w = screen._windows[19];
+	bool isDarkCc = _vm->_files->_isDarkCc;
 	int grid[7][7];
 
-	SpriteResource sprites(ccNum ? "detectmn.icn" : "detctmon.icn");
+	SpriteResource sprites(isDarkCc ? "detectmn.icn" : "detctmon.icn");
 	Common::fill(&grid[0][0], &grid[6][6], 0);
 
 	w.open();
@@ -755,7 +753,6 @@ void Spells::insectSpray() {
 }
 
 void Spells::itemToGold() {
-	Windows &windows = *_vm->_windows;
 	Character *c = SpellOnWho::show(_vm, MS_ItemToGold);
 	if (!c)
 		return;
@@ -763,7 +760,7 @@ void Spells::itemToGold() {
 	Mode oldMode = _vm->_mode;
 	_vm->_mode = MODE_FF;
 
-	windows[11].close();
+	_vm->_screen->_windows[11].close();
 	ItemsDialog::show(_vm, c, ITEMMODE_TO_GOLD);
 
 	_vm->_mode = oldMode;
@@ -818,7 +815,7 @@ void Spells::light() {
 	Sound &sound = *_vm->_sound;
 
 	++party._lightCount;
-	if (intf._obscurity != OBSCURITY_BLACK)
+	if (intf._intrIndex1)
 		party._stepped = true;
 	sound.playFX(39);
 }
@@ -1248,11 +1245,11 @@ void Spells::townPortal() {
 		return;
 
 	sound.playFX(51);
-	map._loadCcNum = map._sideTownPortal;
-	_vm->_files->_ccNum = map._sideTownPortal > 0;
+	map._loadDarkSide = map._sideTownPortal;
+	_vm->_files->_isDarkCc = map._sideTownPortal > 0;
 	map.load(Res.TOWN_MAP_NUMBERS[map._sideTownPortal][townNumber - 1]);
 
-	if (!_vm->_files->_ccNum) {
+	if (!_vm->_files->_isDarkCc) {
 		party.moveToRunLocation();
 	} else {
 		switch (townNumber) {

@@ -29,43 +29,39 @@ namespace BladeRunner {
 
 class BladeRunnerEngine;
 class BoundingBox;
-class SaveFileReadStream;
-class SaveFileWriteStream;
+
+struct MovementTrackEntry {
+	int waypointId;
+	int delay;
+	int angle;
+	int running;
+};
 
 class MovementTrack {
-	static const int kSize = 100;
+//	BladeRunnerEngine *_vm;
 
-	struct Entry {
-		int  waypointId;
-		int  delay;
-		int  angle;
-		bool run;
-	};
-
-	int   _currentIndex;
-	int   _lastIndex;
-	bool  _hasNext;
-	bool  _paused;
-	Entry _entries[kSize];
+private:
+	int _currentIndex;
+	int _lastIndex;
+	bool _hasNext;
+	bool _paused;
+	MovementTrackEntry _entries[100];
+	void reset();
 
 public:
 	MovementTrack();
 	~MovementTrack();
-	int append(int waypointId, int delay, bool run);
-	int append(int waypointId, int delay, int angle, bool run);
+	int append(int waypointId, int delay, int running);
+	int append(int waypointId, int delay, int angle, int running);
 	void flush();
 	void repeat();
 	void pause();
 	void unpause();
-	bool isPaused() const;
-	bool hasNext() const;
-	bool next(int *waypointId, int *delay, int *angle, bool *run);
+	bool isPaused();
+	bool hasNext();
+	bool next(int *waypointId, int *delay, int *angle, int *running);
 
-	void save(SaveFileWriteStream &f);
-	void load(SaveFileReadStream &f);
-
-private:
-	void reset();
+	//int saveGame();
 };
 
 } // End of namespace BladeRunner

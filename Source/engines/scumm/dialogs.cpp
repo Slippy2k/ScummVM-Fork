@@ -358,7 +358,7 @@ void HelpDialog::handleCommand(GUI::CommandSender *sender, uint32 cmd, uint32 da
 			_prevButton->setFlags(WIDGET_ENABLED);
 		}
 		displayKeyBindings();
-		g_gui.scheduleTopDialogRedraw();
+		draw();
 		break;
 	case kPrevCmd:
 		_page--;
@@ -369,7 +369,7 @@ void HelpDialog::handleCommand(GUI::CommandSender *sender, uint32 cmd, uint32 da
 			_prevButton->clearFlags(WIDGET_ENABLED);
 		}
 		displayKeyBindings();
-		g_gui.scheduleTopDialogRedraw();
+		draw();
 		break;
 	default:
 		ScummDialog::handleCommand(sender, cmd, data);
@@ -514,10 +514,9 @@ ValueDisplayDialog::ValueDisplayDialog(const Common::String& label, int minVal, 
 	assert(_min <= _value && _value <= _max);
 }
 
-void ValueDisplayDialog::drawDialog(GUI::DrawLayer layerToDraw) {
-	Dialog::drawDialog(layerToDraw);
-
+void ValueDisplayDialog::drawDialog() {
 	const int labelWidth = _w - 8 - _percentBarWidth;
+	g_gui.theme()->drawDialogBackground(Common::Rect(_x, _y, _x+_w, _y+_h), GUI::ThemeEngine::kDialogBackgroundDefault);
 	g_gui.theme()->drawText(Common::Rect(_x+4, _y+4, _x+labelWidth+4,
 				_y+g_gui.theme()->getFontHeight()+4), _label);
 	g_gui.theme()->drawSlider(Common::Rect(_x+4+labelWidth, _y+4, _x+_w-4, _y+_h-4),
@@ -554,7 +553,7 @@ void ValueDisplayDialog::handleKeyDown(Common::KeyState state) {
 
 		setResult(_value);
 		_timer = g_system->getMillis() + kDisplayDelay;
-		g_gui.scheduleTopDialogRedraw();
+		draw();
 	} else {
 		close();
 	}
@@ -582,7 +581,7 @@ void SubtitleSettingsDialog::handleKeyDown(Common::KeyState state) {
 		cycleValue();
 
 		reflowLayout();
-		g_gui.scheduleTopDialogRedraw();
+		draw();
 	} else {
 		close();
 	}
@@ -635,7 +634,7 @@ void DebugInputDialog::handleKeyDown(Common::KeyState state) {
 		buffer.deleteLastChar();
 		Common::String total = mainText + ' ' + buffer;
 		setInfoText(total);
-		g_gui.scheduleTopDialogRedraw();
+		draw();
 		reflowLayout();
 	} else if (state.keycode == Common::KEYCODE_RETURN) {
 		done = 1;
@@ -644,7 +643,7 @@ void DebugInputDialog::handleKeyDown(Common::KeyState state) {
 	} else if ((state.ascii >= '0' && state.ascii <= '9') || (state.ascii >= 'A' && state.ascii <= 'Z') || (state.ascii >= 'a' && state.ascii <= 'z') || state.ascii == '.' || state.ascii == ' ') {
 		buffer += state.ascii;
 		Common::String total = mainText + ' ' + buffer;
-		g_gui.scheduleTopDialogRedraw();
+		draw();
 		reflowLayout();
 		setInfoText(total);
 	}

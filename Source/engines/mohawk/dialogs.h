@@ -53,39 +53,37 @@ public:
 
 	void setInfoText(const Common::String &message);
 
-	void handleMouseDown(int x, int y, int button, int clickCount) override {
+	virtual void handleMouseDown(int x, int y, int button, int clickCount) {
 		setResult(0);
 		close();
 	}
 
-	void handleKeyDown(Common::KeyState state) override {
+	virtual void handleKeyDown(Common::KeyState state) {
 		setResult(state.ascii);
 		close();
 	}
 
-	void reflowLayout() override;
+	virtual void reflowLayout();
 };
 
 class PauseDialog : public InfoDialog {
 public:
 	PauseDialog(MohawkEngine* vm, const Common::String &message);
-	void handleKeyDown(Common::KeyState state) override;
+	virtual void handleKeyDown(Common::KeyState state);
 };
 
 #if defined(ENABLE_MYST) || defined(ENABLE_RIVEN)
 
 class MohawkOptionsDialog : public GUI::Dialog {
 public:
-	explicit MohawkOptionsDialog(MohawkEngine *_vm);
-	~MohawkOptionsDialog() override;
+	MohawkOptionsDialog(MohawkEngine *_vm);
+	virtual ~MohawkOptionsDialog();
 
-	void open() override;
-	void reflowLayout() override;
-	void handleCommand(GUI::CommandSender *sender, uint32 cmd, uint32 data) override;
+	virtual void open() override;
+	virtual void reflowLayout() override;
+	virtual void handleCommand(GUI::CommandSender *sender, uint32 cmd, uint32 data) override;
 
-	int getLoadSlot() const { return _loadSlot; }
-	int getSaveSlot() const { return _saveSlot; }
-	Common::String getSaveDescription() const { return _saveDescription; }
+	int getLoadSlot() const {return _loadSlot;}
 
 private:
 	MohawkEngine *_vm;
@@ -97,8 +95,6 @@ private:
 	GUI::SaveLoadChooser *_saveDialog;
 
 	int _loadSlot;
-	int _saveSlot;
-	Common::String _saveDescription;
 
 	void save();
 	void load();
@@ -112,11 +108,11 @@ class MohawkEngine_Myst;
 
 class MystOptionsDialog : public MohawkOptionsDialog {
 public:
-	explicit MystOptionsDialog(MohawkEngine_Myst *vm);
-	~MystOptionsDialog() override;
+	MystOptionsDialog(MohawkEngine_Myst *vm);
+	virtual ~MystOptionsDialog();
 
-	void open() override;
-	void handleCommand(GUI::CommandSender *sender, uint32 cmd, uint32 data) override;
+	virtual void open() override;
+	virtual void handleCommand(GUI::CommandSender *sender, uint32 cmd, uint32 data);
 
 private:
 	MohawkEngine_Myst *_vm;
@@ -137,11 +133,11 @@ class MohawkEngine_Riven;
 
 class RivenOptionsDialog : public MohawkOptionsDialog {
 public:
-	explicit RivenOptionsDialog(MohawkEngine_Riven *vm);
-	~RivenOptionsDialog() override;
+	RivenOptionsDialog(MohawkEngine_Riven *vm);
+	virtual ~RivenOptionsDialog();
 
-	void open() override;
-	void handleCommand(GUI::CommandSender *sender, uint32 cmd, uint32 data) override;
+	virtual void open() override;
+	virtual void handleCommand(GUI::CommandSender *sender, uint32 cmd, uint32 data) override;
 
 private:
 	MohawkEngine_Riven *_vm;

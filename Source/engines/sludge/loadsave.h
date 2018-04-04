@@ -24,10 +24,6 @@
 
 namespace Sludge {
 
-struct LoadedFunction;
-struct Variable;
-struct VariableStack;
-
 bool saveGame(const Common::String &fname);
 bool loadGame(const Common::String &fname);
 

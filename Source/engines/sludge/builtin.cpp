@@ -24,37 +24,39 @@
 #include "common/savefile.h"
 
 #include "sludge/allfiles.h"
+#include "sludge/sludger.h"
+#include "sludge/builtin.h"
+#include "sludge/newfatal.h"
+#include "sludge/cursors.h"
+#include "sludge/statusba.h"
+#include "sludge/loadsave.h"
 #include "sludge/backdrop.h"
 #include "sludge/bg_effects.h"
-#include "sludge/builtin.h"
-#include "sludge/cursors.h"
-#include "sludge/event.h"
-#include "sludge/floor.h"
+#include "sludge/sprites.h"
 #include "sludge/fonttext.h"
-#include "sludge/freeze.h"
-#include "sludge/graphics.h"
+#include "sludge/sprbanks.h"
+#include "sludge/people.h"
+#include "sludge/sound.h"
+#include "sludge/objtypes.h"
+#include "sludge/floor.h"
+#include "sludge/zbuffer.h"
+#include "sludge/talk.h"
+#include "sludge/region.h"
 #include "sludge/language.h"
-#include "sludge/loadsave.h"
 #include "sludge/moreio.h"
 #include "sludge/movie.h"
-#include "sludge/newfatal.h"
-#include "sludge/objtypes.h"
-#include "sludge/people.h"
-#include "sludge/region.h"
 #include "sludge/savedata.h"
-#include "sludge/sludger.h"
-#include "sludge/sound.h"
-#include "sludge/speech.h"
-#include "sludge/sprbanks.h"
-#include "sludge/sprites.h"
-#include "sludge/statusba.h"
+#include "sludge/freeze.h"
+#include "sludge/language.h"
 #include "sludge/sludge.h"
 #include "sludge/utf8.h"
-#include "sludge/zbuffer.h"
+#include "sludge/graphics.h"
+#include "sludge/event.h"
 
 namespace Sludge {
 
 int speechMode = 0;
+SpritePalette pastePalette;
 
 Variable *launchResult = NULL;
 
@@ -69,6 +71,7 @@ extern int numBIFNames, numUserFunc;
 extern Common::String *allUserFunc;
 extern Common::String *allBIFNames;
 
+extern float speechSpeed;
 extern byte brightnessLevel;
 extern byte fadeMode;
 extern uint16 saveEncoding;
@@ -150,7 +153,7 @@ static BuiltReturn sayCore(int numParams, LoadedFunction *fun, bool sayIt) {
 			if (!getValueType(objT, SVT_OBJTYPE, fun->stack->thisVar))
 				return BR_ERROR;
 			trimStack(fun->stack);
-			p = g_sludge->_speechMan->wrapSpeech(newText, objT, fileNum, sayIt);
+			p = wrapSpeech(newText, objT, fileNum, sayIt);
 			fun->timeLeft = p;
 			//debugOut ("BUILTIN: sayCore: %s (%i)\n", newText, p);
 			fun->isSpeech = true;
@@ -774,7 +777,7 @@ builtIn(setPasteColour) {
 	if (!getRGBParams(red, green, blue, fun))
 		return BR_ERROR;
 
-	g_sludge->_txtMan->setPasterColor((byte)red, (byte)green, (byte)blue);
+	setFontColour(pastePalette, (byte)red, (byte)green, (byte)blue);
 	return BR_CONTINUE;
 }
 
@@ -845,7 +848,7 @@ builtIn(pasteString) {
 	trimStack(fun->stack);
 	if (x == IN_THE_CENTRE)
 		x = g_sludge->_gfxMan->getCenterX(g_sludge->_txtMan->stringWidth(newText));
-	g_sludge->_txtMan->pasteStringToBackdrop(newText, x, y);
+	g_sludge->_txtMan->pasteStringToBackdrop(newText, x, y, pastePalette);
 	return BR_CONTINUE;
 }
 
@@ -1295,7 +1298,7 @@ builtIn(setSpeechMode) {
 
 builtIn(somethingSpeaking) {
 	UNUSEDALL
-	int i = g_sludge->_speechMan->isThereAnySpeechGoingOn();
+	int i = isThereAnySpeechGoingOn();
 	if (i == -1) {
 		setVariable(fun->reg, SVT_INT, 0);
 	} else {
@@ -1955,7 +1958,7 @@ builtIn(setSpeechSpeed) {
 	if (!getValueType(number, SVT_INT, fun->stack->thisVar))
 		return BR_ERROR;
 	trimStack(fun->stack);
-	g_sludge->_speechMan->setSpeechSpeed(number * 0.01);
+	speechSpeed = number * 0.01;
 	setVariable(fun->reg, SVT_INT, 1);
 	return BR_CONTINUE;
 }
@@ -2159,7 +2162,7 @@ builtIn(burnString) {
 	trimStack(fun->stack);
 	if (x == IN_THE_CENTRE)
 		x = g_sludge->_gfxMan->getCenterX(g_sludge->_txtMan->stringWidth(newText));
-	g_sludge->_txtMan->burnStringToBackdrop(newText, x, y);
+	g_sludge->_txtMan->burnStringToBackdrop(newText, x, y, pastePalette);
 	return BR_CONTINUE;
 }
 

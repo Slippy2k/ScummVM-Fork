@@ -40,8 +40,8 @@ enum RectState {
 
 class MystGraphics : public GraphicsManager {
 public:
-	explicit MystGraphics(MohawkEngine_Myst *vm);
-	~MystGraphics() override;
+	MystGraphics(MohawkEngine_Myst *vm);
+	~MystGraphics();
 
 	void copyImageSectionToScreen(uint16 image, Common::Rect src, Common::Rect dest);
 	void copyImageSectionToBackBuffer(uint16 image, Common::Rect src, Common::Rect dest);
@@ -51,6 +51,7 @@ public:
 	void runTransition(TransitionType type, Common::Rect rect, uint16 steps, uint16 delay);
 	void drawRect(Common::Rect rect, RectState state);
 	void drawLine(const Common::Point &p1, const Common::Point &p2, uint32 color);
+	void enableDrawingTimeSimulation(bool enable);
 	void fadeToBlack();
 	void fadeFromBlack();
 

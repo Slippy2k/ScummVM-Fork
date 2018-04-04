@@ -38,7 +38,6 @@ MODULE_OBJS := \
 	palette.o \
 	players/player_ad.o \
 	players/player_apple2.o \
-	players/player_he.o \
 	players/player_mac.o \
 	players/player_mod.o \
 	players/player_nes.o \

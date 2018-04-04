@@ -25,7 +25,7 @@
 #define SCUMM_ACTOR_H
 
 #include "common/scummsys.h"
-#include "common/serializer.h"
+#include "scumm/saveload.h"
 #include "scumm/scumm.h"
 
 
@@ -82,7 +82,7 @@ enum {
 	kNewInavlidBox = 0
 };
 
-class Actor : public Common::Serializable {
+class Actor : public Serializable {
 public:
 	static byte kInvalidBox;
 
@@ -300,7 +300,8 @@ public:
 
 	void classChanged(int cls, bool value);
 
-	virtual void saveLoadWithSerializer(Common::Serializer &ser);
+	// Used by the save/load system:
+	virtual void saveLoadWithSerializer(Serializer *ser);
 
 protected:
 	bool isInClass(int cls);
@@ -374,7 +375,7 @@ public:
 	byte _walkMaxXYCountInc;
 
 	Common::Point _tmp_Pos;
-	Common::Point _tmp_NewPos;
+	Common::Point _tmp_Dest;
 	byte _tmp_WalkBox;
 	bool _tmp_NewWalkBoxEntered;
 
@@ -407,8 +408,8 @@ public:
 	bool calcWalkDistances();
 	void walkActor();
 	void actorSetWalkTo();
-	byte actorWalkXCalculate();
-	byte actorWalkYCalculate();
+	byte actorWalkX();
+	byte actorWalkY();
 	byte updateWalkbox();
 
 	void walkBoxQueueReset();
@@ -417,10 +418,11 @@ public:
 	AdjustBoxResult adjustXYToBeInBox(int dstX, int dstY);
 	AdjustBoxResult adjustPosInBorderWalkbox(AdjustBoxResult box);
 
-	void setActorToTempPosition();
-	void setActorToOriginalPosition();
+	void setTmpFromActor();
+	void setActorFromTmp();
 
-	virtual void saveLoadWithSerializer(Common::Serializer &ser);
+	// Used by the save/load system:
+	virtual void saveLoadWithSerializer(Serializer *ser);
 };
 
 

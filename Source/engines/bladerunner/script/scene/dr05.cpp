@@ -20,7 +20,7 @@
  *
  */
 
-#include "bladerunner/script/scene_script.h"
+#include "bladerunner/script/scene.h"
 
 namespace BladeRunner {
 
@@ -108,7 +108,7 @@ bool SceneScriptDR05::ClickedOnExit(int exitId) {
 		if (!Loop_Actor_Walk_To_XYZ(kActorMcCoy, -22.0f, 0.3f, 221.0f, 0, 1, false, 0)) {
 			Game_Flag_Reset(232);
 			Game_Flag_Set(229);
-			Set_Enter(7, kSceneDR04);
+			Set_Enter(7, 28);
 		}
 		return true;
 	}
@@ -142,7 +142,7 @@ void SceneScriptDR05::PlayerWalkedIn() {
 		Loop_Actor_Walk_To_XYZ(kActorMcCoy, -10.0f, 0.3f, 133.0f, 0, 0, false, 0);
 		if (!Game_Flag_Query(511)) {
 			Game_Flag_Set(511);
-			if (Game_Flag_Query(kFlagSadikIsReplicant)) {
+			if (Game_Flag_Query(48)) {
 				Actor_Voice_Over(730, kActorVoiceOver);
 				Actor_Voice_Over(740, kActorVoiceOver);
 				Actor_Voice_Over(750, kActorVoiceOver);

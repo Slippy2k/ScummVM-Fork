@@ -135,7 +135,7 @@ void ScrollBarWidget::handleMouseMoved(int x, int y, int button) {
 			_part = kSliderPart;
 
 		if (old_part != _part)
-			markAsDirty();
+			draw();
 	}
 }
 
@@ -165,7 +165,7 @@ void ScrollBarWidget::checkBounds(int old_pos) {
 
 	if (old_pos != _currentPos) {
 		recalc();
-		markAsDirty();
+		draw();
 		sendCommand(kSetPositionCmd, _currentPos);
 	}
 }

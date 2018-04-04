@@ -212,17 +212,17 @@
 #endif
 
 #define fast_memcpy(d,s,n) \
-{ size_t nn = (size_t)(n); \
+{ register size_t nn = (size_t)(n); \
     if (nn >= breakeven_point) memcpy((d), (s), nn); \
     else if (nn > 0) { /* proc call overhead is worth only for large strings*/\
-	char *dd; const char *ss; \
+	register char *dd; register const char *ss; \
 for (ss=(s), dd=(d); nn>0; nn--) *dd++ = *ss++; } }
 
 #define fast_memset(d,c,n) \
-{ size_t nn = (size_t)(n); \
+{ register size_t nn = (size_t)(n); \
     if (nn >= breakeven_point) memset((d), (int)(c), nn); \
     else if (nn > 0) { /* proc call overhead is worth only for large strings*/\
-	char *dd; const int cc=(int)(c); \
+	register char *dd; register const int cc=(int)(c); \
 for (dd=(d); nn>0; nn--) *dd++ = cc; } }
 
 

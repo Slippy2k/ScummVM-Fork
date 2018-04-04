@@ -14,8 +14,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SRCTOOLS_RESAMPLER_MODEL_H
-#define SRCTOOLS_RESAMPLER_MODEL_H
+#ifndef RESAMPLER_MODEL_H
+#define RESAMPLER_MODEL_H
 
 #include "FloatSampleProvider.h"
 
@@ -60,4 +60,4 @@ void freeResamplerModel(FloatSampleProvider &model, FloatSampleProvider &source)
 
 } // namespace SRCTools
 
-#endif // SRCTOOLS_RESAMPLER_MODEL_H
+#endif // RESAMPLER_MODEL_H

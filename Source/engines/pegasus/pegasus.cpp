@@ -356,7 +356,7 @@ Common::Error PegasusEngine::showLoadDialog() {
 
 	Common::String gameId = ConfMan.get("gameid");
 
-	const Plugin *plugin = nullptr;
+	const EnginePlugin *plugin = 0;
 	EngineMan.findGame(gameId, &plugin);
 
 	int slot = slc.runModalWithPluginAndTarget(plugin, ConfMan.getActiveDomainName());
@@ -380,7 +380,7 @@ Common::Error PegasusEngine::showSaveDialog() {
 
 	Common::String gameId = ConfMan.get("gameid");
 
-	const Plugin *plugin = nullptr;
+	const EnginePlugin *plugin = 0;
 	EngineMan.findGame(gameId, &plugin);
 
 	int slot = slc.runModalWithPluginAndTarget(plugin, ConfMan.getActiveDomainName());

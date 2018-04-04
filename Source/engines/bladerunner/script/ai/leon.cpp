@@ -20,26 +20,19 @@
  *
  */
 
-#include "bladerunner/script/ai_script.h"
+#include "bladerunner/script/ai.h"
 
 namespace BladeRunner {
-
-AIScriptLeon::AIScriptLeon(BladeRunnerEngine *vm) : AIScriptBase(vm) {
-	var_45EDA0_z = 0.0f;
-	var_45EDA4_y = 0.0f;
-	var_45EDA8_x = 0.0f;
-	var_45EDAC = 0;
-}
 
 void AIScriptLeon::Initialize() {
 	var_45EDA0_z = 0.0f;
 	var_45EDA4_y = 0.0f;
 	var_45EDA8_x = 0.0f;
 	var_45EDAC = 0;
-	_animationStateNext = 0;
-	_animationNext = 0;
-	_animationFrame = 0;
-	_animationState = 0;
+	var_462AF0 = 0;
+	var_462AF4 = 0;
+	var_45EDB4_animation_frame = 0;
+	var_45EDB0_animation_state = 0;
 }
 
 bool AIScriptLeon::Update() {
@@ -135,11 +128,10 @@ void AIScriptLeon::OtherAgentEnteredCombatMode(int otherActorId, int combatMode)
 
 void AIScriptLeon::ShotAtAndMissed() {}
 
-bool AIScriptLeon::ShotAtAndHit() {
+void AIScriptLeon::ShotAtAndHit() {
 	if (Actor_Query_Goal_Number(kActorLeon) != 7) {
 		Actor_Set_Goal_Number(kActorLeon, 7);
 	}
-	return false;
 }
 
 void AIScriptLeon::Retired(int byActorId) {}
@@ -244,27 +236,28 @@ bool AIScriptLeon::GoalChanged(int currentGoalNumber, int newGoalNumber) {
 }
 
 bool AIScriptLeon::UpdateAnimation(int *animation, int *frame) {
-	switch (_animationState) {
+
+	switch (var_45EDB0_animation_state) {
 	case 10:
 		*animation = 856;
-		if (_animationFrame++ == 7) {
+		if (var_45EDB4_animation_frame++ == 7) {
 			Actor_Change_Animation_Mode(kActorMcCoy, 48);
 			Actor_Retired_Here(kActorMcCoy, 12, 12, 1, -1);
 		}
-		if (_animationFrame > Slice_Animation_Query_Number_Of_Frames(*animation) - 1) {
+		if (var_45EDB4_animation_frame > Slice_Animation_Query_Number_Of_Frames(*animation) - 1) {
 			*animation = 847;
-			_animationFrame = 0;
+			var_45EDB4_animation_frame = 0;
 			Actor_Change_Animation_Mode(kActorLeon, 0);
 		}
 		break;
 	case 9:
 		*animation = 849;
-		_animationFrame++;
-		if (_animationFrame > Slice_Animation_Query_Number_Of_Frames(849) - 1) {
+		var_45EDB4_animation_frame++;
+		if (var_45EDB4_animation_frame > Slice_Animation_Query_Number_Of_Frames(849) - 1) {
 			Actor_Change_Animation_Mode(kActorLeon, 0);
 			*animation = 847;
-			_animationFrame = 0;
-			_animationState = 0;
+			var_45EDB4_animation_frame = 0;
+			var_45EDB0_animation_state = 0;
 			if (Actor_Query_Goal_Number(kActorLeon) == 2) {
 				Actor_Set_Goal_Number(kActorLeon, 3);
 			}
@@ -272,94 +265,94 @@ bool AIScriptLeon::UpdateAnimation(int *animation, int *frame) {
 		break;
 	case 8:
 		*animation = 854;
-		_animationFrame++;
-		if (_animationFrame > Slice_Animation_Query_Number_Of_Frames(854) - 1) {
-			_animationFrame = 0;
+		var_45EDB4_animation_frame++;
+		if (var_45EDB4_animation_frame > Slice_Animation_Query_Number_Of_Frames(854) - 1) {
+			var_45EDB4_animation_frame = 0;
 		}
 		break;
 	case 7:
 		*animation = 855;
-		_animationFrame++;
-		if (_animationFrame > Slice_Animation_Query_Number_Of_Frames(855) - 1) {
-			_animationFrame = 0;
-			_animationState = 6;
+		var_45EDB4_animation_frame++;
+		if (var_45EDB4_animation_frame > Slice_Animation_Query_Number_Of_Frames(855) - 1) {
+			var_45EDB4_animation_frame = 0;
+			var_45EDB0_animation_state = 6;
 			*animation = 854;
 		}
 		break;
 	case 6:
-		if (_animationFrame == 0 && var_45EDAC != 0) {
+		if (var_45EDB4_animation_frame == 0 && var_45EDAC != 0) {
 			Actor_Change_Animation_Mode(kActorLeon, 72);
 			*animation = 848;
 		} else {
 			*animation = 854;
-			_animationFrame++;
-			if (_animationFrame > Slice_Animation_Query_Number_Of_Frames(854) - 1) {
-				_animationFrame = 0;
+			var_45EDB4_animation_frame++;
+			if (var_45EDB4_animation_frame > Slice_Animation_Query_Number_Of_Frames(854) - 1) {
+				var_45EDB4_animation_frame = 0;
 			}
 		}
 		break;
 	case 5:
 		*animation = 853;
-		_animationFrame++;
-		if (_animationFrame > Slice_Animation_Query_Number_Of_Frames(853) - 1) {
-			_animationFrame = 0;
-			_animationState = 2;
+		var_45EDB4_animation_frame++;
+		if (var_45EDB4_animation_frame > Slice_Animation_Query_Number_Of_Frames(853) - 1) {
+			var_45EDB4_animation_frame = 0;
+			var_45EDB0_animation_state = 2;
 			*animation = 850;
 		}
 		break;
 	case 4:
 		*animation = 852;
-		_animationFrame++;
-		if (_animationFrame > Slice_Animation_Query_Number_Of_Frames(852) - 1) {
-			_animationFrame = 0;
-			_animationState = 2;
+		var_45EDB4_animation_frame++;
+		if (var_45EDB4_animation_frame > Slice_Animation_Query_Number_Of_Frames(852) - 1) {
+			var_45EDB4_animation_frame = 0;
+			var_45EDB0_animation_state = 2;
 			*animation = 850;
 		}
 		break;
 	case 3:
 		*animation = 851;
-		_animationFrame++;
-		if (_animationFrame > Slice_Animation_Query_Number_Of_Frames(851) - 1) {
-			_animationFrame = 0;
-			_animationState = 2;
+		var_45EDB4_animation_frame++;
+		if (var_45EDB4_animation_frame > Slice_Animation_Query_Number_Of_Frames(851) - 1) {
+			var_45EDB4_animation_frame = 0;
+			var_45EDB0_animation_state = 2;
 			*animation = 850;
 		}
 		break;
 	case 2:
-		if (!_animationFrame && var_45EDAC) {
+		if (!var_45EDB4_animation_frame && var_45EDAC) {
 			*animation = 847;
-			_animationState = 0;
+			var_45EDB0_animation_state = 0;
 		} else {
 			*animation = 850;
-			_animationFrame++;
-			if (_animationFrame > Slice_Animation_Query_Number_Of_Frames(850) - 1) {
-				_animationFrame = 0;
+			var_45EDB4_animation_frame++;
+			if (var_45EDB4_animation_frame > Slice_Animation_Query_Number_Of_Frames(850) - 1) {
+				var_45EDB4_animation_frame = 0;
 			}
 		}
 		break;
 	case 1:
 		*animation = 846;
-		_animationFrame++;
-		if (_animationFrame > Slice_Animation_Query_Number_Of_Frames(846) - 1) {
-			_animationFrame = 0;
+		var_45EDB4_animation_frame++;
+		if (var_45EDB4_animation_frame > Slice_Animation_Query_Number_Of_Frames(846) - 1) {
+			var_45EDB4_animation_frame = 0;
 		}
 		break;
 	case 0:
 		*animation = 847;
-		_animationFrame++;
-		if (_animationFrame > Slice_Animation_Query_Number_Of_Frames(847) - 1) {
-			_animationFrame = 0;
+		var_45EDB4_animation_frame++;
+		if (var_45EDB4_animation_frame > Slice_Animation_Query_Number_Of_Frames(847) - 1) {
+			var_45EDB4_animation_frame = 0;
 		}
 		break;
 	}
-	*frame = _animationFrame;
+	*frame = var_45EDB4_animation_frame;
 	return true;
 }
 
 bool AIScriptLeon::ChangeAnimationMode(int mode) {
 	switch (mode) {
-	case kAnimationModeIdle:
-		switch (_animationState) {
+	case 0:
+		switch (var_45EDB0_animation_state) {
 		case 2:
 		case 3:
 		case 4:
@@ -372,75 +365,75 @@ bool AIScriptLeon::ChangeAnimationMode(int mode) {
 			Actor_Change_Animation_Mode(kActorLeon, 72);
 			break;
 		default:
-			_animationState = 0;
-			_animationFrame = 0;
+			var_45EDB0_animation_state = 0;
+			var_45EDB4_animation_frame = 0;
 			break;
 		}
 		break;
-	case kAnimationModeWalk:
-		_animationState = 1;
-		_animationFrame = 0;
+	case 1:
+		var_45EDB0_animation_state = 1;
+		var_45EDB4_animation_frame = 0;
 		break;
-	case kAnimationModeTalk:
-		_animationState = 2;
-		_animationFrame = 0;
+	case 3:
+		var_45EDB0_animation_state = 2;
+		var_45EDB4_animation_frame = 0;
 		var_45EDAC = 0;
 		break;
-	case kAnimationModeCombatAttack:
-		_animationState = 10;
-		_animationFrame = 0;
+	case 6:
+		var_45EDB0_animation_state = 10;
+		var_45EDB4_animation_frame = 0;
 		break;
 	case 12:
-		_animationState = 3;
-		_animationFrame = 0;
+		var_45EDB0_animation_state = 3;
+		var_45EDB4_animation_frame = 0;
 		var_45EDAC = 0;
 		break;
 	case 13:
-		_animationState = 4;
-		_animationFrame = 0;
+		var_45EDB0_animation_state = 4;
+		var_45EDB4_animation_frame = 0;
 		var_45EDAC = 0;
 		break;
 	case 14:
-		_animationState = 5;
-		_animationFrame = 0;
+		var_45EDB0_animation_state = 5;
+		var_45EDB4_animation_frame = 0;
 		var_45EDAC = 0;
 		break;
 	case 15:
-		_animationState = 6;
-		_animationFrame = 0;
+		var_45EDB0_animation_state = 6;
+		var_45EDB4_animation_frame = 0;
 		var_45EDAC = 0;
 		break;
 	case 16:
-		_animationState = 7;
-		_animationFrame = 0;
+		var_45EDB0_animation_state = 7;
+		var_45EDB4_animation_frame = 0;
 		var_45EDAC = 0;
 		break;
 	case 26:
-		_animationState = 9;
-		_animationFrame = 0;
+		var_45EDB0_animation_state = 9;
+		var_45EDB4_animation_frame = 0;
 		break;
 	case 72:
-		if (_animationState != 8) {
-			_animationState = 8;
-			_animationFrame = 0;
+		if (var_45EDB0_animation_state != 8) {
+			var_45EDB0_animation_state = 8;
+			var_45EDB4_animation_frame = 0;
 		}
 		break;
 	}
 	return true;
 }
 
-void AIScriptLeon::QueryAnimationState(int *animationState, int *animationFrame, int *animationStateNext, int *animationNext) {
-	*animationState     = _animationState;
-	*animationFrame     = _animationFrame;
-	*animationStateNext = _animationStateNext;
-	*animationNext      = _animationNext;
+void AIScriptLeon::QueryAnimationState(int *animationState, int *animationFrame, int *a3, int *a4) {
+	*animationState = var_45EDB0_animation_state;
+	*animationFrame = var_45EDB4_animation_frame;
+	*a3 = var_462AF0;
+	*a4 = var_462AF4;
 }
 
-void AIScriptLeon::SetAnimationState(int animationState, int animationFrame, int animationStateNext, int animationNext) {
-	_animationState     = animationState;
-	_animationFrame     = animationFrame;
-	_animationStateNext = animationStateNext;
-	_animationNext      = animationNext;
+void AIScriptLeon::SetAnimationState(int animationState, int animationFrame, int a3, int a4) {
+	var_45EDB0_animation_state = animationState;
+	var_45EDB4_animation_frame = animationFrame;
+	var_462AF0 = a3;
+	var_462AF4 = a4;
 }
 
 bool AIScriptLeon::ReachedMovementTrackWaypoint(int waypointId) {

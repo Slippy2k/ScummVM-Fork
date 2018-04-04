@@ -162,7 +162,7 @@ bool Cursor::increaseXY(int32 incX, int32 incY) {
 
 	int32 oldX = _x, oldY = _y;
 
-	// adjust for screen resolution
+	// adjust for differences in X and Y
 	adjustXYForScreenSize(incX, incY);
 
 	_x += incX;
@@ -204,15 +204,29 @@ void Cursor::setLimits(uint32 width, uint32 height) {
 inline void Cursor::adjustXYForScreenSize(int32 &x, int32 &y) {
 	DEBUG_ENTER_FUNC();
 	// We have our speed calibrated for the y axis at 480x272. The idea is to adjust this for other
-	// resolutions
+	// resolutions and for x, which is wider.
 	int32 newX = x, newY = y;
 
+	// adjust width movement to match height (usually around 1.5)
+	if (_mouseLimitWidth >= _mouseLimitHeight + (_mouseLimitHeight >> 1))
+		newX = newX + (newX >> 1);
+
 	if (_mouseLimitWidth >= 600) {	// multiply by 2
-		newX *= 2;
-		newY *= 2;
+		newX <<= 1;
+		newY <<= 1;
 	} else if (_mouseLimitWidth >= 480) {	// multiply by 1.5
-		newX = newX + (newX / 2);
-		newY = newY + (newY / 2);
+		newX = newX + (newX >> 1);
+		newY = newY + (newY >> 1);
+	}
+
+	// Divide all movements by 8
+	newX >>= 3;
+	newY >>= 3;
+
+	// Make sure we didn't destroy minimum movement
+	if (!((x && !newX) || (y && !newY))) {
+		x = newX;
+		y = newY;
 	}
 }
 

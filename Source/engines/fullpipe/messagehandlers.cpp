@@ -39,16 +39,18 @@ void global_messageHandler_KickStucco() {
 	bool flip = false;
 
 	for (int i = 0; i < end; i++) {
-		ExCommand *ex = mov->getDynamicPhaseByIndex(i)->getExCommand();
+		ExCommand *ex = mov->getDynamicPhaseByIndex(i)->_exCommand;
 
-		if (ex && ex->_messageKind == 35 && ex->_messageNum == SND_CMN_015) {
-			if (flip) {
-				ex->_messageNum = SND_CMN_055;
-			} else {
-				ex->_messageNum = SND_CMN_054;
-				flip = true;
-			}
-		}
+		if (ex)
+			if (ex->_messageKind == 35)
+				if (ex->_messageNum == SND_CMN_015) {
+					if (flip) {
+						ex->_messageNum = SND_CMN_055;
+					} else {
+						ex->_messageNum = SND_CMN_054;
+						flip = true;
+					}
+				}
 	}
 
 	mov = g_fp->_aniMan->getMovementById(MV_MAN_HMRKICK_COINLESS);
@@ -56,16 +58,18 @@ void global_messageHandler_KickStucco() {
 	flip = false;
 
 	for (int i = 0; i < end; i++) {
-		ExCommand *ex = mov->getDynamicPhaseByIndex(i)->getExCommand();
+		ExCommand *ex = mov->getDynamicPhaseByIndex(i)->_exCommand;
 
-		if (ex && ex->_messageKind == 35 && ex->_messageNum == SND_CMN_015) {
-			if (flip) {
-				ex->_messageNum = SND_CMN_055;
-			} else {
-				ex->_messageNum = SND_CMN_054;
-				flip = true;
-			}
-		}
+		if (ex)
+			if (ex->_messageKind == 35)
+				if (ex->_messageNum == SND_CMN_015) {
+					if (flip) {
+						ex->_messageNum = SND_CMN_055;
+					} else {
+						ex->_messageNum = SND_CMN_054;
+						flip = true;
+					}
+				}
 	}
 }
 
@@ -74,24 +78,24 @@ void global_messageHandler_KickMetal() {
 	int end = mov->_currMovement ? mov->_currMovement->_dynamicPhases.size() : mov->_dynamicPhases.size();
 
 	for (int i = 0; i < end; i++) {
-		ExCommand *ex = mov->getDynamicPhaseByIndex(i)->getExCommand();
+		ExCommand *ex = mov->getDynamicPhaseByIndex(i)->_exCommand;
 
-		if (ex && ex->_messageKind == 35) {
-			if (ex->_messageNum == SND_CMN_054 || ex->_messageNum == SND_CMN_055)
-				ex->_messageNum = SND_CMN_015;
-		}
+		if (ex)
+			if (ex->_messageKind == 35)
+				if (ex->_messageNum == SND_CMN_054 || ex->_messageNum == SND_CMN_055)
+					ex->_messageNum = SND_CMN_015;
 	}
 
 	mov = g_fp->_aniMan->getMovementById(MV_MAN_HMRKICK_COINLESS);
 	end = mov->_currMovement ? mov->_currMovement->_dynamicPhases.size() : mov->_dynamicPhases.size();
 
 	for (int i = 0; i < end; i++) {
-		ExCommand *ex = mov->getDynamicPhaseByIndex(i)->getExCommand();
+		ExCommand *ex = mov->getDynamicPhaseByIndex(i)->_exCommand;
 
-		if (ex && ex->_messageKind == 35) {
-			if (ex->_messageNum == SND_CMN_054 || ex->_messageNum == SND_CMN_055)
-				ex->_messageNum = SND_CMN_015;
-		}
+		if (ex)
+			if (ex->_messageKind == 35)
+				if (ex->_messageNum == SND_CMN_054 || ex->_messageNum == SND_CMN_055)
+					ex->_messageNum = SND_CMN_015;
 	}
 }
 
@@ -200,9 +204,9 @@ int global_messageHandler1(ExCommand *cmd) {
 			case '8':
 				{
 					int num = 32;
-					for (uint i = 0; i < g_fp->_gameLoader->_sc2array[num]._picAniInfos.size(); i++) {
+					for (int i = 0; i < g_fp->_gameLoader->_sc2array[num]._picAniInfosCount; i++) {
 						debug("pic %d, %d:", num, i);
-						g_fp->_gameLoader->_sc2array[num]._picAniInfos[i].print();
+						g_fp->_gameLoader->_sc2array[num]._picAniInfos[i]->print();
 					}
 				}
 				break;
@@ -250,7 +254,7 @@ int global_messageHandler1(ExCommand *cmd) {
 			g_fp->setCursor(g_fp->_cursorId);
 			break;
 		case 65: // open map
-			if (cmd->_field_2C == 11 && cmd->_z == ANI_INV_MAP && g_fp->_flgCanOpenMap)
+			if (cmd->_field_2C == 11 && cmd->_field_14 == ANI_INV_MAP && g_fp->_flgCanOpenMap)
 				g_fp->openMap();
 			break;
 		default:
@@ -263,7 +267,7 @@ int global_messageHandler1(ExCommand *cmd) {
 
 		ExCommand *newex = new ExCommand(0, 35, SND_CMN_031, 0, 0, 0, 1, 0, 0, 0);
 
-		newex->_z = 1;
+		newex->_field_14 = 1;
 		newex->_excFlags |= 3;
 		newex->postMessage();
 
@@ -291,19 +295,19 @@ int global_messageHandler2(ExCommand *cmd) {
 	switch (cmd->_messageNum) {
 	case 0x44c8:
 		error("0x44c8");
-		// Unk3_sub_4477A0(&unk3, _parentId, _z != 0);
+		// Unk3_sub_4477A0(&unk3, _parentId, _field_14 != 0);
 		break;
 
 	case 28:
 		ani = g_fp->_currentScene->getStaticANIObject1ById(cmd->_parentId, cmd->_param);
 		if (ani)
-			ani->_priority = cmd->_z;
+			ani->_priority = cmd->_field_14;
 		break;
 
 	case 25:
 		ani = g_fp->_currentScene->getStaticANIObject1ById(cmd->_parentId, cmd->_param);
 		if (ani) {
-			if (cmd->_z) {
+			if (cmd->_field_14) {
 				ani->setFlags40(true);
 				ani->_callback2 = staticANIObjectCallback;
 			} else {
@@ -341,7 +345,7 @@ int global_messageHandler2(ExCommand *cmd) {
 			SoundList *s = g_fp->_currSoundList1[snd];
 			int ms = s->getCount();
 			for (int i = 0; i < ms; i++) {
-				s->getSoundByIndex(i).setPanAndVolumeByStaticAni();
+				s->getSoundByIndex(i)->setPanAndVolumeByStaticAni();
 			}
 		}
 	}
@@ -379,7 +383,7 @@ int global_messageHandler3(ExCommand *cmd) {
 			return g_fp->_gameLoader->gotoScene(cmd->_parentId, cmd->_param);
 		case 64:
 			if (g_fp->_currentScene && g_fp->_msgObjectId2
-					&& (!(cmd->_param & 4) || g_fp->_msgObjectId2 != cmd->_z || g_fp->_msgId != cmd->_field_20)) {
+					&& (!(cmd->_param & 4) || g_fp->_msgObjectId2 != cmd->_field_14 || g_fp->_msgId != cmd->_field_20)) {
 				ani = g_fp->_currentScene->getStaticANIObject1ById(g_fp->_msgObjectId2, g_fp->_msgId);
 				if (ani) {
 					ani->_flags &= 0xFF7F;
@@ -396,7 +400,7 @@ int global_messageHandler3(ExCommand *cmd) {
 				g_fp->_msgY = cmd->_y;
 			}
 			if (cmd->_param & 4) {
-				g_fp->_msgObjectId2 = cmd->_z;
+				g_fp->_msgObjectId2 = cmd->_field_14;
 				g_fp->_msgId = cmd->_field_20;
 			}
 			return result;
@@ -479,13 +483,13 @@ int global_messageHandler3(ExCommand *cmd) {
 	case 57:
 		if (cmd->_field_2C) {
 			if (!cmd->_field_20) {
-				getGameLoaderInventory()->removeItem2(g_fp->_currentScene, cmd->_parentId, cmd->_x, cmd->_y, cmd->_z);
+				getGameLoaderInventory()->removeItem2(g_fp->_currentScene, cmd->_parentId, cmd->_x, cmd->_y, cmd->_field_14);
 				getGameLoaderInventory()->rebuildItemRects();
 				return 1;
 			}
 			ani = g_fp->_currentScene->getStaticANIObject1ById(g_fp->_gameLoader->_field_FA, -1);
 			if (ani) {
-				getGameLoaderInventory()->removeItem2(g_fp->_currentScene, cmd->_parentId, ani->_ox + cmd->_x, ani->_oy + cmd->_y, ani->_priority + cmd->_z);
+				getGameLoaderInventory()->removeItem2(g_fp->_currentScene, cmd->_parentId, ani->_ox + cmd->_x, ani->_oy + cmd->_y, ani->_priority + cmd->_field_14);
 				getGameLoaderInventory()->rebuildItemRects();
 				return 1;
 			}
@@ -497,7 +501,7 @@ int global_messageHandler3(ExCommand *cmd) {
 	case 55:
 		if (g_fp->_currentScene) {
 			GameObject *obj;
-			if (cmd->_z)
+			if (cmd->_field_14)
 				obj = g_fp->_currentScene->getStaticANIObject1ById(cmd->_x, cmd->_y);
 			else
 				obj = g_fp->_currentScene->getPictureObjectById(cmd->_x, cmd->_y);
@@ -513,7 +517,7 @@ int global_messageHandler3(ExCommand *cmd) {
 		return doSomeAnimation2(cmd->_parentId, cmd->_param);
 	case 63:
 		if (cmd->_objtype == kObjTypeObjstateCommand) {
-			ObjstateCommand *c = static_cast<ObjstateCommand *>(cmd);
+			ObjstateCommand *c = (ObjstateCommand *)cmd;
 			result = 1;
 			g_fp->setObjectState(c->_objCommandName.c_str(), c->_value);
 		}
@@ -557,7 +561,7 @@ int global_messageHandler4(ExCommand *cmd) {
 		if (!ani)
 			break;
 
-		int flags = cmd->_z;
+		int flags = cmd->_field_14;
 		if (flags <= 0)
 			flags = -1;
 
@@ -587,18 +591,16 @@ int global_messageHandler4(ExCommand *cmd) {
 		if (!ani)
 			break;
 
-		int flags = cmd->_z;
+		int flags = cmd->_field_14;
 		if (flags <= 0)
 			flags = -1;
 
-		if (cmd->_objtype == kObjTypeExCommand2) {
-			ExCommand2 *cmd2 = static_cast<ExCommand2 *>(cmd);
+		ExCommand2 *cmd2 = (ExCommand2 *)cmd;
 
-			if (cmd->_excFlags & 1) {
-				ani->startAnimSteps(cmd->_messageNum, 0, cmd->_x, cmd->_y, cmd2->_points, flags);
-			} else {
-				ani->startAnimSteps(cmd->_messageNum, cmd->_parId, cmd->_x, cmd->_y, cmd2->_points, flags);
-			}
+		if (cmd->_excFlags & 1) {
+			ani->startAnimSteps(cmd->_messageNum, 0, cmd->_x, cmd->_y, cmd2->_points, cmd2->_pointsSize, flags);
+		} else {
+			ani->startAnimSteps(cmd->_messageNum, cmd->_parId, cmd->_x, cmd->_y, cmd2->_points, cmd2->_pointsSize, flags);
 		}
 		break;
 	}
@@ -681,8 +683,8 @@ int global_messageHandler4(ExCommand *cmd) {
 		if (!ani)
 			break;
 
-		if (cmd->_z >= 0)
-			ani->_priority = cmd->_z;
+		if (cmd->_field_14 >= 0)
+			ani->_priority = cmd->_field_14;
 
 		ani->show1(cmd->_x, cmd->_y, cmd->_messageNum, cmd->_parId);
 		break;
@@ -695,8 +697,8 @@ int global_messageHandler4(ExCommand *cmd) {
 		if (!ani)
 			break;
 
-		if (cmd->_z >= 0)
-			ani->_priority = cmd->_z;
+		if (cmd->_field_14 >= 0)
+			ani->_priority = cmd->_field_14;
 
 		ani->show2(cmd->_x, cmd->_y, cmd->_messageNum, cmd->_parId);
 		break;
@@ -733,7 +735,7 @@ int global_messageHandler4(ExCommand *cmd) {
 		if (!ani)
 			break;
 
-		ani->_flags = cmd->_messageNum | (ani->_flags & ~cmd->_z);
+		ani->_flags = cmd->_messageNum | (ani->_flags & ~cmd->_field_14);
 
 		break;
 
@@ -752,7 +754,7 @@ int global_messageHandler4(ExCommand *cmd) {
 	return 1;
 }
 
-int MovGraph::messageHandler(ExCommand *cmd) {
+int MovGraph_messageHandler(ExCommand *cmd) {
 	if (cmd->_messageKind != 17)
 		return 0;
 
@@ -767,20 +769,20 @@ int MovGraph::messageHandler(ExCommand *cmd) {
 	if (getSc2MctlCompoundBySceneId(g_fp->_currentScene->_sceneId)->_objtype != kObjTypeMovGraph || !ani)
 		return 0;
 
-	MovGraph *gr = getSc2MovGraphBySceneId(g_fp->_currentScene->_sceneId);
+	MovGraph *gr = (MovGraph *)getSc2MctlCompoundBySceneId(g_fp->_currentScene->_sceneId);
 
 	MovGraphLink *link = 0;
 	double mindistance = 1.0e10;
 	Common::Point point;
 
-	for (LinkList::iterator i = gr->_links.begin(); i != gr->_links.end(); ++i) {
+	for (ObList::iterator i = gr->_links.begin(); i != gr->_links.end(); ++i) {
 		point.x = ani->_ox;
 		point.y = ani->_oy;
 
-		double dst = gr->putToLink(&point, *i, 0);
+		double dst = gr->putToLink(&point, (MovGraphLink *)(*i), 0);
 		if (dst >= 0.0 && dst < mindistance) {
 			mindistance = dst;
-			link = *i;
+			link = (MovGraphLink *)(*i);
 		}
 	}
 
@@ -790,21 +792,21 @@ int MovGraph::messageHandler(ExCommand *cmd) {
 		MovGraphNode *node = link->_graphSrc;
 
 		double sq = (ani->_oy - node->_y) * (ani->_oy - node->_y) + (ani->_ox - node->_x) * (ani->_ox - node->_x);
-		int off = (node->_z >> 16) & 0xFF;
-		double off2 = ((link->_graphDst->_z >> 8) & 0xff) - off;
+		int off = (node->_field_14 >> 16) & 0xFF;
+		double off2 = ((link->_graphDst->_field_14 >> 8) & 0xff) - off;
 
 		top = off + (int)(sqrt(sq) * off2 / link->_length);
 	} else {
-		top = (gr->calcOffset(ani->_ox, ani->_oy)->_z >> 8) & 0xff;
+		top = (gr->calcOffset(ani->_ox, ani->_oy)->_field_14 >> 8) & 0xff;
 	}
 
 	if (ani->_movement) {
-		ani->_movement->_currDynamicPhase->_rect.top = 255 - top;
+		ani->_movement->_currDynamicPhase->_rect->top = 255 - top;
 		return 0;
 	}
 
 	if (ani->_statics)
-		ani->_statics->_rect.top = 255 - top;
+		ani->_statics->_rect->top = 255 - top;
 
 	return 0;
 }

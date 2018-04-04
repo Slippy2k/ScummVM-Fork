@@ -25,41 +25,37 @@
 
 #include "bladerunner/bladerunner.h"
 
-#include "common/array.h"
 #include "common/rect.h"
 
 namespace BladeRunner {
 
-class SaveFileReadStream;
-class SaveFileWriteStream;
+struct Region {
+	Common::Rect _rectangle;
+	int _type;
+	int _present;
+};
 
 class Regions {
-	friend class Debugger;
+#ifdef _DEBUG
+	friend class BladeRunnerEngine;
+#endif
 
-	struct Region {
-		Common::Rect rectangle;
-		int          type;
-		int          present;
-	};
-
-	Common::Array<Region> _regions;
-	bool                  _enabled;
-
+private:
+	Region* _regions;
+	bool _enabled;
 public:
 	Regions();
+	~Regions();
 
 	void clear();
 	bool add(int index, Common::Rect rect, int type);
 	bool remove(int index);
 
-	int getTypeAtXY(int x, int y) const;
-	int getRegionAtXY(int x, int y) const;
+	int getTypeAtXY(int x, int y);
+	int getRegionAtXY(int x, int y);
 
 	void setEnabled(bool enabled);
 	void enable();
-
-	void save(SaveFileWriteStream &f);
-	void load(SaveFileReadStream &f);
 };
 
 } // End of namespace BladeRunner

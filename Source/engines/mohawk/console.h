@@ -35,8 +35,8 @@ class MohawkEngine_Myst;
 
 class MystConsole : public GUI::Debugger {
 public:
-	explicit MystConsole(MohawkEngine_Myst *vm);
-	~MystConsole() override;
+	MystConsole(MohawkEngine_Myst *vm);
+	virtual ~MystConsole(void);
 
 private:
 	MohawkEngine_Myst *_vm;
@@ -66,8 +66,8 @@ class MohawkEngine_Riven;
 
 class RivenConsole : public GUI::Debugger {
 public:
-	explicit RivenConsole(MohawkEngine_Riven *vm);
-	~RivenConsole() override;
+	RivenConsole(MohawkEngine_Riven *vm);
+	virtual ~RivenConsole(void);
 
 private:
 	MohawkEngine_Riven *_vm;
@@ -95,8 +95,8 @@ private:
 
 class LivingBooksConsole : public GUI::Debugger {
 public:
-	explicit LivingBooksConsole(MohawkEngine_LivingBooks *vm);
-	~LivingBooksConsole() override;
+	LivingBooksConsole(MohawkEngine_LivingBooks *vm);
+	virtual ~LivingBooksConsole(void);
 
 private:
 	MohawkEngine_LivingBooks *_vm;

@@ -27,7 +27,7 @@
 
 namespace Plumbers {
 
-Console::Console() {
+Console::Console(Plumbers::PlumbersGame *vm) : _vm(vm) {
 	_allowSkip = false;
 	 registerCmd("allowSkip", WRAP_METHOD(Console, Cmd_allowSkip));
 }

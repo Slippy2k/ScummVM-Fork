@@ -43,7 +43,7 @@ public:
 
 	virtual int32 doCommand(int numargs, int args[]) = 0;
 
-	virtual void saveLoadWithSerializer(Common::Serializer &ser);
+	virtual void saveLoadWithSerializer(Serializer *ser);
 	virtual void restoreAfterLoad();
 
 	// version 1 specific
@@ -69,7 +69,6 @@ protected:
 		uint8 looping;
 		uint32 priority;
 	} _pcmCurrentSound[9];
-	friend void syncWithSerializer(Common::Serializer &, PcmCurrentSound &);
 
 	uint8 _unkFlags;
 
@@ -102,7 +101,7 @@ public:
 	void setSoundVolume(int sound, int left, int right);
 	void setSoundNote(int sound, int note);
 
-	void saveLoadWithSerializer(Common::Serializer &ser);
+	void saveLoadWithSerializer(Serializer *ser);
 	void restoreAfterLoad();
 
 private:
@@ -155,7 +154,7 @@ public:
 
 	int32 doCommand(int numargs, int args[]);
 
-	void saveLoadWithSerializer(Common::Serializer &ser);
+	void saveLoadWithSerializer(Serializer *ser);
 
 private:
 	void playVocTrack(const uint8 *data);

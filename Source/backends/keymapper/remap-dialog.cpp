@@ -267,7 +267,7 @@ void RemapDialog::startRemapping(uint i) {
 	_remapTimeout = g_system->getMillis() + kRemapTimeoutDelay;
 	Action *activeRemapAction = _currentActions[_topAction + i].action;
 	_keymapWidgets[i].keyButton->setLabel("...");
-	_keymapWidgets[i].keyButton->markAsDirty();
+	_keymapWidgets[i].keyButton->draw();
 	_keymapper->startRemappingMode(activeRemapAction);
 
 }
@@ -414,8 +414,8 @@ void RemapDialog::refreshKeymap() {
 
 	_topAction = newTopAction;
 
-	//_container->markAsDirty();
-	_scrollBar->markAsDirty();
+	//_container->draw();
+	_scrollBar->draw();
 
 	uint actionI = _topAction;
 
@@ -446,12 +446,12 @@ void RemapDialog::refreshKeymap() {
 			widg.keyButton->setVisible(false);
 			widg.clearButton->setVisible(false);
 		}
-		//widg.actionText->markAsDirty();
-		//widg.keyButton->markAsDirty();
+		//widg.actionText->draw();
+		//widg.keyButton->draw();
 	}
 	// need to redraw entire Dialog so that invisible
 	// widgets disappear
-	g_gui.scheduleTopDialogRedraw();
+	draw();
 }
 
 

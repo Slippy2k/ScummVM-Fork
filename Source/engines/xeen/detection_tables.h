@@ -36,7 +36,7 @@ static const XeenGameDescription gameDescriptions[] = {
 			Common::EN_ANY,
 			Common::kPlatformDOS,
 			ADGF_NO_FLAGS,
-			GUIO1(GAMEOPTION_SHOW_ITEM_COSTS)
+			GUIO1(GUIO_NONE)
 		},
 		GType_WorldOfXeen,
 		0
@@ -55,7 +55,7 @@ static const XeenGameDescription gameDescriptions[] = {
 			Common::DE_DEU,
 			Common::kPlatformDOS,
 			ADGF_NO_FLAGS,
-			GUIO1(GAMEOPTION_SHOW_ITEM_COSTS)
+			GUIO1(GUIO_NONE),
 		},
 		GType_WorldOfXeen,
 		0
@@ -74,63 +74,9 @@ static const XeenGameDescription gameDescriptions[] = {
 			Common::EN_ANY,
 			Common::kPlatformDOS,
 			ADGF_NO_FLAGS,
-			GUIO1(GAMEOPTION_SHOW_ITEM_COSTS)
+			GUIO1(GUIO_NONE)
 		},
 		GType_WorldOfXeen,
-		0
-	},
-
-	{
-		// Clouds of Xeen
-		{
-			"cloudsofxeen",
-			nullptr,
-			{
-				{ "xeen.cc", 0, "0cffbab533d9afe140e69ec93096f43e", 13435646 },
-				AD_LISTEND
-			},
-			Common::EN_ANY,
-			Common::kPlatformDOS,
-			ADGF_NO_FLAGS,
-			GUIO1(GAMEOPTION_SHOW_ITEM_COSTS)
-		},
-		GType_Clouds,
-		0
-	},
-
-	{
-		// Dark Side of Xeen
-		{
-			"darksideofxeen",
-			nullptr,
-			{
-				{ "dark.cc", 0, "df194483ecea6abc0511637d712ced7c", 11217676 },
-				AD_LISTEND
-			},
-			Common::EN_ANY,
-			Common::kPlatformDOS,
-			ADGF_NO_FLAGS,
-			GUIO1(GAMEOPTION_SHOW_ITEM_COSTS)
-		},
-		GType_DarkSide,
-		0
-	},
-
-	{
-		// Swords of Xeen (GOG)
-		{
-			"swordsofxeen",
-			nullptr,
-			{
-				{"swrd.cc", 0, "0d51c3457070cc7d1a596da9241924a5", 13026924 },
-				AD_LISTEND
-			},
-			Common::EN_ANY,
-			Common::kPlatformDOS,
-			ADGF_NO_FLAGS,
-			GUIO1(GAMEOPTION_SHOW_ITEM_COSTS)
-		},
-		GType_Swords,
 		0
 	},
 

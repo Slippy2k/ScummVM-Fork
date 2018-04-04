@@ -25,7 +25,7 @@
 
 #include "common/scummsys.h"
 #include "xeen/map.h"
-#include "xeen/window.h"
+#include "xeen/screen.h"
 
 namespace Xeen {
 

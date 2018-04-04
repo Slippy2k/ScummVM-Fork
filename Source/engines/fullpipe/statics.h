@@ -31,20 +31,23 @@ class ExCommand;
 
 class StepArray : public CObject {
 	int _currPointIndex;
-	PointList _points;
-	bool _isEos;
+	Common::Point **_points;
+	int _maxPointIndex;
+	int _pointsCount;
+	int _isEos;
 
   public:
 	StepArray();
+	~StepArray();
 	void clear();
 
-	int getCurrPointIndex() const { return _currPointIndex; }
-	int getPointsCount() const { return _points.size(); }
+	int getCurrPointIndex() { return _currPointIndex; }
+	int getPointsCount() { return _maxPointIndex; }
 
-	Common::Point getCurrPoint() const;
-	Common::Point getPoint(int index, int offset) const;
+	Common::Point *getCurrPoint(Common::Point *point);
+	Common::Point *getPoint(Common::Point *point, int index, int offset);
 	bool gotoNextPoint();
-	void insertPoints(const PointList &points);
+	void insertPoints(Common::Point **points, int pointsCount);
 };
 
 class StaticPhase : public Picture {
@@ -53,23 +56,22 @@ class StaticPhase : public Picture {
 	int16 _countdown;
 	int16 _field_68;
 	int16 _field_6A;
-	Common::ScopedPtr<ExCommand> _exCommand;
+	ExCommand *_exCommand;
 
   public:
 	StaticPhase();
+	virtual ~StaticPhase();
 
 	virtual bool load(MfcArchive &file);
 
-	virtual Common::String toXML();
-
-	ExCommand *getExCommand() { return _exCommand.get(); }
+	ExCommand *getExCommand() { return _exCommand; }
 };
 
 class DynamicPhase : public StaticPhase {
  public:
 	int _someX;
 	int _someY;
-	Common::Rect _rect;
+	Common::Rect *_rect;
 	int16 _field_7C;
 	int16 _field_7E;
 	int _dynFlags;
@@ -77,10 +79,9 @@ class DynamicPhase : public StaticPhase {
   public:
 	DynamicPhase();
 	DynamicPhase(DynamicPhase *src, bool reverse);
+	virtual ~DynamicPhase();
 
 	virtual bool load(MfcArchive &file);
-
-	virtual Common::String toXML();
 
 	int getDynFlags() { return _dynFlags; }
 };
@@ -89,18 +90,19 @@ class Statics : public DynamicPhase {
  public:
  	int16 _staticsId;
 	Common::String _staticsName;
-	Picture _picture;
+	Picture *_picture;
 
   public:
 	Statics();
 	Statics(Statics *src, bool reverse);
+	virtual ~Statics();
 
 	virtual bool load(MfcArchive &file);
 	virtual void init();
 	Statics *getStaticsById(int itemId);
 
-	Common::Point getSomeXY() const;
-	Common::Point getCenter() const;
+	Common::Point *getSomeXY(Common::Point &p);
+	Common::Point *getCenter(Common::Point *p);
 };
 
 class StaticANIObject;
@@ -120,10 +122,9 @@ class Movement : public GameObject {
 	int _field_50;
 	int _counterMax;
 	int _counter;
-	/** a confusing mix of owned and unowned items */
 	Common::Array<DynamicPhase *> _dynamicPhases;
 	int _field_78;
-	PointList _framePosOffsets;
+	Common::Point **_framePosOffsets;
 	Movement *_currMovement;
 	int _field_84;
 	DynamicPhase *_currDynamicPhase;
@@ -141,11 +142,11 @@ class Movement : public GameObject {
 	virtual bool load(MfcArchive &file);
 	bool load(MfcArchive &file, StaticANIObject *ani);
 
-	Common::Point getCurrDynamicPhaseXY() const;
-	Common::Point getCenter() const;
-	Dims getDimensionsOfPhase(int phaseIndex) const;
+	Common::Point *getCurrDynamicPhaseXY(Common::Point &p);
+	Common::Point *getCenter(Common::Point *p);
+	Common::Point *getDimensionsOfPhase(Common::Point *p, int phaseIndex);
 
-	Common::Point calcSomeXY(int idx, int dynidx);
+	Common::Point *calcSomeXY(Common::Point &p, int idx, int dynidx);
 
 	void initStatics(StaticANIObject *ani);
 	void updateCurrDynamicPhase();
@@ -181,9 +182,7 @@ class StaticANIObject : public GameObject {
 	int _initialCounter;
 	void (*_callback1)(int, Common::Point *point, int, int);
 	void (*_callback2)(int *);
-	/** list items are owned */
 	Common::Array<Movement *> _movements;
-	/** list items are owned */
 	Common::Array<Statics *> _staticsList;
 	StepArray _stepArray;
 	int16 _field_96;
@@ -207,11 +206,11 @@ public:
 	Statics *getStaticsById(int id);
 	Statics *getStaticsByName(const Common::String &name);
 	Movement *getMovementById(int id);
-	int getMovementIdById(int itemId) const;
+	int getMovementIdById(int itemId);
 	Movement *getMovementByName(const Common::String &name);
-	Common::Point getCurrDimensions() const;
+	Common::Point *getCurrDimensions(Common::Point &p);
 
-	Common::Point getSomeXY() const;
+	Common::Point *getSomeXY(Common::Point &p);
 
 	void clearFlags();
 	void setFlags40(bool state);
@@ -235,7 +234,7 @@ public:
 
 	bool startAnim(int movementId, int messageQueueId, int dynPhaseIdx);
 	bool startAnimEx(int movid, int parId, int flag1, int flag2);
-	void startAnimSteps(int movementId, int messageQueueId, int x, int y, const PointList &points, int someDynamicPhaseIndex);
+	void startAnimSteps(int movementId, int messageQueueId, int x, int y, Common::Point **points, int pointsCount, int someDynamicPhaseIndex);
 
 	void hide();
 	void show1(int x, int y, int movementId, int mqId);
@@ -247,7 +246,6 @@ public:
 	void draw();
 	void draw2();
 
-	/** ownership of returned object is transferred to caller */
 	MovTable *countMovements();
 	Common::Point *calcStepLen(Common::Point *p);
 	void setSpeed(int speed);
@@ -261,6 +259,14 @@ public:
 
 	bool getPixelAtPos(int x, int y, uint32 *pixel, bool hitOnly = false);
 	bool isPixelHitAtPos(int x, int y);
+};
+
+struct MovTable {
+	int count;
+	int16 *movs;
+
+	MovTable() { count = 0; movs = 0; }
+	~MovTable() { free(movs); }
 };
 
 } // End of namespace Fullpipe

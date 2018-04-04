@@ -1,5 +1,5 @@
 /* Copyright (C) 2003, 2004, 2005, 2006, 2008, 2009 Dean Beeler, Jerome Fisher
- * Copyright (C) 2011-2017 Dean Beeler, Jerome Fisher, Sergey V. Mikayev
+ * Copyright (C) 2011-2016 Dean Beeler, Jerome Fisher, Sergey V. Mikayev
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License as published by
@@ -24,7 +24,6 @@
 #include "Structures.h"
 #include "LA32Ramp.h"
 #include "LA32WaveGenerator.h"
-#include "LA32FloatWaveGenerator.h"
 
 namespace MT32Emu {
 
@@ -40,7 +39,7 @@ struct ControlROMPCMStruct;
 class Partial {
 private:
 	Synth *synth;
-	const int partialIndex; // Index of this Partial in the global partial table
+	const int debugPartialNum; // Only used for debugging
 	// Number of the sample currently being rendered by produceOutput(), or 0 if no run is in progress
 	// This is only kept available for debugging purposes.
 	Bit32u sampleNum;
@@ -73,22 +72,13 @@ private:
 	LA32Ramp cutoffModifierRamp;
 
 	// TODO: This should be owned by PartialPair
-	LA32PartialPair *la32Pair;
-	const bool floatMode;
+	LA32PartialPair la32Pair;
 
 	const PatchCache *patchCache;
 	PatchCache cachebackup;
 
 	Bit32u getAmpValue();
 	Bit32u getCutoffValue();
-
-	template <class Sample, class LA32PairImpl>
-	bool doProduceOutput(Sample *leftBuf, Sample *rightBuf, Bit32u length, LA32PairImpl *la32PairImpl);
-	bool canProduceOutput();
-	template <class LA32PairImpl>
-	bool generateNextSample(LA32PairImpl *la32PairImpl);
-	void produceAndMixSample(IntSample *&leftBuf, IntSample *&rightBuf, LA32IntPartialPair *la32IntPair);
-	void produceAndMixSample(FloatSample *&leftBuf, FloatSample *&rightBuf, LA32FloatPartialPair *la32FloatPair);
 
 public:
 	bool alreadyOutputed;
@@ -108,7 +98,6 @@ public:
 	void startAbort();
 	void startDecayAll();
 	bool shouldReverb();
-	bool isRingModulatingNoMix() const;
 	bool hasRingModulatingSlave() const;
 	bool isRingModulatingSlave() const;
 	bool isPCM() const;
@@ -119,10 +108,9 @@ public:
 	void backupCache(const PatchCache &cache);
 
 	// Returns true only if data written to buffer
-	// These functions produce processed stereo samples
+	// This function (unlike the one below it) returns processed stereo samples
 	// made from combining this single partial with its pair, if it has one.
-	bool produceOutput(IntSample *leftBuf, IntSample *rightBuf, Bit32u length);
-	bool produceOutput(FloatSample *leftBuf, FloatSample *rightBuf, Bit32u length);
+	bool produceOutput(Sample *leftBuf, Sample *rightBuf, Bit32u length);
 }; // class Partial
 
 } // namespace MT32Emu

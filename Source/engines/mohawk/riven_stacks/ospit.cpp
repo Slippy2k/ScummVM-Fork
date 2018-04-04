@@ -193,19 +193,22 @@ void OSpit::xogehnbookprevpage(const ArgumentArray &args) {
 	uint32 &page = _vm->_vars["ogehnpage"];
 
 	// Keep turning pages while the mouse is pressed
-	while (keepTurningPages()) {
+	bool firstPageTurn = true;
+	while (mouseIsDown() || firstPageTurn) {
 		// Check for the first page
 		if (page == 1)
 			return;
 
+		if (!pageTurn(kRivenTransitionWipeRight)) {
+			return;
+		}
+
 		// Update the page number
 		page--;
+		firstPageTurn = false;
 
-		pageTurn(kRivenTransitionWipeRight);
 		_vm->getCard()->drawPicture(page);
 		_vm->doFrame();
-
-		waitForPageTurnSound();
 	}
 }
 
@@ -214,19 +217,22 @@ void OSpit::xogehnbooknextpage(const ArgumentArray &args) {
 	uint32 &page = _vm->_vars["ogehnpage"];
 
 	// Keep turning pages while the mouse is pressed
-	while (keepTurningPages()) {
+	bool firstPageTurn = true;
+	while ((mouseIsDown() || firstPageTurn) && !_vm->hasGameEnded()) {
 		// Check for the last page
 		if (page == 13)
 			return;
 
+		if (!pageTurn(kRivenTransitionWipeLeft)) {
+			return;
+		}
+
 		// Update the page number
 		page++;
+		firstPageTurn = false;
 
-		pageTurn(kRivenTransitionWipeLeft);
 		_vm->getCard()->drawPicture(page);
 		_vm->doFrame();
-
-		waitForPageTurnSound();
 	}
 }
 

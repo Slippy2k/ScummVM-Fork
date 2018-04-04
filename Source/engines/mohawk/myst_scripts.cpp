@@ -40,7 +40,6 @@ MystScriptEntry::MystScriptEntry() {
 	var = 0;
 	resourceId = 0;
 	u1 = 0;
-	opcode = 0;
 }
 
 const uint8 MystScriptParser::_stackMap[11] = {
@@ -80,10 +79,8 @@ MystScriptParser::MystScriptParser(MohawkEngine_Myst *vm) :
 	_invokingResource = nullptr;
 	_savedCardId = 0;
 	_savedCursorId = 0;
-	_savedMapCardId = 0;
 	_tempVar = 0;
 	_scriptNestingLevel = 0;
-	_startTime = 0;
 }
 
 MystScriptParser::~MystScriptParser() {
@@ -803,8 +800,6 @@ void MystScriptParser::showMap() {
 }
 
 void MystScriptParser::o_exitMap(uint16 var, const ArgumentsArray &args) {
-	assert(_savedMapCardId);
-
 	_vm->changeToCard(_savedMapCardId, kTransitionCopy);
 }
 

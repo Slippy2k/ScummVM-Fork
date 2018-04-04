@@ -318,7 +318,6 @@ private:
 	void update();
 public:
 	bool _musicOn;
-	Common::String _currentMusic, _priorMusic;
 public:
 	Music();
 	~Music();

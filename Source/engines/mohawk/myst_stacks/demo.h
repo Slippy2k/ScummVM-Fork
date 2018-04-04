@@ -37,8 +37,8 @@ namespace MystStacks {
 
 class Demo : public Intro {
 public:
-	explicit Demo(MohawkEngine_Myst *vm);
-	~Demo() override;
+	Demo(MohawkEngine_Myst *vm);
+	~Demo();
 
 	void disablePersistentScripts() override;
 	void runPersistentScripts() override;
@@ -51,6 +51,8 @@ private:
 	DECLARE_OPCODE(o_fadeToBlack);
 
 	DECLARE_OPCODE(o_returnToMenu_init);
+
+	DECLARE_OPCODE(opcode_300);
 
 	bool _returnToMenuRunning;
 	uint16 _returnToMenuStep; // 42

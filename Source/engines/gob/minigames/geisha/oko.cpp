@@ -79,7 +79,6 @@ void Oko::advance() {
 		case kStateBreathe:
 			if ((getFrame() == 6) || (getFrame() == 23))
 				_sound->blasterPlay(_breathe, 1, 0);
-			// fall through
 		case kStateSink:
 		case kStateRaise:
 		case kStateHurt:

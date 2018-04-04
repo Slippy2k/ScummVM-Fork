@@ -43,7 +43,6 @@
 #include "backends/audiocd/sdl/sdl-audiocd.h"
 #endif
 
-#include "backends/events/default/default-events.h"
 #include "backends/events/sdl/sdl-events.h"
 #include "backends/mutex/sdl/sdl-mutex.h"
 #include "backends/timer/sdl/sdl-timer.h"
@@ -90,8 +89,6 @@ OSystem_SDL::OSystem_SDL()
 	_eventSource(0),
 	_window(0) {
 
-	ConfMan.registerDefault("kbdmouse_speed", 3);
-	ConfMan.registerDefault("joystick_deadzone", 3);
 }
 
 OSystem_SDL::~OSystem_SDL() {
@@ -182,10 +179,10 @@ bool OSystem_SDL::hasFeature(Feature f) {
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 	if (f == kFeatureClipboardSupport) return true;
 #endif
-	if (f == kFeatureJoystickDeadzone || f == kFeatureKbdMouseSpeed) {
-		bool joystickSupportEnabled = ConfMan.getInt("joystick_num") >= 0;
-		return joystickSupportEnabled;
-	}
+#ifdef JOY_ANALOG
+	if (f == kFeatureJoystickDeadzone) return true;
+#endif
+	if (f == kFeatureKbdMouseSpeed) return true;
 	return ModularBackend::hasFeature(f);
 }
 
@@ -209,16 +206,6 @@ void OSystem_SDL::initBackend() {
 	// manager didn't provide one yet.
 	if (_eventSource == 0)
 		_eventSource = new SdlEventSource();
-
-	if (_eventManager == nullptr) {
-		DefaultEventManager *eventManager = new DefaultEventManager(_eventSource);
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-		// SDL 2 generates its own keyboard repeat events.
-		eventManager->setGenerateKeyRepeatEvents(false);
-#endif
-		_eventManager = eventManager;
-	}
-
 
 #ifdef USE_OPENGL
 #if SDL_VERSION_ATLEAST(2, 0, 0)
@@ -291,6 +278,16 @@ void OSystem_SDL::initBackend() {
 
 	_inited = true;
 
+	if (!ConfMan.hasKey("kbdmouse_speed")) {
+		ConfMan.registerDefault("kbdmouse_speed", 3);
+		ConfMan.setInt("kbdmouse_speed", 3);
+	}
+#ifdef JOY_ANALOG
+	if (!ConfMan.hasKey("joystick_deadzone")) {
+		ConfMan.registerDefault("joystick_deadzone", 3);
+		ConfMan.setInt("joystick_deadzone", 3);
+	}
+#endif
 	ModularBackend::initBackend();
 
 	// We have to initialize the graphics manager before the event manager
@@ -757,10 +754,13 @@ int SDL_SetAlpha(SDL_Surface *surface, Uint32 flag, Uint8 alpha) {
 		if (SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE)) {
 			return -1;
 		}
+		SDL_SetSurfaceRLE(surface, 0);
 	} else {
 		if (SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_BLEND)) {
 			return -1;
 		}
+		if (flag & SDL_RLEACCEL)
+			SDL_SetSurfaceRLE(surface, 1);		
 	}
 
 	return 0;
@@ -768,7 +768,13 @@ int SDL_SetAlpha(SDL_Surface *surface, Uint32 flag, Uint8 alpha) {
 
 #undef SDL_SetColorKey
 int SDL_SetColorKey_replacement(SDL_Surface *surface, Uint32 flag, Uint32 key) {
-	return SDL_SetColorKey(surface, SDL_TRUE, key) ? -1 : 0;
+	if (SDL_SetColorKey(surface, SDL_TRUE, key)) {
+		return -1;
+	}
+
+	if (flag & SDL_RLEACCEL)
+		SDL_SetSurfaceRLE(surface, 1);
+	return 0;
 }
 #endif
 

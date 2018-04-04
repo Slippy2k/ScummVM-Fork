@@ -23,7 +23,6 @@
 #ifndef FULLPIPE_GAMELOADER_H
 #define FULLPIPE_GAMELOADER_H
 
-#include "common/ptr.h"
 #include "engines/savestate.h"
 
 #include "fullpipe/objects.h"
@@ -32,31 +31,32 @@
 
 namespace Fullpipe {
 
-#define FULLPIPE_SAVEGAME_VERSION 2
+#define FULLPIPE_SAVEGAME_VERSION 1
 
 class SceneTag;
 class MctlCompound;
 class InputController;
 class InteractionController;
 class MotionController;
-class MovGraph;
 
 class Sc2 : public CObject {
  public:
 	int16 _sceneId;
 	int16 _field_2;
 	Scene *_scene;
-	/** owned */
 	MotionController *_motionController;
-	Common::Array<int32> _data1; // FIXME, could be a struct
-	PicAniInfoList _defPicAniInfos;
-	PicAniInfoList _picAniInfos;
-	bool _isLoaded;
-	Common::Array<EntranceInfo> _entranceData;
+	int32 *_data1; // FIXME, could be a struct
+	int _count1;
+	PicAniInfo **_defPicAniInfos;
+	int _defPicAniInfosCount;
+	PicAniInfo **_picAniInfos;
+	int _picAniInfosCount;
+	int _isLoaded;
+	EntranceInfo **_entranceData;
+	int _entranceDataCount;
 
  public:
 	Sc2();
-	virtual ~Sc2();
 	virtual bool load(MfcArchive &file);
 };
 
@@ -71,7 +71,7 @@ struct PreloadItem {
 
 bool preloadCallback(PreloadItem &pre, int flag);
 
-class PreloadItems : public Common::Array<PreloadItem>, public CObject {
+class PreloadItems : public Common::Array<PreloadItem *>, public CObject {
  public:
 	virtual bool load(MfcArchive &file);
 };
@@ -80,11 +80,10 @@ struct FullpipeSavegameHeader {
 	char id[6];
 	uint8 version;
 	Common::String saveName;
-	Common::String description;
 	uint32 date;
 	uint16 time;
 	uint32 playtime;
-	Common::SharedPtr<Graphics::Surface> thumbnail;
+	Graphics::Surface *thumbnail;
 };
 
 struct SaveHeader {
@@ -106,23 +105,23 @@ class GameLoader : public CObject {
 	bool preloadScene(int sceneId, int entranceId);
 	bool unloadScene(int sceneId);
 
-	void addPreloadItem(const PreloadItem &item);
+	void addPreloadItem(PreloadItem *item);
 
 	void updateSystems(int counterdiff);
 
 	int getSceneTagBySceneId(int sceneId, SceneTag **st);
-	void applyPicAniInfos(Scene *sc, const PicAniInfoList &picAniInfo);
+	void applyPicAniInfos(Scene *sc, PicAniInfo **picAniInfo, int picAniInfoCount);
 	void saveScenePicAniInfos(int sceneId);
-	PicAniInfoList savePicAniInfos(Scene *sc, int flag1, int flag2);
+	PicAniInfo **savePicAniInfos(Scene *sc, int flag1, int flag2, int *picAniInfoCount);
 
 	bool readSavegame(const char *fname);
-	bool writeSavegame(Scene *sc, const char *fname, const Common::String &description);
+	bool writeSavegame(Scene *sc, const char *fname);
 
 	void addVar(GameVar *var, GameVar *subvar);
 
 	void restoreDefPicAniInfos();
 
-	Common::ScopedPtr<GameProject> _gameProject;
+	GameProject *_gameProject;
 	InteractionController *_interactionController;
 	InputController *_inputController;
 	Inventory2 _inventory;
@@ -148,7 +147,6 @@ void parseSavegameHeader(Fullpipe::FullpipeSavegameHeader &header, SaveStateDesc
 Inventory2 *getGameLoaderInventory();
 InteractionController *getGameLoaderInteractionController();
 MctlCompound *getSc2MctlCompoundBySceneId(int16 sceneId);
-MovGraph *getSc2MovGraphBySceneId(int16 sceneId);
 MctlCompound *getCurrSceneSc2MotionController();
 
 } // End of namespace Fullpipe

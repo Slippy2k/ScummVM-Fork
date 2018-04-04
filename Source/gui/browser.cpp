@@ -21,7 +21,6 @@
  */
 
 #include "gui/browser.h"
-#include "gui/gui-manager.h"
 #include "gui/widgets/list.h"
 
 #include "common/config-manager.h"
@@ -192,7 +191,7 @@ void BrowserDialog::updateListing() {
 	_fileList->scrollTo(0);
 
 	// Finally, redraw
-	g_gui.scheduleTopDialogRedraw();
+	draw();
 }
 
 } // End of namespace GUI

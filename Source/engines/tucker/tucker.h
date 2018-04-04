@@ -28,7 +28,6 @@
 #include "common/endian.h"
 #include "common/events.h"
 #include "common/random.h"
-#include "common/savefile.h"
 #include "common/stream.h"
 
 #include "video/flic_decoder.h"
@@ -52,162 +51,6 @@ class RewindableAudioStream;
  * - Bud Tucker in Double Trouble
  */
 namespace Tucker {
-
-enum CursorStyle {
-	kCursorNormal     = 0,
-	kCursorTalk       = 1,
-	kCursorArrowRight = 2,
-	kCursorArrowUp    = 3,
-	kCursorArrowLeft  = 4,
-	kCursorArrowDown  = 5,
-	kCursorMap        = 6
-};
-
-enum CursorState {
-	kCursorStateNormal         = 0,
-	kCursorStateDialog         = 1,
-	kCursorStateDisabledHidden = 2
-};
-
-enum PanelState {
-	kPanelStateNormal    = 0,
-	kPanelStateShrinking = 1,
-	kPanelStateExpanding = 2
-};
-
-enum PanelStyle {
-	kPanelStyleVerbs = 0,
-	kPanelStyleIcons = 1
-};
-
-enum PanelType {
-	kPanelTypeNormal           = 0,
-	kPanelTypeEmpty            = 1,
-	kPanelTypeLoadSavePlayQuit = 2,
-	kPanelTypeLoadSaveSavegame = 3
-};
-
-enum Verb {
-	kVerbWalk  = 0,
-	kVerbLook  = 1,
-	kVerbTalk  = 2,
-	kVerbOpen  = 3,
-	kVerbClose = 4,
-	kVerbGive  = 5,
-	kVerbTake  = 6,
-	kVerbMove  = 7,
-	kVerbUse   = 8,
-
-	kVerbFirst = kVerbWalk,
-	kVerbLast  = kVerbUse
-};
-
-enum VerbPreposition {
-	kVerbPrepositionNone = 0,
-
-	kVerbPrepositionWith = 11,
-	kVerbPrepositionTo   = 12
-};
-
-enum Part {
-	kPartInit  = 0,
-	kPartOne   = 1,
-	kPartTwo   = 2,
-	kPartThree = 3
-};
-
-enum Location {
-	kLocationNone                      =  0,
-
-	kLocationHotelRoom                 =  1,
-	kLocationBackAlley                 =  2,
-	kLocationSeedyStreet               =  3,
-	kLocationBakersShop                =  4,
-	kLocationBakersKitchen             =  5,
-	kLocationStripJoint                =  6,
-	kLocationPoliceHQ                  =  7,
-	kLocationPoliceCell                =  8,
-	kLocationMall                      =  9,
-	kLocationFishShop                  = 10,
-	kLocationBurgerJoint               = 11,
-	kLocationRecordShop                = 12,
-	kLocationDentist                   = 13,
-	kLocationPlugShop                  = 14,
-	kLocationTouristInfo               = 15,
-	kLocationPark                      = 16,
-	kLocationRoystonsHomeHallway       = 17,
-	kLocationRoystonsHomeBoxroom       = 18,
-	kLocationDocks                     = 19,
-	kLocationOutsideMuseum             = 20,
-	kLocationInsideMuseum              = 21,
-	kLocationFishingTrawler            = 22,
-	kLocationWarehouseCutscene         = 23,
-	kLocationStoreRoom                 = 24,
-	kLocationVentSystem                = 25,
-	kLocationSubwayTunnel              = 26,
-	kLocationStrangeRoom               = 27,
-	kLocationTopCorridor               = 28,
-	kLocationSubmarineHangar           = 29,
-	kLocationBunkRoom                  = 30,
-	kLocationBottomCorridor            = 31,
-	kLocationKitchen                   = 32,
-	kLocationCommandCentre             = 33,
-	kLocationSubmarineHatch            = 34,
-	kLocationSubmarineWalkway          = 35,
-	kLocationSubmarineBridge           = 36,
-	kLocationSubmarineOffice           = 37,
-	kLocationSubmarineEngineRoom       = 38,
-	kLocationLuxuryApartment           = 39,
-	kLocationFarDocks                  = 40,
-	kLocationAlleyway                  = 41,
-	kLocationBasement                  = 42,
-	kLocationTateTowerEntrance         = 43,
-	kLocationRooftop                   = 44,
-	kLocationConferenceRoom            = 45,
-	kLocationAnteChamber               = 46,
-	kLocationHelipad                   = 47,
-	kLocationCorridor                  = 48,
-	kLocationWaitingRoom               = 49,
-	kLocationkLocationCorridorCutscene = 50,
-	kLocationCells                     = 51,
-	kLocationMachineRoom               = 52,
-	kLocationRecordShopPartThree       = 53,
-	kLocationPlugShopPartThree         = 54,
-	kLocationTouristInfoPartThree      = 55,
-	kLocationDentistPartThree          = 56,
-	kLocationFishShopPartThree         = 57,
-	kLocationInsideMuseumPartThree     = 58,
-	kLocationBakersShopPartThree       = 59,
-	kLocationStripJointPartThree       = 60,
-	kLocationParkPartThree             = 61,
-	kLocationDocksPartThree            = 62,
-	kLocationTV                        = 63,
-	kLocationSewer                     = 64,
-	kLocationSeedyStreetPartThree      = 65,
-	kLocationMallPartThree             = 66,
-	kLocationBurgerJointPartThree      = 67,
-	kLocationOutsideMuseumPartThree    = 68,
-	kLocation69Cutscene                = 69,
-	kLocationComputerScreen            = 70,
-	kLocationParkCutscene              = 71,
-	kLocationSeedyStreetCutscene       = 72,
-	kLocationJesusCutscene1            = 73,
-	kLocationCredits                   = 74,
-	kLocation75Cutscene                = 75,
-	kLocationBeachCutscene             = 76,
-	kLocationHospitalCutscene          = 77,
-	kLocation78Cutscene                = 78,
-	kLocationElvisCutscene             = 79,
-	kLocationPyramidCutscene           = 80,
-	kLocationCleopatraCutscene         = 81,
-	kLocationJesusCutscene2            = 82,
-
-	kLocationNewPart                   = 98,
-	kLocationMap                       = 99,
-
-	kLocationInit                      =  1,
-	kLocationInitDemo                  =  9
-};
 
 struct Action {
 	int _key;
@@ -305,7 +148,7 @@ struct LocationObject {
 	int _xSize;
 	int _ySize;
 	int _textNum;
-	Location _location;
+	int _locationNum;
 	int _toX;
 	int _toY;
 	int _toX2;
@@ -314,7 +157,7 @@ struct LocationObject {
 	int _toWalkY2;
 	int _standX;
 	int _standY;
-	CursorStyle _cursorStyle;
+	int _cursorNum;
 };
 
 struct LocationSound {
@@ -344,20 +187,31 @@ enum {
 	kScreenHeight = 200,
 	kScreenPitch = 640,
 	kFadePaletteStep = 5,
+	kStartupLocationDemo = 9,
+	kStartupLocationGame = 1,
 	kDefaultCharSpeechSoundCounter = 1,
 	kMaxSoundVolume = 127,
-	kLastSaveSlot = 99,
-	kAutoSaveSlot = kLastSaveSlot
+	kLastSaveSlot = 99
+};
+
+enum Verb {
+	kVerbWalk  = 0,
+	kVerbLook  = 1,
+	kVerbTalk  = 2,
+	kVerbOpen  = 3,
+	kVerbClose = 4,
+	kVerbGive  = 5,
+	kVerbTake  = 6,
+	kVerbMove  = 7,
+	kVerbUse   = 8
 };
 
 enum InputKey {
 	kInputKeyPause = 0,
 	kInputKeyEscape,
-	kInputKeyTogglePanelStyle,
+	kInputKeyToggleInventory,
 	kInputKeyToggleTextSpeech,
 	kInputKeyHelp,
-	kInputKeySkipSpeech,
-
 	kInputKeyCount
 };
 
@@ -427,24 +281,6 @@ public:
 		kMaxDirtyRects = 32
 	};
 
-	struct SavegameHeader {
-		uint16 version;
-		uint32 flags;
-		Common::String description;
-		uint32 saveDate;
-		uint32 saveTime;
-		uint32 playTime;
-		Graphics::Surface *thumbnail;
-	};
-
-	enum SavegameError {
-		kSavegameNoError = 0,
-		kSavegameInvalidTypeError,
-		kSavegameInvalidVersionError,
-		kSavegameNotFoundError,
-		kSavegameIoError
-	};
-
 	TuckerEngine(OSystem *system, Common::Language language, uint32 flags);
 	virtual ~TuckerEngine();
 
@@ -452,10 +288,6 @@ public:
 	virtual bool hasFeature(EngineFeature f) const;
 	GUI::Debugger *getDebugger() { return _console; }
 
-	static SavegameError readSavegameHeader(Common::InSaveFile *file, SavegameHeader &header, bool loadThumbnail = false);
-	static SavegameError readSavegameHeader(const char *target, int slot, SavegameHeader &header);
-	bool isAutosaveAllowed();
-	static bool isAutosaveAllowed(const char *target);
 protected:
 
 	int getRandomNumber();
@@ -466,8 +298,8 @@ protected:
 	void waitForTimer(int ticksCount);
 	void parseEvents();
 	void updateCursorPos(int x, int y);
-	void setCursorStyle(CursorStyle num);
-	void setCursorState(CursorState state);
+	void setCursorNum(int num);
+	void setCursorType(int type);
 	void showCursor(bool visible);
 	void setupNewLocation();
 	void copyLocBitmap(const char *filename, int offset, bool isMask);
@@ -490,7 +322,7 @@ protected:
 	void updateSfxData3_2();
 	void saveOrLoad();
 	void handleMouseOnPanel();
-	void togglePanelStyle();
+	void switchPanelType();
 	void redrawPanelOverBackground();
 	void drawConversationTexts();
 	void updateScreenScrolling();
@@ -608,7 +440,6 @@ protected:
 	void updateSprite_locationNum13(int i);
 	void execData3PreUpdate_locationNum13();
 	void updateSprite_locationNum14(int i);
-	void execData3Update_locationNum14();
 	void execData3PreUpdate_locationNum14();
 	void execData3PreUpdate_locationNum14Helper1(int i);
 	void execData3PreUpdate_locationNum14Helper2(int i);
@@ -742,16 +573,11 @@ protected:
 	void updateSprite_locationNum81_1(int i);
 	void updateSprite_locationNum82(int i);
 
-	template<class S> SavegameError saveOrLoadGameStateData(S &s);
-	virtual Common::Error loadGameState(int slot);
-	virtual Common::Error saveGameState(int slot, const Common::String &description);
-	Common::Error writeSavegame(int slot, const Common::String &description, bool autosave = false);
-	SavegameError writeSavegameHeader(Common::OutSaveFile *file, SavegameHeader &header);
-	void writeAutosave();
-	bool canLoadOrSave() const;
+	template<class S> void saveOrLoadGameStateData(S &s);
+	virtual Common::Error loadGameState(int num);
+	virtual Common::Error saveGameState(int num, const Common::String &description);
 	virtual bool canLoadGameStateCurrently();
 	virtual bool canSaveGameStateCurrently();
-	virtual bool existsSavegame();
 
 	TuckerConsole *_console;
 
@@ -772,13 +598,13 @@ protected:
 	void loadCharsetHelper();
 	void loadCharSizeDta();
 	void loadPanel();
-	void loadBudSpr();
-	int  loadCTable01(int *framesCount);
-	void loadCTable02();
+	void loadBudSpr(int startOffset);
+	int loadCTable01(int index, int firstSpriteNum, int *framesCount);
+	void loadCTable02(int fl);
 	void loadLoc();
 	void loadObj();
 	void loadData();
-	int  loadDataHelper(int offset, int index);
+	int loadDataHelper(int offset, int index);
 	void loadPanObj();
 	void loadData3();
 	void loadData4();
@@ -798,7 +624,6 @@ protected:
 	Common::Language _gameLang;
 	uint32 _gameFlags;
 	int _startSlot;
-	uint32 _lastSaveTime;
 
 	bool _quitGame;
 	bool _fastMode;
@@ -808,10 +633,10 @@ protected:
 	int _mainLoopCounter2;
 	int _timerCounter2;
 	int _flagsTable[kFlagsTableSize];
-	Part _part;
-	Part _currentPart;
-	Location _location;
-	Location _nextLocation;
+	int _partNum;
+	int _currentPartNum;
+	int _locationNum;
+	int _nextLocationNum;
 	bool _gamePaused;
 	bool _gameDebug;
 	bool _displayGameHints;
@@ -856,19 +681,17 @@ protected:
 	int _mouseIdleCounter;
 	bool _leftMouseButtonPressed;
 	bool _rightMouseButtonPressed;
-	bool _mouseWheelUp;
-	bool _mouseWheelDown;
 	int _lastKeyPressed;
 	bool _inputKeys[kInputKeyCount];
-	CursorStyle _cursorStyle;
-	CursorState _cursorState;
+	int _cursorNum;
+	int _cursorType;
 	bool _updateCursorFlag;
 
-	PanelStyle _panelStyle;
-	PanelState _panelState;
-	PanelType  _panelType;
+	int _panelNum;
+	int _panelState;
 	bool _forceRedrawPanelItems;
 	int _redrawPanelItemsCounter;
+	int _switchPanelFlag;
 	int _panelObjectsOffsetTable[50];
 	int _switchPanelCounter;
 	int _conversationOptionsCount;
@@ -922,9 +745,7 @@ protected:
 	int _pendingActionDelay;
 	int _charPositionFlagNum;
 	int _charPositionFlagValue;
-	Verb _actionVerb;
-	Verb _currentActionVerb;
-	Verb _previousActionVerb;
+	int _actionVerb;
 	int _nextAction;
 	int _selectedObjectNum;
 	int _selectedObjectType;
@@ -941,7 +762,7 @@ protected:
 		int _yDefaultPos;
 		int _xPos;
 		int _yPos;
-		Location _locationObjectLocation;
+		int _locationObjectLocationNum;
 		int _locationObjectToX;
 		int _locationObjectToY;
 		int _locationObjectToX2;
@@ -991,6 +812,8 @@ protected:
 	int _characterAnimationsTable[200];
 	int _characterStateTable[200];
 	int _backgroundSprOffset;
+	int _currentActionVerb;
+	int _previousActionVerb;
 	int _mainSpritesBaseOffset;
 	int _currentSpriteAnimationLength;
 	int _currentSpriteAnimationFrame;

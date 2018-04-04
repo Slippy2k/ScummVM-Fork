@@ -46,15 +46,15 @@ protected:
 public:
 	AboutDialog();
 
-	void open() override;
-	void close() override;
-	void drawDialog(DrawLayer layerToDraw) override;
-	void handleTickle() override;
-	void handleMouseUp(int x, int y, int button, int clickCount) override;
-	void handleKeyDown(Common::KeyState state) override;
-	void handleKeyUp(Common::KeyState state) override;
+	void open();
+	void close();
+	void drawDialog();
+	void handleTickle();
+	void handleMouseUp(int x, int y, int button, int clickCount);
+	void handleKeyDown(Common::KeyState state);
+	void handleKeyUp(Common::KeyState state);
 
-	void reflowLayout() override;
+	void reflowLayout();
 };
 
 } // End of namespace GUI

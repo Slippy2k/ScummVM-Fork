@@ -22,18 +22,15 @@
 
 #include "bladerunner/audio_speech.h"
 
-#include "bladerunner/actor.h"
 #include "bladerunner/aud_stream.h"
 #include "bladerunner/audio_mixer.h"
-#include "bladerunner/audio_player.h"
 #include "bladerunner/bladerunner.h"
 
 #include "common/debug.h"
-#include "common/str.h"
 
 namespace BladeRunner {
 
-const int AudioSpeech::kSpeechSamples[] = { 65, 355, 490, 465, 480, 485, 505, 760, 7655, 7770, 7740, 8170, 2705, 7200, 6460, 5560, 4870, 4555, 3880, 3525, 3595, 3250, 3070 };
+#define BUFFER_SIZE 200000
 
 void AudioSpeech::ended() {
 	//Common::StackLock lock(_mutex);
@@ -42,15 +39,14 @@ void AudioSpeech::ended() {
 }
 
 void AudioSpeech::mixerChannelEnded(int channel, void *data) {
-	AudioSpeech *audioSpeech = (AudioSpeech *)data;
+	AudioSpeech *audioSpeech = (AudioSpeech*)data;
 	audioSpeech->ended();
 }
 
-AudioSpeech::AudioSpeech(BladeRunnerEngine *vm) {
-	_vm = vm;
-	_speechVolume = 50;
+AudioSpeech::AudioSpeech(BladeRunnerEngine *vm) : _vm(vm) {
+	_volume = 50;
 	_isActive = false;
-	_data = new byte[kBufferSize];
+	_data = new byte[BUFFER_SIZE];
 	_channel = -1;
 }
 
@@ -58,17 +54,17 @@ AudioSpeech::~AudioSpeech() {
 	delete[] _data;
 }
 
-bool AudioSpeech::playSpeech(const Common::String &name, int pan) {
+bool AudioSpeech::playSpeech(const char *name, int pan) {
 	// debug("AudioSpeech::playSpeech(\"%s\")", name);
 	Common::ScopedPtr<Common::SeekableReadStream> r(_vm->getResourceStream(name));
 
 	if (!r) {
-		warning("AudioSpeech::playSpeech: AUD resource \"%s\" not found", name.c_str());
+		warning("AudioSpeech::playSpeech: AUD resource \"%s\" not found", name);
 		return false;
 	}
 
-	if (r->size() > kBufferSize) {
-		warning("AudioSpeech::playSpeech: AUD larger than buffer size (%d > %d)", r->size(), kBufferSize);
+	if (r->size() > BUFFER_SIZE) {
+		warning("AudioSpeech::playSpeech: AUD larger than buffer size (%d > %d)", r->size(), BUFFER_SIZE);
 		return false;
 	}
 
@@ -78,7 +74,7 @@ bool AudioSpeech::playSpeech(const Common::String &name, int pan) {
 
 	r->read(_data, r->size());
 	if (r->err()) {
-		warning("AudioSpeech::playSpeech: Error reading resource \"%s\"", name.c_str());
+		warning("AudioSpeech::playSpeech: Error reading resource \"%s\"", name);
 		return false;
 	}
 
@@ -91,7 +87,7 @@ bool AudioSpeech::playSpeech(const Common::String &name, int pan) {
 		audioStream,
 		100,
 		false,
-		_speechVolume,
+		_volume,
 		pan,
 		mixerChannelEnded,
 		this);
@@ -108,29 +104,11 @@ void AudioSpeech::stopSpeech() {
 	}
 }
 
-bool AudioSpeech::isPlaying() const {
+bool AudioSpeech::isPlaying() {
 	if (_channel == -1) {
 		return  false;
 	}
 	return _isActive;
-}
-
-bool AudioSpeech::playSpeechLine(int actorId, int sentenceId, int volume, int a4, int priority) {
-	int balance = _vm->_actors[actorId]->soundBalance();
-	Common::String name = Common::String::format("%02d-%04d%s.AUD", actorId, sentenceId, _vm->_languageCode.c_str());
-	return _vm->_audioPlayer->playAud(name, _speechVolume * volume / 100, balance, balance, priority, kAudioPlayerOverrideVolume);
-}
-
-void AudioSpeech::setVolume(int volume) {
-	_speechVolume = volume;
-}
-
-int AudioSpeech::getVolume() const {
-	return _speechVolume;
-}
-
-void AudioSpeech::playSample() {
-	_vm->_playerActor->speechPlay(kSpeechSamples[_vm->_rnd.getRandomNumber(22)], true);
 }
 
 } // End of namespace BladeRunner

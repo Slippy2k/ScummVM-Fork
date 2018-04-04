@@ -32,8 +32,6 @@ namespace Xeen {
 
 #define MAX_NUM_MONSTERS 107
 #define PARTY_AND_MONSTERS 12
-#define POW_COUNT 12
-#define ATTACK_MONSTERS_COUNT 26
 
 enum DamageType {
 	DT_PHYSICAL = 0, DT_MAGICAL = 1, DT_FIRE = 2, DT_ELECTRICAL = 3,
@@ -53,12 +51,21 @@ enum SpecialAttack {
 	SA_ERADICATE = 19, SA_AGING = 20, SA_DEATH = 21, SA_STONE = 22
 };
 
+enum ElementalCategory {
+	ELEM_FIRE = 0, ELEM_ELECTRICITY = 1, ELEM_COLD = 2,
+	ELEM_ACID_POISON = 3, ELEM_ENERGY = 4, ELEM_MAGIC = 5
+};
+
+enum RangeType {
+	RT_SINGLE = 0, RT_GROUP = 1, RT_ALL = 2, RT_3 = 3
+};
+
 enum ShootType {
 	ST_0 = 0, ST_1 = 1
 };
 
 enum CombatMode {
-	COMBATMODE_STARTUP = 0, COMBATMODE_1 = 1, COMBATMODE_2 = 2
+	COMBATMODE_0 = 0, COMBATMODE_1 = 1, COMBATMODE_2 = 2
 };
 
 enum PowType {
@@ -70,78 +77,24 @@ enum PowType {
 	POW_SPARKLES = 14, POW_DEADLY_SWARM = 15
 };
 
-enum RangeType {
-	RT_SINGLE = 0, RT_GROUP = 1, RT_ALL = 2, RT_HIT = 3
-};
-
 class XeenEngine;
 class Character;
 class XeenItem;
-
-struct PowSlot {
-	bool _active;
-	int _duration;
-	int _scale;
-	int _elemFrame;
-	int _elemScale;
-
-	PowSlot() : _active(false), _duration(0), _scale(0),
-		_elemFrame(0), _elemScale(0) {}
-};
-
-class PowSlots {
-private:
-	PowSlot _data[POW_COUNT];
-public:
-	/**
-	 * Gets a slot entry
-	 */
-	PowSlot &operator[](uint idx) {
-		assert(idx < POW_COUNT);
-		return _data[idx];
-	}
-
-	/**
-	 * Resets the elemental frame used in all the slots
-	 */
-	void resetElementals() {
-		for (int idx = 0; idx < POW_COUNT; ++idx)
-			_data[idx]._elemFrame = 0;
-	}
-};
 
 class Combat {
 private:
 	XeenEngine *_vm;
 
-	/**
-	 * Handles the logic for attacking with a given amount of damage
-	 */
 	void attack2(int damage, RangeType rangeType);
 
-	/**
-	 * Returns true if the character successfully hits the monster
-	 */
 	bool hitMonster(Character &c, RangeType rangeType);
 
-	/**
-	 * Gets the damage a given character's equipped weapon will do
-	 */
 	void getWeaponDamage(Character &c, RangeType rangeType);
 
-	/**
-	 * Returns how much damage will be done to a monster
-	 */
 	int getMonsterDamage(Character &c);
 
-	/**
-	 * Gets the scale of damage, used for sprite display in the scene
-	 */
 	int getDamageScale(int v);
 
-	/**
-	 * Gets the current monster's damage resistance to the currently set damage type
-	 */
 	int getMonsterResistence(RangeType rangeType);
 
 	/**
@@ -150,15 +103,19 @@ private:
 	void giveExperience(int experience);
 public:
 	Common::Array<Character *> _combatParty;
-	bool _charsBlocked[PARTY_AND_MONSTERS];
-	int _charsGone[PARTY_AND_MONSTERS];
+	Common::Array<bool> _charsBlocked;
+	Common::Array<int> _charsGone;
 	SpriteResource _powSprites;
-	int _attackMonsters[ATTACK_MONSTERS_COUNT];
+	int _attackMonsters[26];
 	int _monster2Attack;
-	PowSlots _pow;
+	int _charsArray1[PARTY_AND_MONSTERS];
+	bool _monPow[PARTY_AND_MONSTERS];
+	int _monsterScale[PARTY_AND_MONSTERS];
+	ElementalCategory _elemPow[PARTY_AND_MONSTERS];
+	int _elemScale[PARTY_AND_MONSTERS];
 	int _missedShot[8];
 	Common::Array<int> _speedTable;
-	int _shootingRow[8];
+	int _shooting[8];
 	int _globalCombat;
 	int _whosTurn;
 	bool _itemFlag;
@@ -168,7 +125,7 @@ public:
 	int _gmonHit[36];
 	bool _monstersAttacking;
 	CombatMode _combatMode;
-	int _attackDurationCtr;
+	int _monsterIndex;
 	bool _partyRan;
 	int _whosSpeed;
 	DamageType _damageType;
@@ -176,37 +133,19 @@ public:
 	int _monsterDamage;
 	int _weaponDamage;
 	int _weaponDie, _weaponDice;
-	int _weaponElemMaterial;
 	XeenItem *_attackWeapon;
 	int _attackWeaponId;
-	File _missVoc;
+	File _missVoc, _pow1Voc;
 	int _hitChanceBonus;
 	bool _dangerPresent;
 	bool _moveMonsters;
 	RangeType _rangeType;
 	ShootType _shootType;
-	int _combatTarget;
 public:
 	Combat(XeenEngine *vm);
 
-	/**
-	 * Clear the list of attacking monsters
-	 */
-	void clearAttackers();
+	void clear();
 
-	/**
-	 * Clear the list of blocked characters
-	 */
-	void clearBlocked();
-
-	/**
-	 * Clear the list of ros projectiles are on headed for part members
-	 */
-	void clearShooting();
-
-	/**
-	 * Gives damage to character or characters in the party
-	 */
 	void giveCharDamage(int damage, DamageType attackType, int charIndex);
 
 	/**
@@ -214,9 +153,6 @@ public:
 	 */
 	void doCharDamage(Character &c, int charNum, int monsterDataIndex);
 
-	/**
-	 * Handles moving monsters by a space between game turns
-	 */
 	void moveMonsters();
 
 	/**
@@ -224,9 +160,6 @@ public:
 	 */
 	void setupCombatParty();
 
-	/**
-	 * Sets up a table of speeds to determine the order in which characters and monsters fight
-	 */
 	void setSpeedTable();
 
 	/**
@@ -244,9 +177,6 @@ public:
 	 */
 	Common::String getMonsterDescriptions();
 
-	/**
-	 * Main method for characters to attack
-	 */
 	void attack(Character &c, RangeType rangeType);
 
 	/**
@@ -264,9 +194,6 @@ public:
 	 */
 	void run();
 
-	/**
-	 * Called to handle monsters doing ranged attacks against the party
-	 */
 	void monstersAttack();
 
 	void setupMonsterAttack(int monsterDataIndex, const Common::Point &pt);
@@ -284,16 +211,10 @@ public:
 
 	void doMonsterTurn(int monsterId);
 
-	/**
-	 * Called when combat has ended
-	 */
 	void endAttack();
 
 	void monsterOvercome();
 
-	/**
-	 * Checks whether a given position on the map will stop a ranged attack
-	 */
 	int stopAttack(const Common::Point &diffPt);
 
 	/**

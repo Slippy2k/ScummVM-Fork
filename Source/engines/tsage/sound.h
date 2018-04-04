@@ -196,6 +196,7 @@ public:
 	virtual void listenerSynchronize(Serializer &s);
 	virtual void postInit();
 	void syncSounds();
+	void update();
 
 	static void saveNotifier(bool postFlag);
 	void saveNotifierProc(bool postFlag);
@@ -251,10 +252,11 @@ public:
 	static void sfDoAddToPlayList(Sound *sound);
 	static bool sfDoRemoveFromPlayList(Sound *sound);
 	static void sfDoUpdateVolume(Sound *sound);
-	static void sfSoundServer(void *);
+	static void sfSoundServer();
 	static void sfProcessFading();
 	static void sfUpdateVoiceStructs();
 	static void sfUpdateVoiceStructs2();
+	static void sfUpdateCallback(void *ref);
 };
 
 class Sound: public EventHandler {
@@ -458,7 +460,6 @@ private:
 	byte _portContents[256];
 	const byte *_patchData;
 	int _masterVolume;
-	Common::Mutex _queueMutex;
 	Common::Queue<RegisterValue> _queue;
 
 	bool _channelVoiced[ADLIB_CHANNEL_COUNT];

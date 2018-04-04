@@ -25,33 +25,28 @@
 
 #include "bladerunner/vector.h"
 
-#include "common/str.h"
-
 namespace BladeRunner {
 
 class BladeRunnerEngine;
 class BoundingBox;
 class Regions;
-class SaveFileReadStream;
-class SaveFileWriteStream;
 class Set;
 class VQAPlayer;
 
 class Scene {
-	friend class Debugger;
-
 	BladeRunnerEngine *_vm;
 
+private:
 	int         _setId;
 	int         _sceneId;
 	VQAPlayer  *_vqaPlayer;
 
 	int         _defaultLoop;
 	bool        _defaultLoopSet;
-	bool        _defaultLoopPreloadedSet;
 	int         _specialLoopMode;
 	int         _specialLoop;
-	// int         _introFinished;
+	bool        _specialLoopAtEnd;
+	int         _introFinished;
 	int         _nextSetId;
 	int         _nextSceneId;
 	int         _frame;
@@ -65,6 +60,9 @@ public:
 	Regions    *_regions;
 	Regions    *_exits;
 
+	// _default_loop_id = 0;
+	// _scene_vqa_frame_number = -1;
+
 public:
 	Scene(BladeRunnerEngine *vm);
 	~Scene();
@@ -72,8 +70,6 @@ public:
 	bool open(int setId, int sceneId, bool isLoadingGame);
 	bool close(bool isLoadingGame);
 	int  advanceFrame();
-	void resume(bool isLoadingGame = false);
-	void startDefaultLoop();
 	void setActorStart(Vector3 position, int facing);
 
 	void loopSetDefault(int loopId);
@@ -84,21 +80,18 @@ public:
 
 	bool didPlayerWalkIn() { bool r = _playerWalkedIn; _playerWalkedIn = false; return r; }
 
-	int findObject(const Common::String &objectName);
+	int findObject(const char *objectName);
 	bool objectSetHotMouse(int objectId);
 	bool objectGetBoundingBox(int objectId, BoundingBox *boundingBox);
 	void objectSetIsClickable(int objectId, bool isClickable, bool sceneLoaded);
 	void objectSetIsObstacle(int objectId, bool isObstacle, bool sceneLoaded, bool updateWalkpath);
 	void objectSetIsObstacleAll(bool isObstacle, bool sceneLoaded);
 	void objectSetIsTarget(int objectId, bool isTarget, bool sceneLoaded);
-	const Common::String &objectGetName(int objectId);
-
-	void save(SaveFileWriteStream &f);
-	void load(SaveFileReadStream &f);
+	const char *objectGetName(int objectId);
 
 private:
 	void loopEnded(int frame, int loopId);
-	static void loopEndedStatic(void *data, int frame, int loopId);
+	static void loopEndedStatic(void* data, int frame, int loopId);
 };
 
 } // End of namespace BladeRunner

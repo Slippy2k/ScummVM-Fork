@@ -81,7 +81,7 @@ namespace Resource {
 			return false;
 		}
 
-		// FIXME: This is stupid. Maybe loadFromStream should be helper method that returns initialized object
+		// FIXME: This is stupid. Maybe loadFromStream should be helper method that returns initiailzed object
 		while (true) {
 			T* t = new T();
 			if (!t->loadFromStream(*stream)) {

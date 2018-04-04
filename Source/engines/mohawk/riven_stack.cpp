@@ -321,6 +321,7 @@ void RivenStack::onKeyPressed(const Common::KeyState &keyState) {
 
 		if (!script->empty()) {
 			_vm->_scriptMan->runScript(script, true);
+			keyResetAction();
 		}
 	}
 }
@@ -413,7 +414,16 @@ void RivenStack::removeTimer() {
 	_timerTime = 0;
 }
 
-void RivenStack::pageTurn(RivenTransition transition) {
+bool RivenStack::pageTurn(RivenTransition transition) {
+	// Wait until the previous page turn sound completes
+	while (_vm->_sound->isEffectPlaying() && !_vm->hasGameEnded()) {
+		if (!mouseIsDown()) {
+			return false;
+		}
+
+		_vm->doFrame();
+	}
+
 	// Play the page turning sound
 	const char *soundName = nullptr;
 	if (_vm->_rnd->getRandomBit())
@@ -425,16 +435,8 @@ void RivenStack::pageTurn(RivenTransition transition) {
 
 	// Now update the screen :)
 	_vm->_gfx->scheduleTransition(transition);
-}
 
-bool RivenStack::keepTurningPages() {
-	return (mouseIsDown() || keyGetAction() != kKeyActionNone) && !_vm->shouldQuit();
-}
-
-void RivenStack::waitForPageTurnSound() {
-	while (_vm->_sound->isEffectPlaying() && keepTurningPages()) {
-		_vm->doFrame();
-	}
+	return true;
 }
 
 RivenNameList::RivenNameList() {

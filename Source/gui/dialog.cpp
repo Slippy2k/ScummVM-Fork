@@ -153,30 +153,20 @@ void Dialog::releaseFocus() {
 	}
 }
 
-void Dialog::markWidgetsAsDirty() {
-	Widget *w = _firstWidget;
-	while (w) {
-		w->markAsDirty();
-		w = w->_next;
-	}
+void Dialog::draw() {
+	//TANOKU - FIXME when is this enabled? what does this do?
+	// Update: called on tab drawing, mainly...
+	// we can pass this as open a new dialog or something
+//	g_gui._needRedraw = true;
+	g_gui._redrawStatus = GUI::GuiManager::kRedrawTopDialog;
 }
 
-void Dialog::drawDialog(DrawLayer layerToDraw) {
+void Dialog::drawDialog() {
 
 	if (!isVisible())
 		return;
 
-	g_gui.theme()->_layerToDraw = layerToDraw;
 	g_gui.theme()->drawDialogBackground(Common::Rect(_x, _y, _x+_w, _y+_h), _backgroundType);
-
-	markWidgetsAsDirty();
-	drawWidgets();
-}
-
-void Dialog::drawWidgets() {
-
-	if (!isVisible())
-		return;
 
 	// Draw all children
 	Widget *w = _firstWidget;

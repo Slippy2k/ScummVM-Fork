@@ -129,7 +129,7 @@ enum CSTimeState {
 
 class MohawkEngine_CSTime : public MohawkEngine {
 protected:
-	Common::Error run() override;
+	Common::Error run();
 
 public:
 	MohawkEngine_CSTime(OSystem *syst, const MohawkGameDescription *gamedesc);
@@ -142,7 +142,7 @@ public:
 	CSTimeGraphics *_gfx;
 	bool _needsUpdate;
 
-	GUI::Debugger *getDebugger() override { return _console; }
+	GUI::Debugger *getDebugger() { return _console; }
 	CSTimeView *getView() { return _view; }
 	CSTimeCase *getCase() { return _case; }
 	CSTimeInterface *getInterface() { return _interface; }

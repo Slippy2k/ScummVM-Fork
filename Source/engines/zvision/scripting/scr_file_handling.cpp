@@ -141,22 +141,6 @@ bool ScriptManager::parseCriteria(Common::SeekableReadStream &stream, Common::Li
 		criteriaList.back().push_back(entry);
 	}
 
-	// WORKAROUND for a script bug in Zork: Grand Inquisitor, room me2j
-	// (Closing the Time Tunnels). When the time tunnel is open the game
-	// shows a close-up of only the tunnel, instead of showing the entire
-	// booth. However, the scripts that draw the lever in its correct
-	// state do not test this flag, causing it to be drawn when it should
-	// not be. This fixes bug #6770.
-	if (_engine->getGameId() == GID_GRANDINQUISITOR && key == 9536) {
-		Puzzle::CriteriaEntry entry;
-		entry.key = 9404; // me2j_time_tunnel_open
-		entry.criteriaOperator = Puzzle::EQUAL_TO;
-		entry.argumentIsAKey = false;
-		entry.argument = 0;
-
-		criteriaList.back().push_back(entry);
-	}
-
 	while (!stream.eos() && !line.contains('}')) {
 		Puzzle::CriteriaEntry entry;
 

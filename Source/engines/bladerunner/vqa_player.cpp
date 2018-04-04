@@ -71,7 +71,7 @@ void VQAPlayer::close() {
 	_s = nullptr;
 }
 
-int VQAPlayer::update(bool forceDraw, bool advanceFrame, Graphics::Surface *customSurface) {
+int VQAPlayer::update(bool forceDraw) {
 	uint32 now = 60 * _vm->_system->getMillis();
 	int result = -1;
 
@@ -104,14 +104,14 @@ int VQAPlayer::update(bool forceDraw, bool advanceFrame, Graphics::Surface *cust
 		}
 
 		result = -1;
-	} else if (_frameNext > _frameEnd) {
+	} else 	if (_frameNext > _frameEnd) {
 		result = -3;
 	} else if (now < _frameNextTime) {
 		result = -1;
-	} else if (advanceFrame) {
+	} else {
 		_frame = _frameNext;
 		_decoder.readFrame(_frameNext, kVQAReadVideo);
-		_decoder.decodeVideoFrame(customSurface != nullptr ? customSurface : _surface, _frameNext);
+		_decoder.decodeVideoFrame(_frameNext);
 
 		int audioPreloadFrames = 14;
 
@@ -140,9 +140,8 @@ int VQAPlayer::update(bool forceDraw, bool advanceFrame, Graphics::Surface *cust
 		_frameNext++;
 		result = _frame;
 	}
-
 	if (result < 0 && forceDraw && _frame != -1) {
-		_decoder.decodeVideoFrame(customSurface != nullptr ? customSurface : _surface, _frame, true);
+		_decoder.decodeVideoFrame(_frame, true);
 		result = _frame;
 	}
 	return result;
@@ -165,7 +164,7 @@ void VQAPlayer::updateLights(Lights *lights) {
 }
 
 bool VQAPlayer::setLoop(int loop, int repeatsCount, int loopSetMode, void (*callback)(void *, int, int), void *callbackData) {
-#if BLADERUNNER_DEBUG_CONSOLE
+#if 0
 	debug("VQAPlayer::setBeginAndEndFrameFromLoop(%i, %i, %i), streamLoaded = %i", loop, repeatsCount, loopSetMode, _s != nullptr);
 #endif
 	if (_s == nullptr) {
@@ -186,7 +185,7 @@ bool VQAPlayer::setLoop(int loop, int repeatsCount, int loopSetMode, void (*call
 }
 
 bool VQAPlayer::setBeginAndEndFrame(int begin, int end, int repeatsCount, int loopSetMode, void (*callback)(void *, int, int), void *callbackData) {
-#if BLADERUNNER_DEBUG_CONSOLE
+#if 0
 	debug("VQAPlayer::setBeginAndEndFrame(%i, %i, %i, %i), streamLoaded = %i", begin, end, repeatsCount, loopSetMode, _s != nullptr);
 #endif
 
@@ -239,10 +238,6 @@ int VQAPlayer::getLoopEndFrame(int loop) {
 		return -1;
 	}
 	return end;
-}
-
-int VQAPlayer::getFrameCount() {
-	return _decoder.numFrames();
 }
 
 void VQAPlayer::queueAudioFrame(Audio::AudioStream *audioStream) {

@@ -14,8 +14,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SRCTOOLS_IIR_2X_RESAMPLER_H
-#define SRCTOOLS_IIR_2X_RESAMPLER_H
+#ifndef IIR_2X_RESAMPLER_H
+#define IIR_2X_RESAMPLER_H
 
 #include "ResamplerStage.h"
 
@@ -97,4 +97,4 @@ public:
 
 } // namespace SRCTools
 
-#endif // SRCTOOLS_IIR_2X_RESAMPLER_H
+#endif // IIR_2X_RESAMPLER_H

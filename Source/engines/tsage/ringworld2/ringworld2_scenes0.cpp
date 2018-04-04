@@ -1659,7 +1659,6 @@ void Scene180::signal() {
 	case 10:
 		loadScene(4002);
 		R2_GLOBALS._scenePalette.loadPalette(0);
-		R2_GLOBALS._interfaceY = SCREEN_HEIGHT;
 		setSceneDelay(6);
 		break;
 

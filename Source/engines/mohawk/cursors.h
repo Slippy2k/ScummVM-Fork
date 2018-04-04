@@ -72,11 +72,11 @@ protected:
 // Uses standard tCUR resources
 class DefaultCursorManager : public CursorManager {
 public:
-	explicit DefaultCursorManager(MohawkEngine *vm, uint32 tag = ID_TCUR) : _vm(vm), _tag(tag) {}
-	~DefaultCursorManager() override {}
+	DefaultCursorManager(MohawkEngine *vm, uint32 tag = ID_TCUR) : _vm(vm), _tag(tag) {}
+	~DefaultCursorManager() {}
 
-	void setCursor(uint16 id) override;
-	bool hasSource() const override { return true; }
+	void setCursor(uint16 id);
+	bool hasSource() const { return true; }
 
 private:
 	MohawkEngine *_vm;
@@ -110,14 +110,14 @@ class MohawkEngine_Myst;
 // Uses WDIB + CLRC resources
 class MystCursorManager : public CursorManager {
 public:
-	explicit MystCursorManager(MohawkEngine_Myst *vm);
-	~MystCursorManager() override;
+	MystCursorManager(MohawkEngine_Myst *vm);
+	~MystCursorManager();
 
-	void showCursor() override;
-	void hideCursor() override;
-	void setCursor(uint16 id) override;
-	void setDefaultCursor() override;
-	bool hasSource() const override { return true; }
+	void showCursor();
+	void hideCursor();
+	void setCursor(uint16 id);
+	void setDefaultCursor();
+	bool hasSource() const { return true; }
 
 private:
 	MohawkEngine_Myst *_vm;
@@ -128,11 +128,11 @@ private:
 // The cursor manager for NE EXE's
 class NECursorManager : public CursorManager {
 public:
-	explicit NECursorManager(const Common::String &appName);
-	~NECursorManager() override;
+	NECursorManager(const Common::String &appName);
+	~NECursorManager();
 
-	void setCursor(uint16 id) override;
-	bool hasSource() const override { return _exe != nullptr; }
+	void setCursor(uint16 id);
+	bool hasSource() const { return _exe != 0; }
 
 private:
 	Common::NEResources *_exe;
@@ -141,11 +141,11 @@ private:
 // The cursor manager for Mac applications
 class MacCursorManager : public CursorManager {
 public:
-	explicit MacCursorManager(const Common::String &appName);
-	~MacCursorManager() override;
+	MacCursorManager(const Common::String &appName);
+	~MacCursorManager();
 
-	void setCursor(uint16 id) override;
-	bool hasSource() const override { return _resFork != nullptr; }
+	void setCursor(uint16 id);
+	bool hasSource() const { return _resFork != 0; }
 
 private:
 	Common::MacResManager *_resFork;
@@ -156,11 +156,11 @@ private:
 class LivingBooksCursorManager_v2 : public CursorManager {
 public:
 	LivingBooksCursorManager_v2();
-	~LivingBooksCursorManager_v2() override;
+	~LivingBooksCursorManager_v2();
 
-	void setCursor(uint16 id) override;
-	void setCursor(const Common::String &name) override;
-	bool hasSource() const override { return _sysArchive != nullptr; }
+	void setCursor(uint16 id);
+	void setCursor(const Common::String &name);
+	bool hasSource() const { return _sysArchive != 0; }
 
 private:
 	MohawkArchive *_sysArchive;
@@ -169,11 +169,11 @@ private:
 // The cursor manager for PE EXE's
 class PECursorManager : public CursorManager {
 public:
-	explicit PECursorManager(const Common::String &appName);
-	~PECursorManager() override;
+	PECursorManager(const Common::String &appName);
+	~PECursorManager();
 
-	void setCursor(uint16 id) override;
-	bool hasSource() const override { return !_cursors.empty(); }
+	void setCursor(uint16 id);
+	bool hasSource() const { return !_cursors.empty(); }
 
 private:
 	struct CursorItem {

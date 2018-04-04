@@ -23,7 +23,6 @@
 #ifndef BLADERUNNER_AUDIO_SPEECH_H
 #define BLADERUNNER_AUDIO_SPEECH_H
 
-#include "common/str.h"
 #include "common/types.h"
 
 namespace BladeRunner {
@@ -31,29 +30,21 @@ namespace BladeRunner {
 class BladeRunnerEngine;
 
 class AudioSpeech {
-	static const int kBufferSize = 200000;
-	static const int kSpeechSamples[];
+	BladeRunnerEngine  *_vm;
 
-	BladeRunnerEngine *_vm;
-
-	int   _speechVolume;
-	bool  _isActive;
-	int   _channel;
-	byte *_data;
+	int                 _volume;
+	bool                _isActive;
+	int                 _channel;
+	byte               *_data;
 
 public:
 	AudioSpeech(BladeRunnerEngine *vm);
 	~AudioSpeech();
 
-	bool playSpeech(const Common::String &name, int balance = 0);
+	bool playSpeech(const char *name, int balance = 0);
 	void stopSpeech();
-	bool isPlaying() const;
-
-	bool playSpeechLine(int actorId, int sentenceId, int volume, int a4, int priority);
-
-	void setVolume(int volume);
-	int getVolume() const;
-	void playSample();
+	bool isPlaying();
+	void setVolume(int volume) { _volume = volume; }
 
 private:
 	void ended();

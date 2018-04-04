@@ -32,14 +32,13 @@ namespace BladeRunner {
 
 class BladeRunnerEngine;
 class Items;
-class SaveFileReadStream;
-class SaveFileWriteStream;
 
 class Item {
-	friend class Items;
-
 	BladeRunnerEngine *_vm;
 
+	friend class Items;
+
+private:
 	int          _itemId;
 	int          _setId;
 
@@ -54,7 +53,7 @@ class Item {
 	int          _screenX;
 	int          _screenY;
 	float        _depth;
-	bool         _isTarget;
+	bool         _isTargetable;
 	bool         _isSpinning;
 	int          _facingChange;
 	bool         _isVisible;
@@ -62,33 +61,16 @@ class Item {
 
 public:
 	Item(BladeRunnerEngine *vm);
+	~Item();
 
-	void getXYZ(float *x, float *y, float *z) const;
+	void getXYZ(float *x, float *y, float *z);
 	void setXYZ(Vector3 position);
-	void getWidthHeight(int *width, int *height) const;
+	void getWidthHeight(int *width, int *height);
 
-	const BoundingBox &getBoundingBox() { return _boundingBox; }
-	const Common::Rect &getScreenRectangle() { return _screenRectangle; }
-	int getFacing() const { return _facing; }
-	void setFacing(int facing) { _facing = facing; }
-
-	void setIsTarget(bool val) { _isTarget = val; }
-
-	bool isTarget() const;
-	bool isSpinning() const { return _isSpinning; }
-	bool isVisible() const { return _isVisible; }
-	void setVisible(bool val) { _isVisible = val; }
-	bool isPoliceMazeEnemy() const;
-	void setPoliceMazeEnemy(bool val) { _isPoliceMazeEnemy = val; }
-	void spinInWorld();
+	bool isTargetable();
 	bool tick(Common::Rect *screenRect, bool special);
 
-	void setup(int itemId, int setId, int animationId, Vector3 position, int facing, int height, int width, bool isTargetFlag, bool isVisibleFlag, bool isPoliceMazeEnemyFlag);
-
-	bool isUnderMouse(int mouseX, int mouseY) const;
-
-	void save(SaveFileWriteStream &f);
-	void load(SaveFileReadStream &f);
+	void setup(int itemId, int setId, int animationId, Vector3 position, int facing, int height, int width, bool isTargetableFlag, bool isVisibleFlag, bool isPoliceMazeEnemyFlag);
 };
 
 }

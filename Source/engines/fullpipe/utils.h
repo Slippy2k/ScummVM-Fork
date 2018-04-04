@@ -58,18 +58,7 @@ public:
 	int readCount();
 	double readDouble();
 	CObject *parseClass(bool *isCopyReturned);
-
-	/** ownership of returned object is passed to caller */
-	template <typename T>
-	T *readClass() {
-		CObject *obj = readBaseClass();
-		if (!obj)
-			return nullptr;
-
-		T *res = dynamic_cast<T *>(obj);
-		assert(res);
-		return res;
-	}
+	CObject *readClass();
 
 	void writeObject(CObject *obj);
 
@@ -87,7 +76,6 @@ public:
 
 private:
 	void init();
-	CObject *readBaseClass();
 };
 
 enum ObjType {
@@ -118,24 +106,9 @@ public:
 	bool loadFile(const Common::String &fname);
 };
 
-template <class T>
-class ObList : public Common::List<T *>, public CObject {
-public:
-	virtual bool load(MfcArchive &file) {
-		debugC(5, kDebugLoading, "ObList::load()");
-		int count = file.readCount();
-
-		debugC(9, kDebugLoading, "ObList::count: %d:", count);
-
-		for (int i = 0; i < count; i++) {
-			debugC(9, kDebugLoading, "ObList::[%d]", i);
-			T *t = file.readClass<T>();
-
-			this->push_back(t);
-		}
-
-		return true;
-	}
+class ObList : public Common::List<CObject *>, public CObject {
+ public:
+	virtual bool load(MfcArchive &file);
 };
 
 class MemoryObject : CObject {

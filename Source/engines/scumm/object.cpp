@@ -1538,8 +1538,7 @@ int ScummEngine::getObjX(int obj) {
 		if (whereIsObject(obj) == WIO_NOT_FOUND)
 			return -1;
 		int x, y;
-		if (getObjectOrActorXY(obj, x, y) == -1)
-			return -1;
+		getObjectOrActorXY(obj, x, y);
 		return x;
 	}
 }
@@ -1554,8 +1553,7 @@ int ScummEngine::getObjY(int obj) {
 		if (whereIsObject(obj) == WIO_NOT_FOUND)
 			return -1;
 		int x, y;
-		if (getObjectOrActorXY(obj, x, y) == -1)
-			return -1;
+		getObjectOrActorXY(obj, x, y);
 		return y;
 	}
 }

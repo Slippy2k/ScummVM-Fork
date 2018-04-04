@@ -101,7 +101,7 @@ public:
 		_lastCopyArea = makeDirectionalInitalArea();
 	}
 
-	bool drawFrame(uint32 elapsed) override {
+	virtual bool drawFrame(uint32 elapsed) override {
 		Common::Rect copyArea;
 		switch (_type) {
 			case kRivenTransitionWipeLeft:
@@ -162,7 +162,7 @@ public:
 		 complete = false;
 	}
 
-	bool drawFrame(uint32 elapsed) override {
+	virtual bool drawFrame(uint32 elapsed) override {
 		Common::Rect newArea;
 		switch (_type) {
 			case kRivenTransitionPanLeft:
@@ -264,7 +264,7 @@ public:
 		_timeBased = false;
 	}
 
-	bool drawFrame(uint32 elapsed) override {
+	virtual bool drawFrame(uint32 elapsed) override {
 		assert(_effectScreen->format == _mainScreen->format);
 		assert(_effectScreen->format == _system->getScreenFormat());
 
@@ -303,22 +303,7 @@ public:
 	}
 };
 
-RivenGraphics::RivenGraphics(MohawkEngine_Riven* vm) :
-		GraphicsManager(),
-		_vm(vm),
-		_screenUpdateNesting(0),
-		_screenUpdateRunning(false),
-		_enableCardUpdateScript(true),
-		_scheduledTransition(kRivenTransitionNone),
-		_dirtyScreen(false),
-		_creditsImage(302),
-		_creditsPos(0),
-		_transitionMode(kRivenTransitionModeFastest),
-		_transitionOffset(-1),
-		_waterEffect(nullptr),
-		_fliesEffect(nullptr),
-		_transitionFrames(0),
-		_transitionDuration(0) {
+RivenGraphics::RivenGraphics(MohawkEngine_Riven* vm) : GraphicsManager(), _vm(vm) {
 	_bitmapDecoder = new MohawkBitmap();
 
 	// Restrict ourselves to a single pixel format to simplify the effects implementation
@@ -332,6 +317,20 @@ RivenGraphics::RivenGraphics(MohawkEngine_Riven* vm) :
 
 	_effectScreen = new Graphics::Surface();
 	_effectScreen->create(608, 392, _pixelFormat);
+
+	_screenUpdateNesting = 0;
+	_screenUpdateRunning = false;
+	_enableCardUpdateScript = true;
+	_scheduledTransition = kRivenTransitionNone;
+	_dirtyScreen = false;
+
+	_creditsImage = 302;
+	_creditsPos = 0;
+
+	_transitionMode = kRivenTransitionModeFastest;
+	_transitionOffset = -1;
+	_waterEffect = nullptr;
+	_fliesEffect = nullptr;
 }
 
 RivenGraphics::~RivenGraphics() {
@@ -340,8 +339,7 @@ RivenGraphics::~RivenGraphics() {
 	_mainScreen->free();
 	delete _mainScreen;
 	delete _bitmapDecoder;
-	clearFliesEffect();
-	clearWaterEffect();
+	delete _fliesEffect;
 }
 
 MohawkSurface *RivenGraphics::decodeImage(uint16 id) {

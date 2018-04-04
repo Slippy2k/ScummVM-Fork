@@ -37,8 +37,8 @@ namespace MystStacks {
 
 class Channelwood : public MystScriptParser {
 public:
-	explicit Channelwood(MohawkEngine_Myst *vm);
-	~Channelwood() override;
+	Channelwood(MohawkEngine_Myst *vm);
+	~Channelwood();
 
 	void disablePersistentScripts() override;
 	void runPersistentScripts() override;
@@ -49,7 +49,7 @@ private:
 	void toggleVar(uint16 var) override;
 	bool setVarValue(uint16 var, uint16 value) override;
 
-	uint16 getMap() override { return 9932; }
+	virtual uint16 getMap() override { return 9932; }
 
 	DECLARE_OPCODE(o_bridgeToggle);
 	DECLARE_OPCODE(o_pipeExtend);

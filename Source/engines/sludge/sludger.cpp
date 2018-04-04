@@ -47,7 +47,7 @@
 #include "sludge/sound.h"
 #include "sludge/sludge.h"
 #include "sludge/sludger.h"
-#include "sludge/speech.h"
+#include "sludge/talk.h"
 #include "sludge/transition.h"
 #include "sludge/variable.h"
 #include "sludge/version.h"
@@ -71,6 +71,7 @@ bool captureAllKeys = false;
 
 byte brightnessLevel = 255;
 
+extern SpeechStruct *speech;
 extern LoadedFunction *saverFunc;
 
 LoadedFunction *allRunningFunctions = NULL;
@@ -80,6 +81,8 @@ Variable *globalVars;
 int numGlobals = 0;
 
 extern SpritePalette pastePalette;
+extern int speechMode;
+extern float speechSpeed;
 extern Variable *launchResult;
 extern int lastFramesPerSecond, thumbWidth, thumbHeight;
 
@@ -152,7 +155,7 @@ void initSludge() {
 	initPeople();
 	initFloor();
 	g_sludge->_objMan->init();
-	g_sludge->_speechMan->init();
+	initSpeech();
 	initStatusBar();
 	resetRandW();
 	g_sludge->_evtMan->init();
@@ -166,6 +169,7 @@ void initSludge() {
 
 	// global variables
 	numGlobals = 0;
+	speechMode = 0;
 	launchResult = nullptr;
 
 	lastFramesPerSecond = -1;
@@ -175,6 +179,7 @@ void initSludge() {
 	noStack = nullptr;
 	numBIFNames = numUserFunc = 0;
 	allUserFunc = allBIFNames = nullptr;
+	speechSpeed = 1;
 	brightnessLevel = 255;
 	fadeMode = 2;
 	saveEncoding = false;
@@ -185,7 +190,7 @@ void killSludge() {
 	killAllPeople();
 	killAllRegions();
 	setFloorNull();
-	g_sludge->_speechMan->kill();
+	killAllSpeech();
 	g_sludge->_languageMan->kill();
 	g_sludge->_gfxMan->kill();
 	g_sludge->_resMan->kill();
@@ -196,6 +201,7 @@ void killSludge() {
 	g_sludge->_cursorMan->kill();
 
 	// global variables
+	pastePalette.reset();
 	numBIFNames = numUserFunc = 0;
 	delete []allUserFunc;
 	delete []allBIFNames;
@@ -339,7 +345,7 @@ void displayBase() {
 
 void sludgeDisplay() {
 	displayBase();
-	g_sludge->_speechMan->display();
+	viewSpeech();// ...and anything being said
 	drawStatusBar();
 	g_sludge->_cursorMan->displayCursor();
 	g_sludge->_gfxMan->display();
@@ -375,7 +381,7 @@ void killSpeechTimers() {
 		thisFunction = thisFunction->next;
 	}
 
-	g_sludge->_speechMan->kill();
+	killAllSpeech();
 }
 
 void completeTimers() {
@@ -934,7 +940,7 @@ bool runSludge() {
 			if (thisFunction->timeLeft) {
 				if (thisFunction->timeLeft < 0) {
 					if (!g_sludge->_soundMan->stillPlayingSound(
-							g_sludge->_speechMan->getLastSpeechSound())) {
+							g_sludge->_soundMan->findInSoundCache(speech->lastFile))) {
 						thisFunction->timeLeft = 0;
 					}
 				} else if (!--(thisFunction->timeLeft)) {
@@ -942,7 +948,7 @@ bool runSludge() {
 			} else {
 				if (thisFunction->isSpeech) {
 					thisFunction->isSpeech = false;
-					g_sludge->_speechMan->kill();
+					killAllSpeech();
 				}
 				if (!continueFunction(thisFunction))
 					return false;

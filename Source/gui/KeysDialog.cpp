@@ -82,7 +82,7 @@ void KeysDialog::handleCommand(CommandSender *sender, uint32 cmd, uint32 data) {
 				selection = Common::String::format(_("Associated key : none"));
 
 			_keyMapping->setLabel(selection);
-			_keyMapping->markAsDirty();
+			_keyMapping->draw();
 		}
 		break;
 	case kMapCmd:
@@ -105,11 +105,11 @@ void KeysDialog::handleCommand(CommandSender *sender, uint32 cmd, uint32 data) {
 
 			_actionTitle->setLabel(_("Press the key to associate"));
 			_keyMapping->setLabel(selection);
-			_keyMapping->markAsDirty();
+			_keyMapping->draw();
 			Actions::Instance()->beginMapping(true);
 			_actionsList->setEnabled(false);
 		}
-		_actionTitle->markAsDirty();
+		_actionTitle->draw();
 		break;
 	case kOKCmd:
 		Actions::Instance()->saveMapping();
@@ -144,8 +144,8 @@ void KeysDialog::handleKeyUp(Common::KeyState state) {
 
 		_actionTitle->setLabel(_("Choose an action to map"));
 		_keyMapping->setLabel(selection);
-		_keyMapping->markAsDirty();
-		_actionTitle->markAsDirty();
+		_keyMapping->draw();
+		_actionTitle->draw();
 		_actionSelected = -1;
 		_actionsList->setEnabled(true);
 		Actions::Instance()->beginMapping(false);

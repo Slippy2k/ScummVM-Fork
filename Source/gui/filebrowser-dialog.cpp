@@ -30,7 +30,6 @@
 #include "common/translation.h"
 
 #include "gui/widgets/list.h"
-#include "gui/gui-manager.h"
 #include "gui/message.h"
 
 namespace GUI {
@@ -89,7 +88,7 @@ void FileBrowserDialog::handleCommand(CommandSender *sender, uint32 cmd, uint32 
 		break;
 	case kListSelectionChangedCmd:
 		_fileName->setEditString(_fileList->getList().operator[](_fileList->getSelected()).c_str());
-		_fileName->markAsDirty();
+		_fileName->draw();
 		break;
 	case kListItemActivatedCmd:
 	case kListItemDoubleClickedCmd:
@@ -155,7 +154,7 @@ void FileBrowserDialog::updateListing() {
 	_fileList->scrollTo(0);
 
 	// Finally, redraw
-	g_gui.scheduleTopDialogRedraw();
+	draw();
 }
 
 } // End of namespace GUI

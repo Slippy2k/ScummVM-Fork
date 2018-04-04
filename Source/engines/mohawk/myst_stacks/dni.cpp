@@ -34,15 +34,9 @@ namespace Mohawk {
 namespace MystStacks {
 
 Dni::Dni(MohawkEngine_Myst *vm) :
-		MystScriptParser(vm),
-		_notSeenAtrus(true),
-		_atrusRunning(false),
-		_waitForLoop(false),
-		_atrusLeft(false),
-		_atrusLeftTime(0),
-		_loopStart(0),
-		_loopEnd(0) {
+		MystScriptParser(vm) {
 	setupOpcodes();
+	_notSeenAtrus = true;
 }
 
 Dni::~Dni() {

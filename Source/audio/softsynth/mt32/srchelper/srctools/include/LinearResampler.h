@@ -14,8 +14,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SRCTOOLS_LINEAR_RESAMPLER_H
-#define SRCTOOLS_LINEAR_RESAMPLER_H
+#ifndef LINEAR_RESAMPLER_H
+#define LINEAR_RESAMPLER_H
 
 #include "ResamplerStage.h"
 
@@ -39,4 +39,4 @@ private:
 
 } // namespace SRCTools
 
-#endif // SRCTOOLS_LINEAR_RESAMPLER_H
+#endif // LINEAR_RESAMPLER_H

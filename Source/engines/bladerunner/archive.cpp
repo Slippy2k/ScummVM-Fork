@@ -27,15 +27,11 @@
 namespace BladeRunner {
 
 MIXArchive::MIXArchive() {
-	_isTLK      = false;
-	_entryCount = 0;
-	_size       = 0;
 }
 
 MIXArchive::~MIXArchive() {
-	if (_fd.isOpen()) {
+	if (_fd.isOpen())
 		debug("~MIXArchive: fd not closed: %s", _fd.getName());
-	}
 }
 
 bool MIXArchive::open(const Common::String &filename) {
@@ -46,23 +42,21 @@ bool MIXArchive::open(const Common::String &filename) {
 
 	_isTLK = filename.hasSuffix(".TLK");
 
-	_entryCount = _fd.readUint16LE();
-	_size       = _fd.readUint32LE();
+	_entry_count = _fd.readUint16LE();
+	_size        = _fd.readUint32LE();
 
-	_entries.resize(_entryCount);
-	for (uint16 i = 0; i != _entryCount; ++i) {
-		_entries[i].hash   = _fd.readUint32LE();
+	_entries.resize(_entry_count);
+	for (uint16 i = 0; i != _entry_count; ++i) {
+		_entries[i].id     = _fd.readSint32LE();
 		_entries[i].offset = _fd.readUint32LE();
 		_entries[i].length = _fd.readUint32LE();
 
-#if BLADERUNNER_DEBUG_CONSOLE
-		debug("%08x %-12d %-12d", _entries[i].id, _entries[i].offset, _entries[i].length);
-#endif
+		if (false)
+			debug("%08x %-12d %-12d", _entries[i].id, _entries[i].offset, _entries[i].length);
 
 		// Verify that the entries are sorted by id. Note that id is signed.
-		if (i > 0) {
-			assert(_entries[i].hash > _entries[i - 1].hash);
-		}
+		if (i > 0)
+			assert(_entries[i].id > _entries[i - 1].id);
 	}
 
 	if (_fd.err()) {
@@ -86,15 +80,15 @@ bool MIXArchive::isOpen() const {
 
 #define ROL(n) ((n << 1) | ((n >> 31) & 1))
 
-int32 MIXArchive::getHash(const Common::String &name) {
+int32 mix_id(const Common::String &name) {
 	char buffer[12] = { 0 };
 
-	for (uint i = 0; i != name.size() && i < 12u; ++i) {
+	for (uint i = 0; i != name.size() && i < 12u; ++i)
 		buffer[i] = (char)toupper(name[i]);
-	}
 
 	uint32 id = 0;
-	for (int i = 0; i < 12 && buffer[i]; i += 4) {
+	for (int i = 0; i < 12 && buffer[i]; i += 4)
+	{
 		uint32 t = (uint32)buffer[i + 3] << 24
 		         | (uint32)buffer[i + 2] << 16
 		         | (uint32)buffer[i + 1] <<  8
@@ -103,10 +97,11 @@ int32 MIXArchive::getHash(const Common::String &name) {
 		id = ROL(id) + t;
 	}
 
-	return id;
+	return reinterpret_cast<int32&>(id);
 }
 
-static uint32 tlk_id(const Common::String &name) {
+static
+int32 tlk_id(const Common::String &name) {
 	char buffer[12] = { 0 };
 
 	for (uint i = 0; i != name.size() && i < 12u; ++i)
@@ -123,39 +118,36 @@ static uint32 tlk_id(const Common::String &name) {
 	return 10000 * actor_id + speech_id;
 }
 
-uint32 MIXArchive::indexForHash(int32 hash) const {
-	uint32 lo = 0, hi = _entryCount;
+uint32 MIXArchive::indexForId(int32 id) const {
+	uint32 lo = 0, hi = _entry_count;
 
 	while (lo < hi) {
 		uint32 mid = lo + (hi - lo) / 2;
 
-		if (hash > _entries[mid].hash) {
+		if (id > _entries[mid].id)
 			lo = mid + 1;
-		} else if (hash < _entries[mid].hash) {
+		else if (id < _entries[mid].id)
 			hi = mid;
-		} else {
+		else
 			return mid;
-		}
 	}
-	return _entryCount;
+	return _entry_count;
 }
 
 Common::SeekableReadStream *MIXArchive::createReadStreamForMember(const Common::String &name) {
-	int32 hash;
+	int32 id;
 
-	if (_isTLK) {
-		hash = tlk_id(name);
-	} else {
-		hash = MIXArchive::getHash(name);
-	}
+	if (_isTLK)
+		id = tlk_id(name);
+	else
+		id = mix_id(name);
 
-	uint32 i = indexForHash(hash);
+	uint32 i = indexForId(id);
 
-	if (i == _entryCount) {
+	if (i == _entry_count)
 		return nullptr;
-	}
 
-	uint32 start = _entries[i].offset + 6 + 12 * _entryCount;
+	uint32 start = _entries[i].offset + 6 + 12 * _entry_count;
 	uint32 end   = _entries[i].length + start;
 
 	return new Common::SafeSeekableSubReadStream(&_fd, start, end, DisposeAfterUse::NO);

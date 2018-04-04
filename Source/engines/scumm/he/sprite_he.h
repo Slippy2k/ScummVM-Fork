@@ -23,8 +23,6 @@
 #if !defined(SCUMM_HE_SPRITE_HE_H) && defined(ENABLE_HE)
 #define SCUMM_HE_SPRITE_HE_H
 
-#include "common/serializer.h"
-
 namespace Scumm {
 
 enum SpriteFlags {
@@ -100,7 +98,7 @@ struct SpriteGroup {
 
 class ScummEngine_v90he;
 
-class Sprite : public Common::Serializable {
+class Sprite {
 public:
 	Sprite(ScummEngine_v90he *vm);
 	virtual ~Sprite();
@@ -114,7 +112,7 @@ public:
 	int32 _varNumSprites;
 	int32 _varMaxSprites;
 
-	void saveLoadWithSerializer(Common::Serializer &s);
+	void saveOrLoadSpriteData(Serializer *s);
 	void resetBackground();
 	void setRedrawFlags(bool checkZOrder);
 	void sortActiveSprites();

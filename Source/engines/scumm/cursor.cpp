@@ -31,6 +31,7 @@
 #include "scumm/he/intern_he.h"
 #include "scumm/object.h"
 #include "scumm/he/resource_he.h"
+#include "scumm/saveload.h"
 #include "scumm/scumm.h"
 #include "scumm/scumm_v2.h"
 #include "scumm/scumm_v5.h"
@@ -190,7 +191,7 @@ void ScummEngine_v70he::setDefaultCursor() {
 	_cursor.height = 32;
 
 	for (i = 0; i < 32; i++) {
-		uint p = *src;
+		int p = *src;
 		for (j = 0; j < 32; j++) {
 			switch ((p & (0x3 << 14)) >> 14) {
 				case 1:
@@ -204,9 +205,7 @@ void ScummEngine_v70he::setDefaultCursor() {
 			}
 			p <<= 2;
 
-			if (j == 31)
-				++src;
-			else if ((j + 1) % 8 == 0)
+			if ((j + 1) % 8 == 0)
 				p = *(++src);
 		}
 	}

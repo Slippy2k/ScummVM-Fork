@@ -31,271 +31,57 @@
 
 namespace Xeen {
 
-enum TownAction {
-	BANK = 0, BLACKSMITH = 1, GUILD = 2, TAVERN = 3, TEMPLE = 4,
-	TRAINING = 5, ARENA = 6, NO_ACTION = 7, REAPER = 8, GOLEM = 9,
-	DWARF1 = 10, SPHINX = 11, PYRAMID = 12, DWARF2 = 13
-};
-
 class XeenEngine;
 class TownMessage;
 
-class TownLocation : public ButtonContainer {
-protected:
-	TownAction _townActionId;
-	Common::Array<SpriteResource> _townSprites;
+class Town: public ButtonContainer {
+	friend class TownMessage;
+private:
 	SpriteResource _icons1, _icons2;
+	Common::StringArray _textStrings;
+	Common::Array<SpriteResource> _townSprites;
 	int _townMaxId;
-	const bool &_isDarkCc;
-	int _animFrame;
-	Common::String _vocName, _songName;
-	Common::Point _townPos;
-	int _drawFrameIndex;
-	uint _farewellTime;
-	int _drawCtr1, _drawCtr2;
-	int _animCtr;
-protected:
-	/**
-	 * Draw the window
-	 */
-	void drawWindow();
-
-	/**
-	 * Waits for a brief pause, checking for any key or mouse events
-	 */
-	int wait();
-
-	/**
-	 * Handles animation updates for Sphinx, Golem, Repear, and Dwarf events
-	 */
-	void animUpdate();
-
-	/**
-	 * Generates the display text for the location, for a given character
-	 */
-	virtual Common::String createLocationText(Character &ch) { return ""; }
-
-	/**
-	 * Draw the visual background
-	 */
-	virtual void drawBackground();
-
-	/**
-	 * Handles options for the particular location
-	 */
-	virtual Character *doOptions(Character *c) { return c; }
-
-	/**
-	 * Handle any farewell
-	 */
-	virtual void farewell() {}
-public:
-	TownLocation(TownAction action);
-	virtual ~TownLocation();
-
-	/**
-	 * Show the town location
-	 */
-	virtual int show();
-
-	/**
-	 * Draws the animated parts
-	 */
-	void drawAnim(bool flag);
-};
-
-class BankLocation : public TownLocation {
-private:
-	/**
-	 * Handles deposits or withdrawls fro the bank
-	 */
-	void depositWithdrawl(PartyBank whereId);
-protected:
-	/**
-	 * Generates the display text for the location, for a given character
-	 */
-	virtual Common::String createLocationText(Character &ch);
-
-	/**
-	 * Draw the visual background
-	 */
-	virtual void drawBackground();
-
-	/**
-	 * Handles options for the particular location
-	 */
-	virtual Character *doOptions(Character *c);
-public:
-	BankLocation();
-	virtual ~BankLocation() {}
-};
-
-class BlacksmithLocation : public TownLocation {
-protected:
-	/**
-	* Generates the display text for the location, for a given character
-	*/
-	virtual Common::String createLocationText(Character &ch);
-
-	/**
-	 * Handle any farewell
-	 */
-	virtual void farewell();
-
-	/**
-	 * Handles options for the particular location
-	 */
-	virtual Character *doOptions(Character *c);
-public:
-	BlacksmithLocation();
-	virtual ~BlacksmithLocation() {}
-};
-
-class GuildLocation : public TownLocation {
-protected:
-	/**
-	 * Generates the display text for the location, for a given character
-	 */
-	virtual Common::String createLocationText(Character &ch);
-
-	/**
-	 * Handles options for the particular location
-	 */
-	virtual Character *doOptions(Character *c);
-public:
-	GuildLocation();
-	virtual ~GuildLocation() {}
-};
-
-class TavernLocation : public TownLocation {
-private:
+	int _townActionId;
+	int _v1, _v2;
+	int _donation;
+	int _healCost;
+	int _v5, _v6;
+	int _v10, _v11, _v12;
+	int _v13, _v14;
+	uint _v20;
 	int _v21;
 	uint _v22;
 	int _v23;
 	int _v24;
-protected:
-	/**
-	* Generates the display text for the location, for a given character
-	*/
-	virtual Common::String createLocationText(Character &ch);
-
-	/**
-	 * Handle any farewell
-	 */
-	virtual void farewell();
-
-	/**
-	 * Handles options for the particular location
-	 */
-	virtual Character *doOptions(Character *c);
-public:
-	TavernLocation();
-	virtual ~TavernLocation() {}
-};
-
-class TempleLocation : public TownLocation {
-private:
-	int _currentCharLevel;
-	int _donation;
-	int _healCost;
-	int _uncurseCost;
 	int _dayOfWeek;
-	int _v10, _v11, _v12;
-	int _v13, _v14;
+	int _uncurseCost;
+	Common::Point _townPos;
+	int _arr1[6];
+	int _currentCharLevel;
 	bool _flag1;
-	int _v5, _v6;
-protected:
-	/**
-	* Generates the display text for the location, for a given character
-	*/
-	virtual Common::String createLocationText(Character &ch);
-
-	/**
-	 * Handles options for the particular location
-	 */
-	virtual Character *doOptions(Character *c);
-public:
-	TempleLocation();
-	virtual ~TempleLocation() {}
-};
-
-class TrainingLocation : public TownLocation {
-private:
-	int _charIndex;
-	bool _charsTrained[MAX_ACTIVE_PARTY];
 	uint _experienceToNextLevel;
-	uint _maxLevel;
-protected:
-	/**
-	 * Generates the display text for the location, for a given character
-	 */
-	virtual Common::String createLocationText(Character &ch);
+	int _drawFrameIndex;
+	int _drawCtr1, _drawCtr2;
 
-	/**
-	 * Handles options for the particular location
-	 */
-	virtual Character *doOptions(Character *c);
-public:
-	TrainingLocation();
-	virtual ~TrainingLocation() {}
-};
+	void loadStrings(const Common::String &name);
 
-class ArenaLocation : public TownLocation {
-public:
-	ArenaLocation();
-	virtual ~ArenaLocation() {}
-};
+	void pyramidEvent();
 
-class ReaperLocation : public TownLocation {
-public:
-	ReaperLocation();
-	virtual ~ReaperLocation() {}
-};
+	void arenaEvent();
 
-class GolemLocation : public TownLocation {
-public:
-	GolemLocation();
-	virtual ~GolemLocation() {}
-};
+	void reaperEvent();
 
-class DwarfLocation : public TownLocation {
-private:
-	/**
-	 * Set the new location
-	 */
-	bool setNewLocation();
-public:
-	DwarfLocation(bool isDwarf1);
-	virtual ~DwarfLocation() {}
+	void golemEvent();
 
-	/**
-	 * Show the town location
-	 */
-	virtual int show();
-};
+	void sphinxEvent();
 
-class SphinxLocation : public TownLocation {
-public:
-	SphinxLocation();
-	virtual ~SphinxLocation() {}
-};
+	void dwarfEvent();
 
-class PyramidLocation : public TownLocation {
-public:
-	PyramidLocation();
-	virtual ~PyramidLocation() {}
+	Common::String createTownText(Character &ch);
 
-	/**
-	 * Show the town location
-	 */
-	virtual int show();
-};
-
-class Town {
-private:
-	TownLocation *_location;
-private:
 	int townWait();
+
+	Character *doTownOptions(Character *c);
 
 	Character *doBankOptions(Character *c);
 
@@ -308,37 +94,35 @@ private:
 	Character *doTempleOptions(Character *c);
 
 	Character *doTrainingOptions(Character *c);
-public:
-	Town();
 
-	/**
-	 * Show a given location, and return any result
-	 */
-	int townAction(TownAction actionId);
+	void depositWithdrawl(int choice);
+public:
+	Town(XeenEngine *vm);
+
+	int townAction(int actionId);
+
+	void drawTownAnim(bool flag);
 
 	/**
 	 * Returns true if a town location (bank, blacksmith, etc.) is currently active
 	 */
 	bool isActive() const;
 
-	/**
-	 * Draws a currently active town location's animation
-	 */
-	void drawAnim(bool flag);
+	void clearSprites();
 };
 
-class TownMessage : public TownLocation {
+class TownMessage : public ButtonContainer {
 private:
 	SpriteResource _iconSprites;
 
-	TownMessage() : TownLocation(NO_ACTION) {}
+	TownMessage(XeenEngine *vm) : ButtonContainer(vm) {}
 
 	bool execute(int portrait, const Common::String &name,
 		const Common::String &text, int confirm);
 
 	void loadButtons();
 public:
-	static bool show(int portrait, const Common::String &name,
+	static bool show(XeenEngine *vm, int portrait, const Common::String &name,
 		const Common::String &text, int confirm);
 };
 

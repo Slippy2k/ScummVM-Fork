@@ -342,7 +342,6 @@ void OpenGLGraphicsManager::initSize(uint width, uint height, const Graphics::Pi
 
 	_currentState.gameWidth = width;
 	_currentState.gameHeight = height;
-	_gameScreenShakeOffset = 0;
 }
 
 int16 OpenGLGraphicsManager::getWidth() const {
