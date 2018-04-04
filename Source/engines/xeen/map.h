@@ -27,6 +27,7 @@
 #include "common/array.h"
 #include "common/rect.h"
 #include "xeen/combat.h"
+#include "xeen/files.h"
 #include "xeen/party.h"
 #include "xeen/scripts.h"
 #include "xeen/sprites.h"
@@ -41,7 +42,7 @@ namespace Xeen {
 class XeenEngine;
 
 enum MonsterType {
-	MONSTER_0 = 0, MONSTER_ANIMAL = 1, MONSTER_INSECT = 2,
+	MONSTER_MONSTERS = 0, MONSTER_ANIMAL = 1, MONSTER_INSECT = 2,
 	MONSTER_HUMANOID = 3, MONSTER_UNDEAD = 4, MONSTER_GOLEM = 5,
 	MONSTER_DRAGON = 6
 };
@@ -51,7 +52,7 @@ public:
 	Common::String _name;
 	int _experience;
 	int _hp;
-	int _accuracy;
+	int _armorClass;
 	int _speed;
 	int _numberOfAttacks;
 	int _hatesClass;
@@ -114,7 +115,7 @@ public:
 
 	void clear();
 
-	void synchronize(Common::SeekableReadStream &s);
+	void synchronize(XeenSerializer &s);
 
 	int &operator[](int idx);
 };
@@ -132,7 +133,10 @@ public:
 public:
 	MazeDifficulties();
 
-	void synchronize(Common::SeekableReadStream &s);
+	/**
+	 * Synchronizes data for the item
+	 */
+	void synchronize(XeenSerializer &s);
 };
 
 enum MazeFlags {
@@ -208,7 +212,10 @@ public:
 
 	void clear();
 
-	void synchronize(Common::SeekableReadStream &s);
+	/**
+	 * Synchronize data for the maze data
+	 */
+	void synchronize(XeenSerializer &s);
 
 	/**
 	 * Flags all tiles for the map as having been stepped on
@@ -226,7 +233,15 @@ public:
 public:
 	MobStruct();
 
+	/**
+	 * Synchronizes the data for the item
+	 */
 	bool synchronize(XeenSerializer &s);
+
+	/**
+	 * Sets up the entry as an end of list marker
+	 */
+	void endOfList();
 };
 
 struct MazeObject {
@@ -248,9 +263,9 @@ struct MazeMonster {
 	int _id;
 	int _spriteId;
 	bool _isAttacking;
-	int _damageType;
+	DamageType _damageType;
 	int _field9;
-	int _fieldA;
+	int _postAttackDelay;
 	int _hp;
 	int _effect1, _effect2;
 	int _effect3;
@@ -314,7 +329,20 @@ public:
 public:
 	MonsterObjectData(XeenEngine *vm);
 
+	/**
+	 * Synchronizes the data
+	 */
 	void synchronize(XeenSerializer &s, MonsterData &monsterData);
+
+	/**
+	 * Clears the current list of monster sprites
+	 */
+	void clearMonsterSprites();
+
+	/**
+	 * Load the normal and attack sprites for a given monster
+	 */
+	void addMonsterSprites(MazeMonster &monster);
 };
 
 class HeadData {
@@ -375,12 +403,34 @@ private:
 	int _sidePictures;
 	int _sideObjects;
 	int _sideMonsters;
+	int _sideMusic;
 	int _mazeDataIndex;
 
 	/**
 	 * Load the events for a new map
 	 */
 	void loadEvents(int mapId);
+
+	/**
+	 * Save the events for a map
+	 */
+	void saveEvents();
+
+	/**
+	 * Save the monster data for a map
+	 */
+	void saveMonsters();
+
+	/**
+	 * Save the map data
+	 */
+	void saveMap();
+
+	/**
+	 * Finds a map in the array that contains the currently active and the surrounding
+	 * maps in the eight cardinal directions
+	 */
+	void findMap(int mapId = -1);
 public:
 	Common::String _mazeName;
 	bool _isOutdoors;
@@ -404,32 +454,75 @@ public:
 	int _currentTile;
 	int _currentSurfaceId;
 	bool _currentSteppedOn;
-	bool _loadDarkSide;
+	int _loadCcNum;
 	int _sideTownPortal;
 public:
 	Map(XeenEngine *vm);
 
+	/**
+	 * Loads a specified map
+	 */
 	void load(int mapId);
 
 	int mazeLookup(const Common::Point &pt, int layerShift, int wallMask = 0xf);
 
 	void cellFlagLookup(const Common::Point &pt);
 
+	/**
+	 * Sets the surface flags for a given position
+	 */
 	void setCellSurfaceFlags(const Common::Point &pt, int bits);
 
+	/**
+	 * Sets the value for the wall in a given direction from a given point
+	 */
 	void setWall(const Common::Point &pt, Direction dir, int v);
 
+	/**
+	 * Saves all changeable maze data to the in-memory save state
+	 */
 	void saveMaze();
 
+	/**
+	 * Clears the current maze. This is used during savegame loads so that
+	 * the previous games maze data isn't saved as the new map is loaded
+	 */
+	void clearMaze();
+
+	/**
+	 * Gets the data for a map position at one of the relative indexes
+	 * surrounding the current position
+	 */
 	int getCell(int idx);
 
+	/**
+	 * Returns the data for the primary active map
+	 */
 	MazeData &mazeData() { return _mazeData[0]; }
 
+	/**
+	 * Returns the data for the currently indexed map
+	 */
 	MazeData &mazeDataCurrent() { return _mazeData[_mazeDataIndex]; }
 
+	/**
+	 * Loads the sprites needed for rendering the skyline
+	 */
 	void loadSky();
 
+	/**
+	 * Tests the current position, and if it's moved beyond the valid (0,0) to (15,15)
+	 * range for a map, loads in the correct surrounding map, and adjusts the
+	 * position to the relative position on the new map
+	 */
 	void getNewMaze();
+
+	/**
+	 * Return the name of a specified maze
+	 * @param mapId		Map Id
+	 * @param ccNum		Cc file number. If -1, uses the current C
+	 */
+	static Common::String getMazeName(int mapId, int ccNum = -1);
 };
 
 } // End of namespace Xeen

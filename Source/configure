@@ -927,7 +927,6 @@ Special configuration feature:
                                            gp2xwiz for GP2X Wiz
                                            iphone for Apple iPhone (iOS <= 6)
                                            ios7 for Apple iPhone / iPad (iOS >= 7)
-                                           linupy for Yopy PDA
                                            maemo for Nokia Maemo
                                            motoezx for MotoEZX
                                            motomagx for MotoMAGX
@@ -957,6 +956,7 @@ Game engines:
     The values of <engine name> for these options are as follows:
 $engines_help
 Optional Features:
+  --enable-static          build a static binary instead of using shared objects
   --enable-c++11           build as C++11 if the compiler allows that
   --disable-debug          disable building with debugging symbols
   --enable-Werror          treat warnings as errors
@@ -1099,6 +1099,7 @@ EOF
 
 for ac_option in $@; do
 	case "$ac_option" in
+	--enable-static)         _static_build=yes;;	
 	--disable-16bit)          _16bit=no       ;;
 	--enable-highres)         _highres=yes    ;;
 	--disable-highres)        _highres=no     ;;
@@ -1505,14 +1506,10 @@ ios7)
 	_host_cpu=arm
 	_host_alias=arm-apple-darwin11
 	;;
-linupy)
-	_host_os=linux
-	_host_cpu=arm
-	;;
 maemo)
 	_host_os=maemo
 	_host_cpu=arm
-	_host_alias=arm-linux
+	_host_alias=arm-none-linux-gnueabi
 
 	# The prefix is always the same on Maemo so we hardcode the default
 	# here. It is still possible to define a custom prefix which is
@@ -2247,20 +2244,12 @@ echo_n "Checking host CPU architecture... "
 case $_host_cpu in
 	arm*)
 		echo "ARM"
-		case $_host_alias in
-			# Apple's as does not support the syntax we use in our ARM
-			# assembly. We simply do not enable it.
-			arm-apple-darwin9)
-				;;
-			arm-apple-darwin10)
-				;;
-			arm-apple-darwin11)
-				;;
-			# psvita does not like the asm code...
-			arm-vita-eabi)
+		case $_host in
+			openpandora)
+				define_in_config_if_yes yes 'USE_ARM_NEON_ASPECT_CORRECTOR'
 				;;
 
-			*)
+			android | android-arm | androidsdl-armeabi | arm-*riscos | caanoo | ds | gp2x | gp2xwiz | maemo | tizen | wince)
 				define_in_config_if_yes yes 'USE_ARM_SCALER_ASM'
 				# FIXME: The following feature exhibits a bug. It produces distorted
 				# sound since 9003ce517ff9906b0288f9f7c02197fd091d4554. The ARM
@@ -2679,7 +2668,7 @@ case $_host_os in
 		_libcurlpath="$PS3DEV/portlibs/ppu:$PS3DEV/portlibs/ppu/bin"
 
 		append_var DEFINES "-DPLAYSTATION3"
-		append_var CXXFLAGS "-mcpu=cell -mminimal-toc -I$PSL1GHT/ppu/include -I$PS3DEV/portlibs/ppu/include"
+		append_var CXXFLAGS "-mcpu=cell -mno-fp-in-toc -I$PSL1GHT/ppu/include -I$PS3DEV/portlibs/ppu/include"
 		append_var LDFLAGS "-L$PSL1GHT/ppu/lib -L$PS3DEV/portlibs/ppu/lib"
 		# The network libraries are statically linked and need to be specified in the following order
 		append_var SDL_NET_LIBS "-lSDL_net -lnet -lsysmodule"
@@ -2738,7 +2727,10 @@ case $_host_os in
 		append_var CXXFLAGS "-march=armv3m"
 		append_var CXXFLAGS "-mtune=xscale"
 		append_var LDFLAGS "-static"
-		_optimization_level=-O3
+		_optimization_level=-O2
+		append_var CXXFLAGS "-ffunction-sections"
+		append_var CXXFLAGS "-fdata-sections"
+		append_var LDFLAGS "-Wl,--gc-sections"
 		_port_mk="backends/platform/sdl/riscos/riscos.mk"
 		;;
 	solaris*)
@@ -2835,7 +2827,6 @@ if test -n "$_host"; then
 			_port_mk="backends/platform/android/android.mk"
 			_build_scalers=no
 			_seq_midi=no
-			_mt32emu=no
 			_timidity=no
 			;;
 		androidsdl | androidsdl-armeabi | androidsdl-armeabi-v7a | androidsdl-mips | androidsdl-x86 | androidsdl-arm64-v8a | androidsdl-x86_64)
@@ -2849,8 +2840,6 @@ if test -n "$_host"; then
 		arm-linux|arm*-linux-gnueabi|arm-*-linux)
 			;;
 		arm-*riscos)
-			_seq_midi=no
-			_timidity=no
 			_opengl_mode=none
 			_build_hq_scalers=no
 			# toolchain binaries prefixed by host
@@ -3050,9 +3039,6 @@ if test -n "$_host"; then
 			_seq_midi=no
 			_timidity=no
 			;;
-		linupy)
-			append_var DEFINES "-DLINUPY"
-			;;
 		m68k-atari-mint)
 			append_var DEFINES "-DSYSTEM_NOT_SUPPORTING_D_TYPE"
 			_ranlib=m68k-atari-mint-ranlib
@@ -3156,7 +3142,6 @@ if test -n "$_host"; then
 				_optimization_level=-O3
 			fi
 
-			define_in_config_if_yes yes 'USE_ARM_NEON_ASPECT_CORRECTOR'
 			append_var CXXFLAGS "-march=armv7-a"
 			append_var CXXFLAGS "-mtune=cortex-a8"
 			append_var CXXFLAGS "-mfloat-abi=softfp"
@@ -3228,7 +3213,6 @@ if test -n "$_host"; then
 			fi
 			;;
 		ps3)
-			_mt32emu=no
 			_timidity=no
 			_vkeybd=yes
 			_eventrec=no
@@ -3245,6 +3229,7 @@ if test -n "$_host"; then
 			_port_mk="backends/platform/sdl/psp2/psp2.mk"
 			;;
 		psp)
+			append_var DEFINES "-DGUI_ONLY_FULLSCREEN"
 			_backend="psp"
 			_build_scalers=no
 			_mt32emu=no
@@ -3263,7 +3248,6 @@ if test -n "$_host"; then
 			_unix=yes
 			_backend="tizen"
 			_port_mk="backends/platform/tizen/tizen.mk"
-			_arm_asm=yes
 			_build_scalers=no
 			_seq_midi=no
 			_mt32emu=no
@@ -3422,6 +3406,7 @@ case $_backend in
 		append_var LIBS "-lSceSysmodule_stub -lSceDisplay_stub -lSceGxm_stub"
 		append_var LIBS "-lSceAudio_stub -lSceCtrl_stub -lScePower_stub"
 		append_var LIBS "-lSceNet_stub -lSceNetCtl_stub -lSceAppMgr_stub -lScePgf_stub"
+		append_var LIBS "-lSceTouch_stub -lSceHid_stub"
 		append_var DEFINES "-DSDL_BACKEND"
 		add_line_to_config_mk "SDL_BACKEND = 1"
 		add_line_to_config_mk "USE_SDL2 = 1"
@@ -3497,7 +3482,11 @@ case $_backend in
 	androidsdl | dingux | gph | linuxmoto | maemo | openpandora | samsungtv | sdl)
 		find_sdlconfig
 		append_var INCLUDES "`$_sdlconfig --prefix="$_sdlpath" --cflags`"
-		append_var LIBS "`$_sdlconfig --prefix="$_sdlpath" --libs`"
+		if test "$_static_build" = yes ; then
+			append_var LIBS "`$_sdlconfig --prefix="$_sdlpath" --static-libs`"
+		else
+			append_var LIBS "`$_sdlconfig --prefix="$_sdlpath" --libs`"
+		fi
 		append_var DEFINES "-DSDL_BACKEND"
 		add_line_to_config_mk "SDL_BACKEND = 1"
 
@@ -3614,10 +3603,10 @@ esac
 #
 echo_n "Checking if host is POSIX compliant... "
 case $_host_os in
-	amigaos* | cygwin* | dreamcast | ds | gamecube | mingw* | n64 | ps2 | ps3 | psp2 | psp | wii | wince)
+	amigaos* | cygwin* | dreamcast | ds | gamecube | mingw* | n64 | ps2 | ps3 | psp2 | psp | riscos | wii | wince)
 		_posix=no
 		;;
-	3ds | android | androidsdl | beos* | bsd* | darwin* | freebsd* | gnu* | gph-linux | haiku* | hpux* | iphone | ios7 | irix*| k*bsd*-gnu* | linux* | maemo | mint* | netbsd* | openbsd* | riscos | solaris* | sunos* | uclinux* | webos)
+	3ds | android | androidsdl | beos* | bsd* | darwin* | freebsd* | gnu* | gph-linux | haiku* | hpux* | iphone | ios7 | irix*| k*bsd*-gnu* | linux* | maemo | mint* | netbsd* | openbsd* | solaris* | sunos* | uclinux* | webos)
 		_posix=yes
 		;;
 	os2-emx*)

@@ -79,11 +79,11 @@ typedef Common::HashMap<Common::String, uint32, Common::IgnoreCase_Hash, Common:
 
 class MohawkEngine_Riven : public MohawkEngine {
 protected:
-	Common::Error run();
+	Common::Error run() override;
 
 public:
 	MohawkEngine_Riven(OSystem *syst, const MohawkGameDescription *gamedesc);
-	virtual ~MohawkEngine_Riven();
+	~MohawkEngine_Riven() override;
 
 	RivenVideoManager *_video;
 	RivenSoundManager *_sound;
@@ -95,14 +95,13 @@ public:
 	// Display debug rectangles around the hotspots
 	bool _showHotspots;
 
-	GUI::Debugger *getDebugger();
+	GUI::Debugger *getDebugger() override;
 
-	bool canLoadGameStateCurrently();
-	bool canSaveGameStateCurrently();
-	Common::Error loadGameState(int slot);
-	void loadGameStateAndDisplayError(int slot);
-	Common::Error saveGameState(int slot, const Common::String &desc);
-	bool hasFeature(EngineFeature f) const;
+	bool canLoadGameStateCurrently() override;
+	bool canSaveGameStateCurrently() override;
+	Common::Error loadGameState(int slot) override;
+	Common::Error saveGameState(int slot, const Common::String &desc) override;
+	bool hasFeature(EngineFeature f) const override;
 
 	void doFrame();
 
@@ -148,8 +147,13 @@ public:
 	Common::SeekableReadStream *getExtrasResource(uint32 tag, uint16 id);
 	bool _activatedPLST;
 	bool _activatedSLST;
-	void runLoadDialog();
 	void delay(uint32 ms);
+
+	// Save / Load
+	void runLoadDialog();
+	void runSaveDialog();
+	void loadGameStateAndDisplayError(int slot);
+	void saveGameStateAndDisplayError(int slot, const Common::String &desc);
 
 	/**
 	 * Has the game ended, or has the user requested to quit?
