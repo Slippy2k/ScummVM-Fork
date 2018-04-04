@@ -62,18 +62,16 @@ class Interaction : public CObject {
 };
 
 class InteractionController : public CObject {
-	friend bool canInteractAny(GameObject *obj1, GameObject *obj2, int invId);
-
-public:
-	typedef ObList<Interaction> InteractionList;
+ public:
+	ObList _interactions;
+	int16 _field_20;
 	bool _flag24;
 
  private:
-	InteractionList _interactions;
-	static bool compareInteractions(const Interaction *i1, const Interaction *i2);
+	static bool compareInteractions(const void *p1, const void *p2);
 
  public:
-	InteractionController() : _flag24(true) {}
+	InteractionController() : _field_20(0), _flag24(true) {}
 	virtual ~InteractionController();
 
 	virtual bool load(MfcArchive &file);
@@ -92,6 +90,7 @@ struct EntranceInfo {
 	int32 _sceneId;
 	int32 _field_4;
 	int32 _messageQueueId;
+	byte _gap_C[292]; // FIXME
 	int32 _field_130;
 
 	bool load(MfcArchive &file);

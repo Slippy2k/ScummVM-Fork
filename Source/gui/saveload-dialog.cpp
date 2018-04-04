@@ -60,7 +60,7 @@ SaveLoadCloudSyncProgressDialog::SaveLoadCloudSyncProgressDialog(bool canRunInBa
 	new ButtonWidget(this, "SaveLoadCloudSyncProgress.Cancel", "Cancel", 0, kCancelSyncCmd, Common::ASCII_ESCAPE);	// Cancel dialog
 	ButtonWidget *backgroundButton = new ButtonWidget(this, "SaveLoadCloudSyncProgress.Background", "Run in background", 0, kBackgroundSyncCmd, Common::ASCII_RETURN);	// Confirm dialog
 	backgroundButton->setEnabled(canRunInBackground);
-	g_gui.scheduleTopDialogRedraw();
+	draw();
 }
 
 SaveLoadCloudSyncProgressDialog::~SaveLoadCloudSyncProgressDialog() {
@@ -72,7 +72,7 @@ void SaveLoadCloudSyncProgressDialog::handleCommand(CommandSender *sender, uint3
 	case kSavesSyncProgressCmd:
 		_percentLabel->setLabel(Common::String::format("%u%%", data));
 		_progressBar->setValue(data);
-		_progressBar->markAsDirty();
+		_progressBar->draw();
 		break;
 
 	case kCancelSyncCmd:
@@ -428,13 +428,11 @@ void SaveLoadChooserSimple::handleCommand(CommandSender *sender, uint32 cmd, uin
 		break;
 	case kChooseCmd:
 		_list->endEditMode();
-		if (selItem >= 0) {
-			if (!_saveList.empty()) {
-				setResult(_saveList[selItem].getSaveSlot());
-				_resultString = _list->getSelectedString();
-			}
-			close();
+		if (!_saveList.empty()) {
+			setResult(_saveList[selItem].getSaveSlot());
+			_resultString = _list->getSelectedString();
 		}
+		close();
 		break;
 	case kListSelectionChangedCmd:
 		updateSelection(true);
@@ -594,14 +592,14 @@ void SaveLoadChooserSimple::updateSelection(bool redraw) {
 	_deleteButton->setEnabled(isDeletable && !isLocked && (selItem >= 0) && (!_list->getSelectedString().empty()));
 
 	if (redraw) {
-		_gfxWidget->markAsDirty();
-		_date->markAsDirty();
-		_time->markAsDirty();
-		_playtime->markAsDirty();
-		_chooseButton->markAsDirty();
-		_deleteButton->markAsDirty();
+		_gfxWidget->draw();
+		_date->draw();
+		_time->draw();
+		_playtime->draw();
+		_chooseButton->draw();
+		_deleteButton->draw();
 
-		g_gui.scheduleTopDialogRedraw();
+		draw();
 	}
 }
 
@@ -696,14 +694,8 @@ void SaveLoadChooserSimple::updateSaveList() {
 		colors.push_back(ThemeEngine::kFontColorNormal);
 	}
 
-	int selected = _list->getSelected();
 	_list->setList(saveNames, &colors);
-	if (selected >= 0 && selected < (int)saveNames.size())
-		_list->setSelected(selected);
-	else
-		_chooseButton->setEnabled(false);
-
-	g_gui.scheduleTopDialogRedraw();
+	draw();
 }
 
 // SaveLoadChooserGrid implementation
@@ -761,13 +753,13 @@ void SaveLoadChooserGrid::handleCommand(CommandSender *sender, uint32 cmd, uint3
 	case kNextCmd:
 		++_curPage;
 		updateSaves();
-		g_gui.scheduleTopDialogRedraw();
+		draw();
 		break;
 
 	case kPrevCmd:
 		--_curPage;
 		updateSaves();
-		g_gui.scheduleTopDialogRedraw();
+		draw();
 		break;
 
 	case kNewSaveCmd:
@@ -788,13 +780,13 @@ void SaveLoadChooserGrid::handleMouseWheel(int x, int y, int direction) {
 		if (_nextButton->isEnabled()) {
 			++_curPage;
 			updateSaves();
-			g_gui.scheduleTopDialogRedraw();
+			draw();
 		}
 	} else {
 		if (_prevButton->isEnabled()) {
 			--_curPage;
 			updateSaves();
-			g_gui.scheduleTopDialogRedraw();
+			draw();
 		}
 	}
 }
@@ -802,7 +794,7 @@ void SaveLoadChooserGrid::handleMouseWheel(int x, int y, int direction) {
 void SaveLoadChooserGrid::updateSaveList() {
 	SaveLoadChooserDialog::updateSaveList();
 	updateSaves();
-	g_gui.scheduleTopDialogRedraw();
+	draw();
 }
 
 void SaveLoadChooserGrid::open() {

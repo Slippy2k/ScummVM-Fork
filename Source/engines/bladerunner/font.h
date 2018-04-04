@@ -33,21 +33,21 @@ namespace BladeRunner {
 
 class BladeRunnerEngine;
 
-class Font {
-	struct Character {
-		int x;
-		int y;
-		int width;
-		int height;
-		int dataOffset;
-	};
+struct FontCharacter {
+	int _x;
+	int _y;
+	int _width;
+	int _height;
+	int _dataOffset;
+};
 
+class Font {
 	BladeRunnerEngine *_vm;
 
 	int           _characterCount;
 	int           _maxWidth;
 	int           _maxHeight;
-	Character     _characters[256];
+	FontCharacter _characters[256];
 	int           _dataSize;
 	uint16       *_data;
 	int           _screenWidth;
@@ -67,18 +67,17 @@ public:
 	void setSpacing(int spacing1, int spacing2);
 	void setColor(uint16 color);
 
-	void draw(const Common::String &text, Graphics::Surface &surface, int x, int y) const;
+	void draw(const Common::String &text, Graphics::Surface &surface, int x, int y);
 	void drawColor(const Common::String &text, Graphics::Surface &surface, int x, int y, uint16 color);
-	void drawNumber(int num, Graphics::Surface &surface, int x, int y) const;
 
-	int getTextWidth(const Common::String &text) const;
-	int getTextHeight(const Common::String &text) const;
+	int getTextWidth(const Common::String &text);
+	int getTextHeight(const Common::String &text);
 
 private:
 	void reset();
 	void replaceColor(uint16 oldColor, uint16 newColor);
 
-	void drawCharacter(const uint8 character, Graphics::Surface &surface, int x, int y) const;
+	void drawCharacter(const char character, Graphics::Surface &surface, int x, int y);
 };
 
 } // End of namespace BladeRunner

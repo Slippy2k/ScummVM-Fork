@@ -54,6 +54,7 @@ struct TextColorData;
 class Dialog;
 class GuiObject;
 class ThemeEval;
+class ThemeItem;
 class ThemeParser;
 
 /**
@@ -110,18 +111,6 @@ enum DrawData {
 	kDDSeparator,
 	kDrawDataMAX,
 	kDDNone = -1
-};
-
-/**
- * Dialog layers.
- * The currently active dialog has two layers, background and foreground.
- * The background layer is drawn to the backbuffer. The foreground layer
- * is drawn to the screen. This allows draw calls to restore the background
- * layer before redrawing a widget.
- */
-enum DrawLayer {
-	kDrawLayerBackground,
-	kDrawLayerForeground
 };
 
 // FIXME: TextData is really a bad name, not conveying what this enum is about.
@@ -319,38 +308,22 @@ public:
 	const Graphics::PixelFormat getPixelFormat() const { return _overlayFormat; }
 
 	/**
-	 * Draw full screen shading with the supplied style
+	 * Implementation of the GUI::Theme API. Called when a
+	 * new dialog is opened. Note that the boolean parameter
+	 * meaning has been changed.
 	 *
-	 * This is used to dim the inactive dialogs so the active one stands out.
+	 * @param enableBuffering If set to true, buffering is enabled for
+	 *                        drawing this dialog, and will continue enabled
+	 *                        until disabled.
 	 */
-	void applyScreenShading(ShadingStyle shading);
-
-	/**
-	 * Sets the active drawing surface to the back buffer.
-	 *
-	 * All drawing from this point on will be done on that surface.
-	 * The back buffer surface needs to be copied to the screen surface
-	 * in order to become visible.
-	 */
-	void drawToBackbuffer();
-
-	/**
-	 * Sets the active drawing surface to the screen.
-	 *
-	 * All drawing from this point on will be done on that surface.
-	 */
-	void drawToScreen();
+	void openDialog(bool enableBuffering, ShadingStyle shading = kShadingNone);
 
 	/**
 	 * The updateScreen() method is called every frame.
-	 * It copies dirty rectangles in the Screen surface to the overlay.
+	 * It processes all the drawing queues and then copies dirty rects
+	 * in the current Screen surface to the overlay.
 	 */
-	void updateScreen();
-
-	/**
-	 * Copy the entire backbuffer surface to the screen surface
-	 */
-	void copyBackBufferToScreen();
+	void updateScreen(bool render = true);
 
 
 	/** @name FONT MANAGEMENT METHODS */
@@ -452,8 +425,8 @@ public:
 
 	/**
 	 * Actual implementation of a dirty rect handling.
-	 * Dirty rectangles are queued on a list, merged and optimized
-	 * when possible and are later used for the actual drawing.
+	 * Dirty rectangles are queued on a list and are later used for the
+	 * actual drawing.
 	 *
 	 * @param r Area of the dirty rect.
 	 */
@@ -561,6 +534,13 @@ protected:
 	void setGraphicsMode(GraphicsMode mode);
 
 public:
+	/**
+	 * Finishes buffering: widgets from then on will be drawn straight on the screen
+	 * without drawing queues.
+	 */
+	inline void finishBuffering() { _buffering = false; }
+	inline void startBuffering() { _buffering = true; }
+
 	inline ThemeEval *getEvaluator() { return _themeEval; }
 	inline Graphics::VectorRenderer *renderer() { return _vectorRenderer; }
 
@@ -643,35 +623,33 @@ protected:
 	const Graphics::Font *loadFont(const Common::String &filename, const Common::String &scalableFilename, const Common::String &charset, const int pointsize, const bool makeLocalizedFont);
 
 	/**
-	 * Dirty Screen handling function.
-	 * Draws all the dirty rectangles in the list to the overlay.
+	 * Actual Dirty Screen handling function.
+	 * Handles all the dirty squares in the list, merges and optimizes
+	 * them when possible and draws them to the screen.
+	 * Called from updateScreen()
 	 */
-	void updateDirtyScreen();
+	void renderDirtyScreen();
 
 	/**
-	 * Draws a GUI element according to a DrawData descriptor.
+	 * Generates a DrawQueue item and enqueues it so it's drawn to the screen
+	 * when the drawing queue is processed.
 	 *
-	 * Only calls with a DrawData layer attribute matching the active layer
-	 * are actually drawn to the active surface.
+	 * If Buffering is enabled, the DrawQueue item will be automatically placed
+	 * on its corresponding queue.
+	 * If Buffering is disabled, the DrawQueue item will be processed immediately
+	 * and drawn to the screen.
 	 *
-	 * These functions are called from all the Widget drawing methods.
+	 * This function is called from all the Widget Drawing methods.
 	 */
-	void drawDD(DrawData type, const Common::Rect &r, uint32 dynamic = 0, bool forceRestore = false);
-	void drawDDClip(DrawData type, const Common::Rect &r, const Common::Rect &clippingRect, uint32 dynamic = 0,
-	                bool forceRestore = false);
-	void drawDDText(TextData type, TextColor color, const Common::Rect &r, const Common::String &text, bool restoreBg,
-	                bool elipsis, Graphics::TextAlign alignH = Graphics::kTextAlignLeft,
-	                TextAlignVertical alignV = kTextAlignVTop, int deltax = 0,
-	                const Common::Rect &drawableTextArea = Common::Rect(0, 0, 0, 0));
-	void drawDDTextClip(TextData type, TextColor color, const Common::Rect &r, const Common::Rect &clippingRect,
-	                    const Common::String &text, bool restoreBg,
-	                    bool elipsis, Graphics::TextAlign alignH = Graphics::kTextAlignLeft,
-	                    TextAlignVertical alignV = kTextAlignVTop, int deltax = 0,
-	                    const Common::Rect &drawableTextArea = Common::Rect(0, 0, 0, 0));
-	void drawBitmap(const Graphics::Surface *bitmap, const Common::Rect &r, bool alpha);
-	void drawBitmapClip(const Graphics::Surface *bitmap, const Common::Rect &clippingRect, const Common::Rect &r,
-	                    bool alpha);
-	void drawABitmap(Graphics::TransparentSurface *bitmap, const Common::Rect &r, AutoScaleMode autoscale, int alpha);
+	void queueDD(DrawData type,  const Common::Rect &r, uint32 dynamic = 0, bool restore = false);
+	void queueDDClip(DrawData type, const Common::Rect &r, const Common::Rect &clippingRect, uint32 dynamic = 0, bool restore = false);
+	void queueDDText(TextData type, TextColor color, const Common::Rect &r, const Common::String &text, bool restoreBg,
+	                 bool elipsis, Graphics::TextAlign alignH = Graphics::kTextAlignLeft, TextAlignVertical alignV = kTextAlignVTop, int deltax = 0, const Common::Rect &drawableTextArea = Common::Rect(0, 0, 0, 0));
+	void queueDDTextClip(TextData type, TextColor color, const Common::Rect &r, const Common::Rect &clippingRect, const Common::String &text, bool restoreBg,
+					 bool elipsis, Graphics::TextAlign alignH = Graphics::kTextAlignLeft, TextAlignVertical alignV = kTextAlignVTop, int deltax = 0, const Common::Rect &drawableTextArea = Common::Rect(0, 0, 0, 0));
+	void queueBitmap(const Graphics::Surface *bitmap, const Common::Rect &r, bool alpha);
+	void queueBitmapClip(const Graphics::Surface *bitmap, const Common::Rect &clippingRect, const Common::Rect &r, bool alpha);
+	void queueABitmap(Graphics::TransparentSurface *bitmap, const Common::Rect &r, AutoScaleMode autoscale, int alpha);
 
 	/**
 	 * DEBUG: Draws a white square and writes some text next to it.
@@ -717,13 +695,9 @@ protected:
 	/** Backbuffer surface. Stores previous states of the screen to blit back */
 	Graphics::TransparentSurface _backBuffer;
 
-	/**
-	 * Filter the submitted DrawData descriptors according to their layer attribute
-	 *
-	 * This is used to selectively draw the background or foreground layer
-	 * of the dialogs.
-	 */
-	DrawLayer _layerToDraw;
+	/** Sets whether the current drawing is being buffered (stored for later
+	    processing) or drawn directly to the screen. */
+	bool _buffering;
 
 	/** Bytes per pixel of the Active Drawing Surface (i.e. the screen) */
 	int _bytesPerPixel;
@@ -756,6 +730,12 @@ protected:
 
 	/** List of all the dirty screens that must be blitted to the overlay. */
 	Common::List<Common::Rect> _dirtyScreen;
+
+	/** Queue with all the drawing that must be done to the Back Buffer */
+	Common::List<ThemeItem *> _bufferQueue;
+
+	/** Queue with all the drawing that must be done to the screen */
+	Common::List<ThemeItem *> _screenQueue;
 
 	bool _initOk;  ///< Class and renderer properly initialized
 	bool _themeOk; ///< Theme data successfully loaded.

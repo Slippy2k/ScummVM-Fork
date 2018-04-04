@@ -1,5 +1,5 @@
 /* Copyright (C) 2003, 2004, 2005, 2006, 2008, 2009 Dean Beeler, Jerome Fisher
- * Copyright (C) 2011-2017 Dean Beeler, Jerome Fisher, Sergey V. Mikayev
+ * Copyright (C) 2011-2016 Dean Beeler, Jerome Fisher, Sergey V. Mikayev
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License as published by
@@ -21,6 +21,12 @@
 
 #include "LA32WaveGenerator.h"
 #include "Tables.h"
+
+#if MT32EMU_USE_FLOAT_SAMPLES
+#define MT32EMU_LA32_WAVE_GENERATOR_CPP
+#include "LA32FloatWaveGenerator.cpp"
+#undef MT32EMU_LA32_WAVE_GENERATOR_CPP
+#else
 
 namespace MT32Emu {
 
@@ -337,12 +343,12 @@ Bit32u LA32WaveGenerator::getPCMInterpolationFactor() const {
 	return pcmInterpolationFactor;
 }
 
-void LA32IntPartialPair::init(const bool useRingModulated, const bool useMixed) {
+void LA32PartialPair::init(const bool useRingModulated, const bool useMixed) {
 	ringModulated = useRingModulated;
 	mixed = useMixed;
 }
 
-void LA32IntPartialPair::initSynth(const PairType useMaster, const bool sawtoothWaveform, const Bit8u pulseWidth, const Bit8u resonance) {
+void LA32PartialPair::initSynth(const PairType useMaster, const bool sawtoothWaveform, const Bit8u pulseWidth, const Bit8u resonance) {
 	if (useMaster == MASTER) {
 		master.initSynth(sawtoothWaveform, pulseWidth, resonance);
 	} else {
@@ -350,7 +356,7 @@ void LA32IntPartialPair::initSynth(const PairType useMaster, const bool sawtooth
 	}
 }
 
-void LA32IntPartialPair::initPCM(const PairType useMaster, const Bit16s *pcmWaveAddress, const Bit32u pcmWaveLength, const bool pcmWaveLooped) {
+void LA32PartialPair::initPCM(const PairType useMaster, const Bit16s *pcmWaveAddress, const Bit32u pcmWaveLength, const bool pcmWaveLooped) {
 	if (useMaster == MASTER) {
 		master.initPCM(pcmWaveAddress, pcmWaveLength, pcmWaveLooped, true);
 	} else {
@@ -358,7 +364,7 @@ void LA32IntPartialPair::initPCM(const PairType useMaster, const Bit16s *pcmWave
 	}
 }
 
-void LA32IntPartialPair::generateNextSample(const PairType useMaster, const Bit32u amp, const Bit16u pitch, const Bit32u cutoff) {
+void LA32PartialPair::generateNextSample(const PairType useMaster, const Bit32u amp, const Bit16u pitch, const Bit32u cutoff) {
 	if (useMaster == MASTER) {
 		master.generateNextSample(amp, pitch, cutoff);
 	} else {
@@ -366,7 +372,7 @@ void LA32IntPartialPair::generateNextSample(const PairType useMaster, const Bit3
 	}
 }
 
-Bit16s LA32IntPartialPair::unlogAndMixWGOutput(const LA32WaveGenerator &wg) {
+Bit16s LA32PartialPair::unlogAndMixWGOutput(const LA32WaveGenerator &wg) {
 	if (!wg.isActive()) {
 		return 0;
 	}
@@ -378,16 +384,22 @@ Bit16s LA32IntPartialPair::unlogAndMixWGOutput(const LA32WaveGenerator &wg) {
 	return firstSample + secondSample;
 }
 
-static inline Bit16s produceDistortedSample(Bit16s sample) {
-	return ((sample & 0x2000) == 0) ? Bit16s(sample & 0x1fff) : Bit16s(sample | ~0x1fff);
-}
-
-Bit16s LA32IntPartialPair::nextOutSample() {
+Bit16s LA32PartialPair::nextOutSample() {
 	if (!ringModulated) {
 		return unlogAndMixWGOutput(master) + unlogAndMixWGOutput(slave);
 	}
 
-	Bit16s masterSample = unlogAndMixWGOutput(master); // Store master partial sample for further mixing
+	/*
+	 * SEMI-CONFIRMED: Ring modulation model derived from sample analysis of specially constructed patches which exploit distortion.
+	 * LA32 ring modulator found to produce distorted output in case if the absolute value of maximal amplitude of one of the input partials exceeds 8191.
+	 * This is easy to reproduce using synth partials with resonance values close to the maximum. It looks like an integer overflow happens in this case.
+	 * As the distortion is strictly bound to the amplitude of the complete mixed square + resonance wave in the linear space,
+	 * it is reasonable to assume the ring modulation is performed also in the linear space by sample multiplication.
+	 * Most probably the overflow is caused by limited precision of the multiplication circuit as the very similar distortion occurs with panning.
+	 */
+	Bit16s nonOverdrivenMasterSample = unlogAndMixWGOutput(master); // Store master partial sample for further mixing
+	Bit16s masterSample = nonOverdrivenMasterSample << 2;
+	masterSample >>= 2;
 
 	/* SEMI-CONFIRMED from sample analysis:
 	 * We observe that for partial structures with ring modulation the interpolation is not applied to the slave PCM partial.
@@ -395,20 +407,13 @@ Bit16s LA32IntPartialPair::nextOutSample() {
 	 * is borrowed by the ring modulation circuit (or the LA32 chip has a similar lack of resources assigned to each partial pair).
 	 */
 	Bit16s slaveSample = slave.isPCMWave() ? LA32Utilites::unlog(slave.getOutputLogSample(true)) : unlogAndMixWGOutput(slave);
-
-	/* SEMI-CONFIRMED: Ring modulation model derived from sample analysis of specially constructed patches which exploit distortion.
-	 * LA32 ring modulator found to produce distorted output in case if the absolute value of maximal amplitude of one of the input partials exceeds 8191.
-	 * This is easy to reproduce using synth partials with resonance values close to the maximum. It looks like an integer overflow happens in this case.
-	 * As the distortion is strictly bound to the amplitude of the complete mixed square + resonance wave in the linear space,
-	 * it is reasonable to assume the ring modulation is performed also in the linear space by sample multiplication.
-	 * Most probably the overflow is caused by limited precision of the multiplication circuit as the very similar distortion occurs with panning.
-	 */
-	Bit16s ringModulatedSample = Bit16s((Bit32s(produceDistortedSample(masterSample)) * Bit32s(produceDistortedSample(slaveSample))) >> 13);
-
-	return mixed ? masterSample + ringModulatedSample : ringModulatedSample;
+	slaveSample <<= 2;
+	slaveSample >>= 2;
+	Bit16s ringModulatedSample = Bit16s((Bit32s(masterSample) * Bit32s(slaveSample)) >> 13);
+	return mixed ? nonOverdrivenMasterSample + ringModulatedSample : ringModulatedSample;
 }
 
-void LA32IntPartialPair::deactivate(const PairType useMaster) {
+void LA32PartialPair::deactivate(const PairType useMaster) {
 	if (useMaster == MASTER) {
 		master.deactivate();
 	} else {
@@ -416,8 +421,10 @@ void LA32IntPartialPair::deactivate(const PairType useMaster) {
 	}
 }
 
-bool LA32IntPartialPair::isActive(const PairType useMaster) const {
+bool LA32PartialPair::isActive(const PairType useMaster) const {
 	return useMaster == MASTER ? master.isActive() : slave.isActive();
 }
 
 } // namespace MT32Emu
+
+#endif // #if MT32EMU_USE_FLOAT_SAMPLES

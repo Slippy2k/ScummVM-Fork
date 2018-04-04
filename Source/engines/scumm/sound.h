@@ -24,10 +24,10 @@
 #define SCUMM_SOUND_H
 
 #include "common/scummsys.h"
-#include "common/serializer.h"
 #include "common/str.h"
 #include "audio/mididrv.h"
 #include "backends/audiocd/audiocd.h"
+#include "scumm/saveload.h"
 
 namespace Audio {
 class Mixer;
@@ -46,7 +46,7 @@ enum {
 
 // TODO: Consider splitting Sound into even more subclasses.
 // E.g. for v1-v4, v5, v6+, ...
-class Sound : public Common::Serializable {
+class Sound : public Serializable {
 public:
 	enum SoundMode {
 		kVOCMode,
@@ -132,7 +132,8 @@ public:
 	AudioCDManager::Status getCDStatus();
 	int getCurrentCDSound() const { return _currentCDSound; }
 
-	void saveLoadWithSerializer(Common::Serializer &ser);
+	// Used by the save/load system:
+	void saveLoadWithSerializer(Serializer *ser);
 
 protected:
 	void setupSfxFile();

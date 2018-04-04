@@ -167,7 +167,8 @@ void RecorderDialog::handleCommand(CommandSender *sender, uint32 cmd, uint32 dat
 	case kRecordCmd: {
 		TimeDate t;
 		Common::String gameId = ConfMan.get("gameid", _target);
-		GameDescriptor desc = EngineMan.findGame(gameId);
+		const EnginePlugin *plugin = 0;
+		GameDescriptor desc = EngineMan.findGame(gameId, &plugin);
 		g_system->getTimeAndDate(t);
 		EditRecordDialog editDlg(_("Unknown Author"), Common::String::format("%.2d.%.2d.%.4d ", t.tm_mday, t.tm_mon, 1900 + t.tm_year) + desc.description(), "");
 		if (editDlg.runModal() != kOKCmd) {
@@ -211,7 +212,7 @@ void RecorderDialog::updateList() {
 		file.close();
 	}
 	_list->setList(namesList);
-	_list->markAsDirty();
+	_list->draw();
 }
 
 int RecorderDialog::runModal(Common::String &target) {
@@ -253,7 +254,7 @@ void RecorderDialog::updateSelection(bool redraw) {
 		_screenShotsCount = -1;
 		_currentScreenshot = 0;
 		_gfxWidget->setGfx(-1, -1, 0, 0, 0);
-		_gfxWidget->markAsDirty();
+		_gfxWidget->draw();
 		updateScreenShotsText();
 	}
 }
@@ -283,7 +284,7 @@ void RecorderDialog::updateScreenshot() {
 	} else {
 		_gfxWidget->setGfx(-1, -1, 0, 0, 0);
 	}
-	_gfxWidget->markAsDirty();
+	_gfxWidget->draw();
 }
 
 void RecorderDialog::updateScreenShotsText() {

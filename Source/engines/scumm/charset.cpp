@@ -708,12 +708,17 @@ void CharsetRenderer::translateColor() {
 	}
 }
 
-void CharsetRenderer::saveLoadWithSerializer(Common::Serializer &ser) {
-	ser.syncAsByte(_curId, VER(73), VER(73));
-	ser.syncAsSint32LE(_curId, VER(74));
-	ser.syncAsByte(_color, VER(73));
+void CharsetRenderer::saveLoadWithSerializer(Serializer *ser) {
+	static const SaveLoadEntry charsetRendererEntries[] = {
+		MKLINE_OLD(CharsetRenderer, _curId, sleByte, VER(73), VER(73)),
+		MKLINE(CharsetRenderer, _curId, sleInt32, VER(74)),
+		MKLINE(CharsetRenderer, _color, sleByte, VER(73)),
+		MKEND()
+	};
 
-	if (ser.isLoading()) {
+	ser->saveLoadEntries(this, charsetRendererEntries);
+
+	if (ser->isLoading()) {
 		setCurID(_curId);
 		setColor(_color);
 	}

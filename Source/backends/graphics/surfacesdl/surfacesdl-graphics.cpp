@@ -1002,8 +1002,6 @@ bool SurfaceSdlGraphicsManager::setShader(int id) {
 void SurfaceSdlGraphicsManager::initSize(uint w, uint h, const Graphics::PixelFormat *format) {
 	assert(_transactionMode == kTransactionActive);
 
-	_newShakePos = 0;
-	
 #ifdef USE_RGB_COLOR
 	//avoid redundant format changes
 	Graphics::PixelFormat newFormat;
@@ -1495,12 +1493,12 @@ void SurfaceSdlGraphicsManager::internUpdateScreen() {
 		dstPitch = _hwScreen->pitch;
 
 		for (r = _dirtyRectList; r != lastRect; ++r) {
-			int dst_y = r->y + _currentShakePos;
-			int dst_h = 0;
+			register int dst_y = r->y + _currentShakePos;
+			register int dst_h = 0;
 #ifdef USE_SCALERS
-			int orig_dst_y = 0;
+			register int orig_dst_y = 0;
 #endif
-			int rx1 = r->x * scale1;
+			register int rx1 = r->x * scale1;
 
 			if (dst_y < height) {
 				dst_h = r->h;
@@ -2113,20 +2111,12 @@ void SurfaceSdlGraphicsManager::copyRectToOverlay(const void *buf, int pitch, in
 #pragma mark -
 
 void SurfaceSdlGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, int hotspotX, int hotspotY, uint32 keyColor, bool dontScale, const Graphics::PixelFormat *format) {
-	bool formatChanged = false;
-	
 	if (format) {
 #ifndef USE_RGB_COLOR
 		assert(format->bytesPerPixel == 1);
 #endif
-		if (format->bytesPerPixel != _cursorFormat.bytesPerPixel) {
-			formatChanged = true;
-		}
 		_cursorFormat = *format;
 	} else {
-		if (_cursorFormat.bytesPerPixel != 1) {
-			formatChanged = true;
-		}		
 		_cursorFormat = Graphics::PixelFormat::createFormatCLUT8();
 	}
 
@@ -2140,9 +2130,13 @@ void SurfaceSdlGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, 
 
 	_cursorDontScale = dontScale;
 
-	if (_mouseCurState.w != (int)w || _mouseCurState.h != (int)h || formatChanged) {
+	if (_mouseCurState.w != (int)w || _mouseCurState.h != (int)h) {
 		_mouseCurState.w = w;
 		_mouseCurState.h = h;
+
+		if (!w || !h) {
+			return;
+		}
 
 		if (_mouseOrigSurface) {
 			SDL_FreeSurface(_mouseOrigSurface);
@@ -2150,22 +2144,12 @@ void SurfaceSdlGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, 
 			if (_mouseSurface == _mouseOrigSurface) {
 				_mouseSurface = nullptr;
 			}
-
-			_mouseOrigSurface = nullptr;
-		}
-
-		if ((formatChanged || _cursorFormat.bytesPerPixel == 4) && _mouseSurface) {
-			SDL_FreeSurface(_mouseSurface);
-			_mouseSurface = nullptr;
-		}
-
-		if (!w || !h) {
-			return;
 		}
 
 		if (_cursorFormat.bytesPerPixel == 4) {
-			assert(!_mouseSurface);
-			assert(!_mouseOrigSurface);
+			if (_mouseSurface != _mouseOrigSurface) {
+				SDL_FreeSurface(_mouseSurface);
+			}
 
 			
 			const Uint32 rMask = ((0xFF >> format->rLoss) << format->rShift);
@@ -2174,8 +2158,6 @@ void SurfaceSdlGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, 
 			const Uint32 aMask = ((0xFF >> format->aLoss) << format->aShift);
 			_mouseSurface = _mouseOrigSurface = SDL_CreateRGBSurfaceFrom(const_cast<void *>(buf), w, h, format->bytesPerPixel * 8, w * format->bytesPerPixel, rMask, gMask, bMask, aMask);
 		} else {
-			assert(!_mouseOrigSurface);
-			
 		// Allocate bigger surface because AdvMame2x adds black pixel at [0,0]
 		_mouseOrigSurface = SDL_CreateRGBSurface(SDL_SWSURFACE | SDL_RLEACCEL | SDL_SRCCOLORKEY | SDL_SRCALPHA,
 						_mouseCurState.w + 2 * MAX_SCALER_REACH,
@@ -2390,7 +2372,7 @@ void SurfaceSdlGraphicsManager::blitCursor() {
 		dstPtr += _mouseOrigSurface->pitch - w * 2;
 	}
 
-	if (sizeChanged || !_mouseSurface) {
+	if (sizeChanged) {
 
 		if (_mouseSurface)
 			SDL_FreeSurface(_mouseSurface);

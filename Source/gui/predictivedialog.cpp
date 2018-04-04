@@ -995,7 +995,7 @@ void PredictiveDialog::pressEditText() {
 	Common::strlcat(_predictiveResult, _currentWord.c_str(), sizeof(_predictiveResult));
 	_editText->setEditString(_predictiveResult);
 	//_editText->setCaretPos(_prefix.size() + _currentWord.size());
-	_editText->markAsDirty();
+	_editText->draw();
 }
 
 } // namespace GUI

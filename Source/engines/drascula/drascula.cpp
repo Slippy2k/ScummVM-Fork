@@ -246,9 +246,6 @@ Common::Error DrasculaEngine::run() {
 	case Common::IT_ITA:
 		_lang = kItalian;
 		break;
-	case Common::RU_RUS:
-		_lang = kRussian;
-		break;
 	default:
 		warning("Unknown game language. Falling back to English");
 		_lang = kEnglish;
@@ -784,7 +781,7 @@ bool DrasculaEngine::verify2() {
 		if (pickupObject())
 			return true;
 	} else {
-		if (!strcmp(textName, _textmisc[3]) && _hasName) {
+		if (!strcmp(textName, "hacker") && _hasName) {
 			if (checkAction(50))
 				return true;
 		} else {

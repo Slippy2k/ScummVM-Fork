@@ -86,8 +86,8 @@ void PspDebugTrace(bool alsoToScreen, const char *format, ...) {
 //
 void mipsBacktrace(uint32 levels, void **addresses) {
 	// get the current return address
-	byte *retAddr;
-	byte *stackPointer;
+	register byte *retAddr;
+	register byte *stackPointer;
 	GET_RET(retAddr);
 	GET_SP(stackPointer);
 	char string[100];

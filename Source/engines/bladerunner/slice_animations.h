@@ -36,6 +36,12 @@ namespace BladeRunner {
 
 class BladeRunnerEngine;
 
+struct SlicePalette {
+	uint16 color555[256];
+	Color256 color[256];
+
+//	uint16 &operator[](size_t i) { return color555[i]; }
+};
 
 class SliceAnimations {
 	friend class SliceRenderer;
@@ -49,30 +55,21 @@ class SliceAnimations {
 		uint32 offset;
 	};
 
-	struct Palette {
-		uint16 color555[256];
-		Color256 color[256];
-
-	//	uint16 &operator[](size_t i) { return color555[i]; }
-	};
-
 	struct Page {
 		void   *_data;
 		uint32 _lastAccess;
 
-		Page() : _data(nullptr), _lastAccess(0) {}
+		Page() : _data(nullptr) {}
 	};
 
 	struct PageFile {
-		int                  _fileNumber;
 		SliceAnimations     *_sliceAnimations;
 		Common::File         _file;
 		Common::Array<int32> _pageOffsets;
 
-		PageFile(SliceAnimations *sliceAnimations) : _sliceAnimations(sliceAnimations), _fileNumber(-1) {}
+		PageFile(SliceAnimations *sliceAnimations) : _sliceAnimations(sliceAnimations) {}
 
 		bool  open(const Common::String &name);
-		void  close();
 		void *loadPage(uint32 page);
 	};
 
@@ -83,7 +80,7 @@ class SliceAnimations {
 	uint32 _pageCount;
 	uint32 _paletteCount;
 
-	Common::Array<Palette>      _palettes;
+	Common::Array<SlicePalette> _palettes;
 	Common::Array<Animation>    _animations;
 	Common::Array<Page>         _pages;
 
@@ -92,28 +89,25 @@ class SliceAnimations {
 
 public:
 	SliceAnimations(BladeRunnerEngine *vm)
-		: _vm(vm)
-		, _coreAnimPageFile(this)
-		, _framesPageFile(this)
-		, _timestamp(0)
-		, _pageSize(0)
-		, _pageCount(0)
-		, _paletteCount(0) {}
+		: _vm(vm),
+		  _coreAnimPageFile(this),
+		  _framesPageFile(this) {
+	}
 	~SliceAnimations();
 
 	bool open(const Common::String &name);
 
 	bool openCoreAnim();
-	bool openFrames(int fileNumber);
+	bool openHDFrames();
 
-	Palette &getPalette(int i) { return _palettes[i]; };
-	void    *getFramePtr(uint32 animation, uint32 frame);
+	SlicePalette &getPalette(int i) { return _palettes[i]; };
+	void *getFramePtr(uint32 animation, uint32 frame);
 
-	int   getFrameCount(int animation) const { return _animations[animation].frameCount; }
-	float getFPS(int animation) const { return _animations[animation].fps; }
+	int getFrameCount(int animation){ return _animations[animation].frameCount; }
+	float getFPS(int animation){ return _animations[animation].fps; }
 
-	Vector3 getPositionChange(int animation) const;
-	float   getFacingChange(int animation) const;
+	Vector3 getPositionChange(int animation);
+	float getFacingChange(int animation);
 };
 
 } // End of namespace BladeRunner

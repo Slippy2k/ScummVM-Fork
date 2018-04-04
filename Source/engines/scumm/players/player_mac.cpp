@@ -97,46 +97,53 @@ Player_Mac::~Player_Mac() {
 	delete[] _channel;
 }
 
-void syncWithSerializer(Common::Serializer &s, Player_Mac::Channel &c) {
-	s.syncAsUint16LE(c._pos, VER(94));
-	s.syncAsSint32LE(c._pitchModifier, VER(94));
-	s.syncAsByte(c._velocity, VER(94));
-	s.syncAsUint32LE(c._remaining, VER(94));
-	s.syncAsByte(c._notesLeft, VER(94));
-}
-
-void syncWithSerializer(Common::Serializer &s, Player_Mac::Instrument &i) {
-	s.syncAsUint32LE(i._pos, VER(94));
-	s.syncAsUint32LE(i._subPos, VER(94));
-}
-
-void Player_Mac::saveLoadWithSerializer(Common::Serializer &s) {
+void Player_Mac::saveLoadWithSerializer(Serializer *ser) {
 	Common::StackLock lock(_mutex);
-	if (s.getVersion() < VER(94)) {
-		if (_vm->_game.id == GID_MONKEY && s.isLoading()) {
+	if (ser->getVersion() < VER(94)) {
+		if (_vm->_game.id == GID_MONKEY && ser->isLoading()) {
 			IMuse *dummyImuse = IMuse::create(_vm->_system, NULL, NULL);
-			dummyImuse->saveLoadIMuse(s, _vm, false);
+			dummyImuse->save_or_load(ser, _vm, false);
 			delete dummyImuse;
 		}
 	} else {
+		static const SaveLoadEntry musicEntries[] = {
+			MKLINE(Player_Mac, _sampleRate, sleUint32, VER(94)),
+			MKLINE(Player_Mac, _soundPlaying, sleInt16, VER(94)),
+			MKEND()
+		};
+
+		static const SaveLoadEntry channelEntries[] = {
+			MKLINE(Channel, _pos, sleUint16, VER(94)),
+			MKLINE(Channel, _pitchModifier, sleInt32, VER(94)),
+			MKLINE(Channel, _velocity, sleUint8, VER(94)),
+			MKLINE(Channel, _remaining, sleUint32, VER(94)),
+			MKLINE(Channel, _notesLeft, sleUint8, VER(94)),
+			MKEND()
+		};
+
+		static const SaveLoadEntry instrumentEntries[] = {
+			MKLINE(Instrument, _pos, sleUint32, VER(94)),
+			MKLINE(Instrument, _subPos, sleUint32, VER(94)),
+			MKEND()
+		};
+
 		uint32 mixerSampleRate = _sampleRate;
 		int i;
 
-		s.syncAsUint32LE(_sampleRate, VER(94));
-		s.syncAsSint16LE(_soundPlaying, VER(94));
+		ser->saveLoadEntries(this, musicEntries);
 
-		if (s.isLoading() && _soundPlaying != -1) {
+		if (ser->isLoading() && _soundPlaying != -1) {
 			const byte *ptr = _vm->getResourceAddress(rtSound, _soundPlaying);
 			assert(ptr);
 			loadMusic(ptr);
 		}
 
-		s.syncArray(_channel, _numberOfChannels, syncWithSerializer);
+		ser->saveLoadArrayOf(_channel, _numberOfChannels, sizeof(Channel), channelEntries);
 		for (i = 0; i < _numberOfChannels; i++) {
-			syncWithSerializer(s, _channel[i]);
+			ser->saveLoadEntries(&_channel[i], instrumentEntries);
 		}
 
-		if (s.isLoading()) {
+		if (ser->isLoading()) {
 			// If necessary, adjust the channel data to fit the
 			// current sample rate.
 			if (_soundPlaying != -1 && _sampleRate != mixerSampleRate) {

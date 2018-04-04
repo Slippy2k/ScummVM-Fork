@@ -147,7 +147,7 @@ static const PlainGameDescriptor mohawkGames[] = {
 	{"stellaluna", "Stellaluna"},
 	{"sheila", "Sheila Rae, the Brave"},
 	{"rugratsps", "Rugrats Print Shop" },
-	{nullptr, nullptr}
+	{0, 0}
 };
 
 #include "mohawk/detection_tables.h"
@@ -159,7 +159,7 @@ static const char *directoryGlobs[] = {
 	"program",
 	"95instal",
 	"Rugrats Adventure Game",
-	nullptr
+	0
 };
 
 static const ADExtraGuiOptionsMap optionsList[] = {
@@ -184,25 +184,25 @@ public:
 		_directoryGlobs = directoryGlobs;
 	}
 
-	const ADGameDescription *fallbackDetect(const FileMap &allFiles, const Common::FSList &fslist) const override {
+	virtual const ADGameDescription *fallbackDetect(const FileMap &allFiles, const Common::FSList &fslist) const {
 		return detectGameFilebased(allFiles, fslist, Mohawk::fileBased);
 	}
 
-	const char *getName() const override {
+	virtual const char *getName() const {
 		return "Mohawk";
 	}
 
-	const char *getOriginalCopyright() const override {
+	virtual const char *getOriginalCopyright() const {
 		return "Myst and Riven (C) Cyan Worlds\nMohawk OS (C) Ubisoft";
 	}
 
-	bool hasFeature(MetaEngineFeature f) const override;
-	bool createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
-	SaveStateList listSaves(const char *target) const override;
+	virtual bool hasFeature(MetaEngineFeature f) const;
+	virtual bool createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const;
+	virtual SaveStateList listSaves(const char *target) const;
 	SaveStateList listSavesForPrefix(const char *prefix, const char *extension) const;
-	int getMaximumSaveSlot() const override { return 999; }
-	void removeSaveState(const char *target, int slot) const override;
-	SaveStateDescriptor querySaveMetaInfos(const char *target, int slot) const override;
+	virtual int getMaximumSaveSlot() const { return 999; }
+	virtual void removeSaveState(const char *target, int slot) const;
+	virtual SaveStateDescriptor querySaveMetaInfos(const char *target, int slot) const;
 };
 
 bool MohawkMetaEngine::hasFeature(MetaEngineFeature f) const {
@@ -354,7 +354,7 @@ bool MohawkMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGa
 		}
 	}
 
-	return (gd != nullptr);
+	return (gd != 0);
 }
 
 #if PLUGIN_ENABLED_DYNAMIC(MOHAWK)

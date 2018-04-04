@@ -70,9 +70,13 @@ public:
 
 class MovGraphReact : public CObject {
 public:
-	PointList _points;
+	int _pointCount;
+	Common::Point **_points;
 
 public:
+	MovGraphReact() : _pointCount(0), _points(0) {}
+	~MovGraphReact() { free(_points); }
+
 	virtual void setCenter(int x1, int y1, int x2, int y2) {}
 	virtual void createRegion() {}
 	virtual bool pointInRegion(int x, int y);
@@ -80,25 +84,28 @@ public:
 
 class MctlItem : public CObject {
 public:
-	Common::ScopedPtr<MotionController> _motionControllerObj;
-	Common::ScopedPtr<MovGraphReact> _movGraphReactObj;
+	MotionController *_motionControllerObj;
+	MovGraphReact *_movGraphReactObj;
 	Common::Array<MctlConnectionPoint *> _connectionPoints;
 	int _field_20;
 	int _field_24;
 	int _field_28;
 
 public:
-	MctlItem() : _field_20(0), _field_24(0), _field_28(0) {}
+	MctlItem() : _movGraphReactObj(0), _motionControllerObj(0), _field_20(0), _field_24(0), _field_28(0) {}
 	~MctlItem();
+};
+
+class MctlCompoundArray : public Common::Array<MctlItem *>, public CObject {
+ public:
+	virtual bool load(MfcArchive &file);
 };
 
 class MctlCompound : public MotionController {
 public:
-	/** list items are owned */
-	Common::Array<MctlItem *> _motionControllers;
+	MctlCompoundArray _motionControllers;
 
 	MctlCompound() { _objtype = kObjTypeMctlCompound; }
-	virtual ~MctlCompound();
 
 	virtual bool load(MfcArchive &file);
 
@@ -113,7 +120,7 @@ public:
 	void replaceNodeX(int from, int to);
 
 	uint getMotionControllerCount() { return _motionControllers.size(); }
-	MotionController *getMotionController(int num) { return _motionControllers[num]->_motionControllerObj.get(); }
+	MotionController *getMotionController(int num) { return _motionControllers[num]->_motionControllerObj; }
 };
 
 struct MctlLadderMovementVars {
@@ -193,19 +200,20 @@ public:
 };
 
 class ReactPolygonal : public MovGraphReact {
-	Common::Rect _bbox;
+	Common::Rect *_bbox;
 	int _centerX;
 	int _centerY;
 
 public:
 	ReactPolygonal();
+	~ReactPolygonal();
 
 	virtual bool load(MfcArchive &file);
 
 	virtual void setCenter(int x1, int y1, int x2, int y2);
 	virtual void createRegion();
 
-	Common::Rect getBBox();
+	void getBBox(Common::Rect *rect);
 };
 
 class MovGraphLink : public CObject {
@@ -230,7 +238,6 @@ class MovGraphLink : public CObject {
 
 	void recalcLength();
 };
-typedef Common::Array<MovGraphLink *> MovGraphLinkList;
 
 struct MovStep {
 	int sfield_0;
@@ -269,24 +276,17 @@ struct MovGraphItem {
 };
 
 class MovGraph : public MotionController {
-friend class MctlCompound;
-friend class MctlGraph;
-friend class MotionController;
-private:
-	typedef ObList<MovGraphNode> NodeList;
-	typedef ObList<MovGraphLink> LinkList;
-	NodeList _nodes;
-	LinkList _links;
+public:
+	ObList _nodes;
+	ObList _links;
 	int _field_44;
-	Common::Array<MovGraphItem> _items;
+	Common::Array<MovGraphItem *> _items;
 	MovArr *(*_callback1)(StaticANIObject *ani, Common::Array<MovItem *> *items, signed int counter);
 	AniHandler _aniHandler;
 
 public:
 	MovGraph();
 	virtual ~MovGraph();
-
-	static int messageHandler(ExCommand *cmd);
 
 	virtual bool load(MfcArchive &file);
 
@@ -308,7 +308,7 @@ public:
 	MovGraphNode *calcOffset(int ox, int oy);
 	int getObjectIndex(StaticANIObject *ani);
 	Common::Array<MovArr *> *getHitPoints(int x, int y, int *arrSize, int flag1, int flag2);
-	void findAllPaths(MovGraphLink *lnk, MovGraphLink *lnk2, MovGraphLinkList &tempObList1, MovGraphLinkList &tempObList2);
+	void findAllPaths(MovGraphLink *lnk, MovGraphLink *lnk2, Common::Array<MovGraphLink *> &tempObList1, Common::Array<MovGraphLink *> &tempObList2);
 	Common::Array<MovItem *> *getPaths(MovArr *movarr1, MovArr *movarr2, int *listCount);
 	void genMovItem(MovItem *movitem, MovGraphLink *grlink, MovArr *movarr1, MovArr *movarr2);
 	bool getHitPoint(int idx, int x, int y, MovArr *arr, int a6);
@@ -354,10 +354,12 @@ struct MctlMQ {
 	int distance2;
 	int subIndex;
 	int item1Index;
-	Common::Array<MctlMQSub> items;
+	Common::Array<MctlMQSub *> items;
+	int itemsCount;
 	int flags;
 
 	MctlMQ() { clear(); }
+	MctlMQ(MctlMQ *src);
 	void clear();
 };
 
@@ -369,7 +371,7 @@ struct MctlAni { // 744
 
 class MctlGraph : public MovGraph {
 public:
-	Common::Array<MctlAni> _items2;
+	Common::Array<MctlAni *> _items2;
 
 public:
 	virtual void attachObject(StaticANIObject *obj);
@@ -384,16 +386,16 @@ public:
 	int getDirByPoint(int idx, StaticANIObject *ani);
 
 	int getDirBySize(MovGraphLink *lnk, int x, int y);
-	int getLinkDir(MovGraphLinkList *linkList, int idx, Common::Rect *a3, Common::Point *a4);
+	int getLinkDir(Common::Array<MovGraphLink *> *linkList, int idx, Common::Rect *a3, Common::Point *a4);
 
-	bool fillData(StaticANIObject *obj, MctlAni &item);
-	void generateList(MctlMQ &movinfo, MovGraphLinkList *linkList, LinkInfo *lnkSrc, LinkInfo *lnkDst);
-	MessageQueue *makeWholeQueue(MctlMQ &mctlMQ);
+	bool fillData(StaticANIObject *obj, MctlAni *item);
+	void generateList(MctlMQ *movinfo, Common::Array<MovGraphLink *> *linkList, LinkInfo *lnkSrc, LinkInfo *lnkDst);
+	MessageQueue *makeWholeQueue(MctlMQ *mctlMQ);
 
 	MovGraphNode *getHitNode(int x, int y, int strictMatch);
 	MovGraphLink *getHitLink(int x, int y, int idx, int fuzzyMatch);
 	MovGraphLink *getNearestLink(int x, int y);
-	double iterate(LinkInfo *linkInfoSource, LinkInfo *linkInfoDest, MovGraphLinkList *listObj);
+	double iterate(LinkInfo *linkInfoSource, LinkInfo *linkInfoDest, Common::Array<MovGraphLink *> *listObj);
 
 	MessageQueue *makeLineQueue(MctlMQ *movinfo);
 };
@@ -405,10 +407,11 @@ public:
 	int _mctlflags;
 	int _mctlstatic;
 	int16 _mctlmirror;
-	Common::ScopedPtr<MessageQueue> _messageQueueObj;
+	MessageQueue *_messageQueueObj;
 	int _motionControllerObj;
 
 	MctlConnectionPoint();
+	~MctlConnectionPoint();
 };
 
 } // End of namespace Fullpipe

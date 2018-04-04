@@ -287,9 +287,6 @@ endif
 ifdef ENABLE_SKY
 DIST_FILES_ENGINEDATA+=sky.cpt
 endif
-ifdef ENABLE_SUPERNOVA
-DIST_FILES_ENGINEDATA+=supernova.dat
-endif
 ifdef ENABLE_TEENAGENT
 DIST_FILES_ENGINEDATA+=teenagent.dat
 endif
@@ -307,9 +304,6 @@ DIST_FILES_ENGINEDATA+=wintermute.zip
 endif
 ifdef ENABLE_MACVENTURE
 DIST_FILES_ENGINEDATA+=macventure.dat
-endif
-ifdef ENABLE_XEEN
-DIST_FILES_ENGINEDATA+=xeen.ccs
 endif
 DIST_FILES_ENGINEDATA:=$(addprefix $(srcdir)/dists/engine-data/,$(DIST_FILES_ENGINEDATA))
 

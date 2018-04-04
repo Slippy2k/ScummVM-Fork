@@ -24,37 +24,17 @@
 #define XEEN_INTERFACE_H
 
 #include "common/scummsys.h"
-#include "xeen/dialogs/dialogs.h"
-#include "xeen/interface_minimap.h"
-#include "xeen/interface_scene.h"
+#include "xeen/dialogs.h"
+#include "xeen/interface_map.h"
 #include "xeen/party.h"
-#include "xeen/window.h"
+#include "xeen/screen.h"
 
 namespace Xeen {
 
 class XeenEngine;
 
-enum Obscurity {
-	OBSCURITY_BLACK = 0,
-	OBSCURITY_3 = 1,
-	OBSCURITY_2 = 2,
-	OBSCURITY_1 = 3,
-	OBSCURITY_NONE = 4
-};
-
-enum IconsMode {
-	ICONS_STANDARD = 0,
-	ICONS_COMBAT = 1
-};
-
-enum FallState {
-	FALL_NONE = 0,
-	FALL_IN_PROGRESS = 1,
-	FALL_START = 2
-};
-
+#define MINIMAP_SIZE 7
 #define HILIGHT_CHAR_DISABLED -2
-#define HILIGHT_CHAR_NONE -1
 
 /**
  * Class responsible for drawing the images of the characters in the party
@@ -71,17 +51,7 @@ public:
 
 	void drawParty(bool updateFlag);
 
-	/**
-	 * Highlights the specified character in the party display at the bottom of the screen
-	 * @param charId		Character number
-	 */
 	void highlightChar(int charId);
-
-	/**
-	 * Highlights the specified character in the party display at the bottom of the screen
-	 * @param c		Character to highlight
-	 */
-	void highlightChar(const Character *c);
 
 	void unhighlightChar();
 
@@ -91,18 +61,17 @@ public:
 /**
  * Implements the main in-game interface
  */
-class Interface: public ButtonContainer, public InterfaceScene,
-		public InterfaceMinimap, public PartyDrawer {
+class Interface: public ButtonContainer, public InterfaceMap, public PartyDrawer {
 private:
 	XeenEngine *_vm;
 	SpriteResource _uiSprites;
+	SpriteResource _iconSprites;
 	SpriteResource _borderSprites;
 	SpriteResource _spellFxSprites;
 	SpriteResource _fecpSprites;
 	SpriteResource _blessSprites;
-	SpriteResource _stdIcons;
-	SpriteResource _combatIcons;
-	Graphics::ManagedSurface _fallSurface;
+	DrawStruct _mainList[16];
+
 	bool _buttonsLoaded;
 	int _steppingFX;
 	int _blessedUIFrame;
@@ -111,14 +80,13 @@ private:
 	int _heroismUIFrame;
 	int _flipUIFrame;
 
+	void initDrawStructs();
+
 	void loadSprites();
 
 	void setupBackground();
 
-	/**
-	 * Sets the main user interface icons for either standard mode or combat mode
-	 */
-	void setMainButtons(IconsMode mode = ICONS_STANDARD);
+	void setMainButtons(bool combatMode = false);
 
 	void chargeStep();
 
@@ -139,32 +107,28 @@ private:
 	 */
 	void handleFalling();
 
-	/**
-	 * Sets up a passed surface with a double height combination of the previously
-	 * saved scene background and the newly rendered (but not displayed) scene
-	 * below it. This will be used by the fall sequence to vertically shift from the
-	 * prior "upper" scene to the lower ground scene
-	 */
-	void setupFallSurface(bool isTop);
+	void saveFall();
 
-	/**
-	 * Handles a frame of falling animation
-	 */
-	void fall(int yp);
+	void fall(int v);
 
 	/**
 	 * Shake the screen
-	 * @param count		Number of times
 	 */
-	void shake(int count);
+	void shake(int time);
+
+	/**
+	 * Draw the minimap
+	 */
+	void drawMiniMap();
 
 	/**
 	 * Select next character or monster to be attacking
 	 */
 	void nextChar();
 public:
-	Obscurity _obscurity;
-	FallState _falling;
+	int _intrIndex1;
+	Common::String _interfaceText;
+	int _falling;
 	int _face1State, _face2State;
 	int _face1UIFrame, _face2UIFrame;
 	int _spotDoorsUIFrame;
@@ -174,7 +138,6 @@ public:
 	Common::String _screenText;
 	byte _tillMove;
 	int _charFX[6];
-	IconsMode _iconsMode;
 public:
 	Interface(XeenEngine *vm);
 
@@ -201,17 +164,9 @@ public:
 
 	void rest();
 
-	/**
-	 * Handles bash actions
-	 */
 	void bash(const Common::Point &pt, Direction direction);
 
-	/**
-	 * Handles drawing the elements of the interface and game scene
-	 * @param updateFlag		Updates UI windows 1 & 3
-	 * @param pauseFlag			Does a brief pause at the end of drawing
-	 */
-	void draw3d(bool updateFlag, bool pauseFlag = true);
+	void draw3d(bool updateFlag, bool skipDelay = false);
 
 	/**
 	 * Draw the display borders
@@ -221,11 +176,6 @@ public:
 	void doCombat();
 
 	void spellFX(Character *c);
-
-	/**
-	 * Optionally obscures the scene due to low light conditions
-	 */
-	void obscureScene(Obscurity obscurity);
 };
 
 } // End of namespace Xeen

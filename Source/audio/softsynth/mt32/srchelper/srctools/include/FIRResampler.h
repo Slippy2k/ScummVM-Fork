@@ -14,8 +14,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SRCTOOLS_FIR_RESAMPLER_H
-#define SRCTOOLS_FIR_RESAMPLER_H
+#ifndef FIR_RESAMPLER_H
+#define FIR_RESAMPLER_H
 
 #include "ResamplerStage.h"
 
@@ -64,4 +64,4 @@ private:
 
 } // namespace SRCTools
 
-#endif // SRCTOOLS_FIR_RESAMPLER_H
+#endif // FIR_RESAMPLER_H

@@ -30,8 +30,7 @@
 namespace Mohawk {
 namespace MystStacks {
 
-MakingOf::MakingOf(MohawkEngine_Myst *vm) :
-		MystScriptParser(vm) {
+MakingOf::MakingOf(MohawkEngine_Myst *vm) : MystScriptParser(vm) {
 	setupOpcodes();
 }
 

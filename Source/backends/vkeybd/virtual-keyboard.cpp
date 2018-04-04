@@ -38,21 +38,21 @@
 
 namespace Common {
 
-VirtualKeyboard::VirtualKeyboard() :
-		_currentMode(nullptr),
-		_fileArchive(nullptr, DisposeAfterUse::NO) {
+VirtualKeyboard::VirtualKeyboard() : _currentMode(0) {
 	assert(g_system);
 	_system = g_system;
 
 	_parser = new VirtualKeyboardParser(this);
 	_kbdGUI = new VirtualKeyboardGUI(this);
 	_submitKeys = _loaded = false;
+	_fileArchive = 0;
 }
 
 VirtualKeyboard::~VirtualKeyboard() {
 	deleteEvents();
 	delete _kbdGUI;
 	delete _parser;
+	delete _fileArchive;
 }
 
 void VirtualKeyboard::deleteEvents() {
@@ -74,31 +74,33 @@ void VirtualKeyboard::reset() {
 	_kbdGUI->reset();
 }
 
-bool VirtualKeyboard::openPack(const String &packName, Archive *searchPath, DisposeAfterUse::Flag disposeSearchPath) {
-	if (searchPath->hasFile(packName + ".xml")) {
-		_fileArchive.reset(searchPath, disposeSearchPath);
+bool VirtualKeyboard::openPack(const String &packName, const FSNode &node) {
+	if (node.getChild(packName + ".xml").exists()) {
+		_fileArchive = new FSDirectory(node, 1);
 
 		// uncompressed keyboard pack
-		if (!_parser->loadStream(searchPath->createReadStreamForMember(packName + ".xml"))) {
-			_fileArchive.reset();
+		if (!_parser->loadFile(node.getChild(packName + ".xml"))) {
+			delete _fileArchive;
+			_fileArchive = 0;
 			return false;
 		}
 
 		return true;
 	}
 
-	if (searchPath->hasFile(packName + ".zip")) {
+	if (node.getChild(packName + ".zip").exists()) {
 		// compressed keyboard pack
-		Archive *zip = makeZipArchive(searchPath->createReadStreamForMember(packName + ".zip"));
-		_fileArchive.reset(zip, DisposeAfterUse::YES);
+		_fileArchive = makeZipArchive(node.getChild(packName + ".zip"));
 		if (_fileArchive && _fileArchive->hasFile(packName + ".xml")) {
 			if (!_parser->loadStream(_fileArchive->createReadStreamForMember(packName + ".xml"))) {
-				_fileArchive.reset();
+				delete _fileArchive;
+				_fileArchive = 0;
 				return false;
 			}
 		} else {
 			warning("Could not find %s.xml file in %s.zip virtual keyboard pack", packName.c_str(), packName.c_str());
-			_fileArchive.reset();
+			delete _fileArchive;
+			_fileArchive = 0;
 			return false;
 		}
 
@@ -111,18 +113,19 @@ bool VirtualKeyboard::openPack(const String &packName, Archive *searchPath, Disp
 bool VirtualKeyboard::loadKeyboardPack(const String &packName) {
 	_kbdGUI->initSize(_system->getOverlayWidth(), _system->getOverlayHeight());
 
-	_fileArchive.reset();
+	delete _fileArchive;
+	_fileArchive = 0;
 	_loaded = false;
 
 	bool opened = false;
 	if (ConfMan.hasKey("vkeybdpath"))
-		opened = openPack(packName, new FSDirectory(ConfMan.get("vkeybdpath")), DisposeAfterUse::YES);
+		opened = openPack(packName, FSNode(ConfMan.get("vkeybdpath")));
 	else if (ConfMan.hasKey("extrapath"))
-		opened = openPack(packName, new FSDirectory(ConfMan.get("extrapath")), DisposeAfterUse::YES);
+		opened = openPack(packName, FSNode(ConfMan.get("extrapath")));
 
-	// fallback to SearchMan
+	// fallback to the current dir
 	if (!opened)
-		opened = openPack(packName, &SearchMan, DisposeAfterUse::NO);
+		opened = openPack(packName, FSNode("."));
 
 	if (opened) {
 		_parser->setParseMode(VirtualKeyboardParser::kParseFull);
@@ -133,7 +136,8 @@ bool VirtualKeyboard::loadKeyboardPack(const String &packName) {
 		} else {
 			warning("Error parsing the virtual keyboard pack '%s'", packName.c_str());
 
-			_fileArchive.reset();
+			delete _fileArchive;
+			_fileArchive = 0;
 		}
 	} else {
 		warning("Virtual keyboard disabled due to missing pack file");
@@ -238,6 +242,7 @@ void VirtualKeyboard::show() {
 
 		// push keydown & keyup events into the event manager
 		Event evt;
+		evt.synthetic = false;
 		while (!_keyQueue.empty()) {
 			evt.kbd = _keyQueue.pop();
 			evt.type = EVENT_KEYDOWN;

@@ -140,20 +140,6 @@ static const ComposerGameDescription gameDescriptions[] = {
 		GType_ComposerV1
 	},
 
-	// Magic Tales: Imo and the King German - from bug #10199
-	{
-		{
-			"imoking",
-			"",
-			AD_ENTRY1s("book.ini", "5925c6d4bf85d89b17208be4fcace5e8", 3274),
-			Common::DE_DEU,
-			Common::kPlatformWindows,
-			ADGF_NO_FLAGS,
-			GUIO1(GUIO_NOASPECT)
-		},
-		GType_ComposerV1
-	},
-
 	// Magic Tales: The Little Samurai - from bug #3485018
 	{
 		{
@@ -511,9 +497,10 @@ SaveStateList ComposerMetaEngine::listSaves(const char *target) const {
 	Common::SaveFileManager *saveFileMan = g_system->getSavefileManager();
 	Common::StringArray filenames;
 	Common::String saveDesc;
-	Common::String pattern = Common::String::format("%s.##", target);
+	Common::String pattern = Common::String::format("%s.??", target);
 
 	filenames = saveFileMan->listSavefiles(pattern);
+	sort(filenames.begin(), filenames.end());	// Sort (hopefully ensuring we are sorted numerically..)
 
 	SaveStateList saveList;
 	for (Common::StringArray::const_iterator file = filenames.begin(); file != filenames.end(); ++file) {
@@ -530,7 +517,6 @@ SaveStateList ComposerMetaEngine::listSaves(const char *target) const {
 		}
 	}
 
-	Common::sort(saveList.begin(), saveList.end(), SaveStateDescriptorSlotComparator());
 	return saveList;
 }
 

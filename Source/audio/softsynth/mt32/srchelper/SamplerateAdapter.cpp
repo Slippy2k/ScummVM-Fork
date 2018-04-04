@@ -16,7 +16,7 @@
 
 #include "SamplerateAdapter.h"
 
-#include "../Synth.h"
+#include "Synth.h"
 
 using namespace MT32Emu;
 
@@ -31,7 +31,7 @@ long SamplerateAdapter::getInputSamples(void *cb_data, float **data) {
 	return length;
 }
 
-SamplerateAdapter::SamplerateAdapter(Synth &useSynth, double targetSampleRate, SamplerateConversionQuality quality) :
+SamplerateAdapter::SamplerateAdapter(Synth &useSynth, double targetSampleRate, SampleRateConverter::Quality quality) :
 	synth(useSynth),
 	inBuffer(new float[CHANNEL_COUNT * MAX_SAMPLES_PER_RUN]),
 	inBufferSize(MAX_SAMPLES_PER_RUN),
@@ -41,16 +41,16 @@ SamplerateAdapter::SamplerateAdapter(Synth &useSynth, double targetSampleRate, S
 	int error;
 	int conversionType;
 	switch (quality) {
-	case SamplerateConversionQuality_FASTEST:
+	case SampleRateConverter::FASTEST:
 		conversionType = SRC_LINEAR;
 		break;
-	case SamplerateConversionQuality_FAST:
+	case SampleRateConverter::FAST:
 		conversionType = SRC_SINC_FASTEST;
 		break;
-	case SamplerateConversionQuality_BEST:
+	case SampleRateConverter::BEST:
 		conversionType = SRC_SINC_BEST_QUALITY;
 		break;
-	case SamplerateConversionQuality_GOOD:
+	case SampleRateConverter::GOOD:
 	default:
 		conversionType = SRC_SINC_MEDIUM_QUALITY;
 		break;

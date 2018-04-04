@@ -80,22 +80,23 @@ class CursorManager;
 
 class MohawkEngine : public ::Engine {
 protected:
-	Common::Error run() override;
+	virtual Common::Error run();
 
 public:
 	MohawkEngine(OSystem *syst, const MohawkGameDescription *gamedesc);
-	~MohawkEngine() override;
+	virtual ~MohawkEngine();
 
 	// Detection related functions
 	const MohawkGameDescription *_gameDescription;
 	const char *getGameId() const;
 	uint32 getFeatures() const;
 	const char *getAppName() const;
+	uint16 getVersion() const;
 	Common::Platform getPlatform() const;
 	uint8 getGameType() const;
 	Common::Language getLanguage() const;
 
-	bool hasFeature(EngineFeature f) const override;
+	bool hasFeature(EngineFeature f) const;
 
 	CursorManager *_cursor;
 

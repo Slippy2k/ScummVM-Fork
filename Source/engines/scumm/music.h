@@ -23,10 +23,11 @@
 #ifndef SCUMM_MUSIC_H
 #define SCUMM_MUSIC_H
 
-#include "common/serializer.h"
 #include "common/scummsys.h"
 
 namespace Scumm {
+
+class Serializer;
 
 /**
  * Pure virtual base class for the various music/sound engines used in Scumm
@@ -38,7 +39,7 @@ namespace Scumm {
  *
  * Instantiated by class Scumm.
  */
-class MusicEngine : public Common::Serializable {
+class MusicEngine {
 public:
 	virtual ~MusicEngine() {}
 
@@ -53,13 +54,6 @@ public:
 	 * @param sound		the sound to start
 	 */
 	virtual void startSound(int sound) = 0;
-
-	/**
-	 * Start playing the sound with the given id and track id.
-	 * @param sound		the sound to start
-	 * @param track		the track to start
-	 */
-	virtual void startSoundWithTrackID(int sound, int track) { startSound(sound); }
 
 	/**
 	 * Stop playing the sound with the given id.
@@ -90,7 +84,7 @@ public:
 	/**
 	 * Save or load the music state.
 	 */
-	virtual void saveLoadWithSerializer(Common::Serializer &ser) {}
+	virtual void saveLoadWithSerializer(Serializer *ser) {}
 };
 
 } // End of namespace Scumm

@@ -151,7 +151,7 @@ NECursorManager::NECursorManager(const Common::String &appName) {
 	if (!_exe->loadFromEXE(appName)) {
 		// Not all have cursors anyway, so this is not a problem
 		delete _exe;
-		_exe = nullptr;
+		_exe = 0;
 	}
 }
 
@@ -183,10 +183,10 @@ MacCursorManager::MacCursorManager(const Common::String &appName) {
 		if (!_resFork->open(appName)) {
 			// Not all have cursors anyway, so this is not a problem
 			delete _resFork;
-			_resFork = nullptr;
+			_resFork = 0;
 		}
 	} else {
-		_resFork = nullptr;
+		_resFork = 0;
 	}
 }
 
@@ -219,7 +219,7 @@ LivingBooksCursorManager_v2::LivingBooksCursorManager_v2() {
 
 	if (!_sysArchive->openFile("system.mhk")) {
 		delete _sysArchive;
-		_sysArchive = nullptr;
+		_sysArchive = 0;
 	}
 }
 

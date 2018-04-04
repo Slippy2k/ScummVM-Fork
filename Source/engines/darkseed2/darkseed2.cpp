@@ -347,7 +347,7 @@ bool DarkSeed2Engine::initGraphicsSystem() {
 }
 
 bool DarkSeed2Engine::doLoadDialog() {
-	const Plugin *plugin = nullptr;
+	const EnginePlugin *plugin = 0;
 	EngineMan.findGame(getGameId(), &plugin);
 	assert(plugin);
 

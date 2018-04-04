@@ -14,20 +14,18 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef MT32EMU_SAMPLERATE_ADAPTER_H
-#define MT32EMU_SAMPLERATE_ADAPTER_H
+#ifndef SAMPLERATE_ADAPTER_H
+#define SAMPLERATE_ADAPTER_H
 
 #include <samplerate.h>
 
-#include "../Enumerations.h"
+#include "../SampleRateConverter.h"
 
 namespace MT32Emu {
 
-class Synth;
-
 class SamplerateAdapter {
 public:
-	SamplerateAdapter(Synth &synth, double targetSampleRate, SamplerateConversionQuality quality);
+	SamplerateAdapter(Synth &synth, double targetSampleRate, SampleRateConverter::Quality quality);
 	~SamplerateAdapter();
 
 	void getOutputSamples(float *outBuffer, unsigned int length);
@@ -45,4 +43,4 @@ private:
 
 } // namespace MT32Emu
 
-#endif // MT32EMU_SAMPLERATE_ADAPTER_H
+#endif // SAMPLERATE_ADAPTER_H

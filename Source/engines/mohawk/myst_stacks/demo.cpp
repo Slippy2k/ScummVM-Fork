@@ -30,12 +30,10 @@
 namespace Mohawk {
 namespace MystStacks {
 
-Demo::Demo(MohawkEngine_Myst *vm) :
-		Intro(vm),
-		_returnToMenuRunning(false),
-		_returnToMenuStep(0),
-		_returnToMenuNextTime(0) {
+Demo::Demo(MohawkEngine_Myst *vm) : Intro(vm) {
 	setupOpcodes();
+
+	_returnToMenuStep = 0;
 }
 
 Demo::~Demo() {

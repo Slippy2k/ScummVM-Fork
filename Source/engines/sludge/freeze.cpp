@@ -19,10 +19,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  */
-
 #include "sludge/allfiles.h"
-#include "sludge/backdrop.h"
 #include "sludge/cursors.h"
+#include "sludge/backdrop.h"
 #include "sludge/event.h"
 #include "sludge/fonttext.h"
 #include "sludge/freeze.h"
@@ -31,12 +30,12 @@
 #include "sludge/objtypes.h"
 #include "sludge/people.h"
 #include "sludge/region.h"
-#include "sludge/sludge.h"
-#include "sludge/sludger.h"
-#include "sludge/speech.h"
 #include "sludge/sprites.h"
 #include "sludge/sprbanks.h"
+#include "sludge/sludge.h"
+#include "sludge/sludger.h"
 #include "sludge/statusba.h"
+#include "sludge/talk.h"
 #include "sludge/zbuffer.h"
 
 namespace Sludge {
@@ -44,6 +43,7 @@ namespace Sludge {
 extern OnScreenPerson *allPeople;
 extern ScreenRegion *allScreenRegions;
 extern ScreenRegion *overRegion;
+extern SpeechStruct *speech;
 
 void GraphicsManager::freezeGraphics() {
 
@@ -100,7 +100,10 @@ bool GraphicsManager::freeze() {
 	overRegion = NULL;
 
 	_vm->_cursorMan->freeze(newFreezer);
-	_vm->_speechMan->freeze(newFreezer);
+
+	newFreezer->speech = speech;
+	initSpeech();
+
 	_vm->_evtMan->freeze(newFreezer);
 
 	newFreezer->next = _frozenStuff;
@@ -165,12 +168,19 @@ void GraphicsManager::unfreeze(bool killImage) {
 
 	killParallax();
 	_parallaxStuff = _frozenStuff->parallaxStuff;
-	_vm->_cursorMan->resotre(_frozenStuff);
-	restoreBarStuff(_frozenStuff->frozenStatus);
-	_vm->_evtMan->restore(_frozenStuff);
-	_vm->_speechMan->restore(_frozenStuff);
 
+	_vm->_cursorMan->resotre(_frozenStuff);
+
+	restoreBarStuff(_frozenStuff->frozenStatus);
+
+	_vm->_evtMan->restore(_frozenStuff);
+
+	killAllSpeech();
+	delete speech;
+
+	speech = _frozenStuff->speech;
 	_frozenStuff = _frozenStuff->next;
+
 	overRegion = NULL;
 
 	// free current frozen screen struct

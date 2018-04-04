@@ -182,6 +182,9 @@ void NeverhoodEngine::mainLoop() {
 			case Common::EVENT_WHEELDOWN:
 				_gameModule->handleWheelDown();
 				break;
+			case Common::EVENT_QUIT:
+				_system->quit();
+				break;
 			default:
 				break;
 			}

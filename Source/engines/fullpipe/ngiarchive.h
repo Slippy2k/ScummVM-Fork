@@ -23,7 +23,6 @@
 #ifndef FULLPIPE_NGIARCHIVE_H
 #define FULLPIPE_NGIARCHIVE_H
 
-#include "common/ptr.h"
 #include "common/str.h"
 
 namespace Fullpipe {
@@ -40,7 +39,7 @@ struct NgiHeader {
 	char  filename[NGI_FILENAME_MAX];
 };
 
-typedef Common::HashMap<Common::String, Common::ScopedPtr<NgiHeader>, Common::IgnoreCase_Hash, Common::IgnoreCase_EqualTo> NgiHeadersMap;
+typedef Common::HashMap<Common::String, NgiHeader*, Common::IgnoreCase_Hash, Common::IgnoreCase_EqualTo> NgiHeadersMap;
 
 class NGIArchive : public Common::Archive {
 	NgiHeadersMap _headers;
@@ -63,7 +62,7 @@ public:
  *
  * May return 0 in case of a failure.
  */
-NGIArchive *makeNGIArchive(const Common::String &name);
+Common::Archive *makeNGIArchive(const Common::String &name);
 
 } // End of namespace Fullpipe
 

@@ -58,13 +58,12 @@ enum {
 
 class MystArea {
 public:
-	MystArea(MohawkEngine_Myst *vm, ResourceType type, Common::SeekableReadStream *rlstStream, MystArea *parent);
+	MystArea(MohawkEngine_Myst *vm, Common::SeekableReadStream *rlstStream, MystArea *parent);
 	virtual ~MystArea();
 
 	virtual const Common::String describe();
 	void drawBoundingRect();
 
-	bool hasType(ResourceType type) const { return _type == type; }
 	bool contains(Common::Point point) { return _rect.contains(point); }
 	virtual void drawDataToScreen() {}
 	virtual void handleCardChange() {}
@@ -84,10 +83,10 @@ public:
 	virtual void handleMouseDrag() {}
 
 	MystArea *_parent;
+	ResourceType type;
 protected:
 	MohawkEngine_Myst *_vm;
 
-	ResourceType _type;
 	uint16 _flags;
 	Common::Rect _rect;
 	uint16 _dest;
@@ -95,7 +94,7 @@ protected:
 
 class MystAreaAction : public MystArea {
 public:
-	MystAreaAction(MohawkEngine_Myst *vm, ResourceType type, Common::SeekableReadStream *rlstStream, MystArea *parent);
+	MystAreaAction(MohawkEngine_Myst *vm, Common::SeekableReadStream *rlstStream, MystArea *parent);
 
 	void handleMouseUp() override;
 	const Common::String describe() override;
@@ -106,7 +105,7 @@ protected:
 
 class MystAreaVideo : public MystAreaAction {
 public:
-	MystAreaVideo(MohawkEngine_Myst *vm, ResourceType type, Common::SeekableReadStream *rlstStream, MystArea *parent);
+	MystAreaVideo(MohawkEngine_Myst *vm, Common::SeekableReadStream *rlstStream, MystArea *parent);
 
 	VideoEntryPtr playMovie();
 	VideoEntryPtr getVideo();
@@ -126,20 +125,20 @@ protected:
 	uint16 _loop;
 	int16 _direction; // 1 => forward, -1 => backwards
 	uint16 _playBlocking;
-	bool _playOnCardChange;
+	uint16 _playOnCardChange;
 	uint16 _playRate; // percents
 };
 
 class MystAreaActionSwitch : public MystArea {
 public:
-	MystAreaActionSwitch(MohawkEngine_Myst *vm, ResourceType type, Common::SeekableReadStream *rlstStream, MystArea *parent);
-	~MystAreaActionSwitch() override;
+	MystAreaActionSwitch(MohawkEngine_Myst *vm, Common::SeekableReadStream *rlstStream, MystArea *parent);
+	virtual ~MystAreaActionSwitch();
 
-	void drawDataToScreen() override;
-	void handleCardChange() override;
+	virtual void drawDataToScreen() override;
+	virtual void handleCardChange() override;
 
-	void handleMouseUp() override;
-	void handleMouseDown() override;
+	virtual void handleMouseUp() override;
+	virtual void handleMouseDown() override;
 
 	MystArea *getSubResource(uint16 index) { return _subResources[index]; }
 protected:
@@ -153,16 +152,16 @@ protected:
 
 class MystAreaImageSwitch : public MystAreaActionSwitch {
 public:
-	MystAreaImageSwitch(MohawkEngine_Myst *vm, ResourceType type, Common::SeekableReadStream *rlstStream, MystArea *parent);
-	~MystAreaImageSwitch() override;
+	MystAreaImageSwitch(MohawkEngine_Myst *vm, Common::SeekableReadStream *rlstStream, MystArea *parent);
+	virtual ~MystAreaImageSwitch();
 
 	struct SubImage {
 		uint16 wdib;
 		Common::Rect rect;
 	};
 
-	const Common::String describe() override;
-	void drawDataToScreen() override;
+	virtual const Common::String describe() override;
+	virtual void drawDataToScreen() override;
 	void drawConditionalDataToScreen(uint16 state, bool update = true);
 	uint16 getImageSwitchVar() override;
 
@@ -176,14 +175,14 @@ protected:
 
 class MystAreaDrag : public MystAreaImageSwitch {
 public:
-	MystAreaDrag(MohawkEngine_Myst *vm, ResourceType type, Common::SeekableReadStream *rlstStream, MystArea *parent);
-	~MystAreaDrag() override;
+	MystAreaDrag(MohawkEngine_Myst *vm, Common::SeekableReadStream *rlstStream, MystArea *parent);
+	virtual ~MystAreaDrag();
 
 	const Common::String describe() override;
 
-	void handleMouseDown() override;
-	void handleMouseUp() override;
-	void handleMouseDrag() override;
+	virtual void handleMouseDown() override;
+	virtual void handleMouseUp() override;
+	virtual void handleMouseDrag() override;
 
 	uint16 getList1(uint16 index);
 	uint16 getList2(uint16 index);
@@ -215,8 +214,8 @@ protected:
 
 class MystAreaSlider : public MystAreaDrag {
 public:
-	MystAreaSlider(MohawkEngine_Myst *vm, ResourceType type, Common::SeekableReadStream *rlstStream, MystArea *parent);
-	~MystAreaSlider() override;
+	MystAreaSlider(MohawkEngine_Myst *vm, Common::SeekableReadStream *rlstStream, MystArea *parent);
+	virtual ~MystAreaSlider();
 
 	void handleMouseDown() override;
 	void handleMouseUp() override;
@@ -236,8 +235,8 @@ protected:
 
 class MystVideoInfo : public MystAreaDrag {
 public:
-	MystVideoInfo(MohawkEngine_Myst *vm, ResourceType type, Common::SeekableReadStream *rlstStream, MystArea *parent);
-	~MystVideoInfo() override;
+	MystVideoInfo(MohawkEngine_Myst *vm, Common::SeekableReadStream *rlstStream, MystArea *parent);
+	virtual ~MystVideoInfo();
 
 	void drawFrame(uint16 frame);
 	bool pullLeverV();
@@ -248,11 +247,14 @@ protected:
 	uint16 _numFrames;
 	uint16 _firstFrame;
 	Common::Rect _frameRect;
+
+private:
+	uint16 _currentFrame;
 };
 
 class MystAreaHover : public MystArea {
 public:
-	MystAreaHover(MohawkEngine_Myst *vm, ResourceType type, Common::SeekableReadStream *rlstStream, MystArea *parent);
+	MystAreaHover(MohawkEngine_Myst *vm, Common::SeekableReadStream *rlstStream, MystArea *parent);
 
 	const Common::String describe() override;
 

@@ -63,19 +63,18 @@ public:
 		_md5Bytes = 5000000; // TODO: Upper limit, adjust it once all games are added
 	}
 
-	const char *getName() const {
+	virtual const char *getName() const override {
 		return "MacVenture";
 	}
-	const char *getOriginalCopyright() const {
+	virtual const char *getOriginalCopyright() const override {
 		return "(C) ICOM Simulations";
 	}
 
-protected:
-	bool createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const;
-	bool hasFeature(MetaEngineFeature f) const;
-	SaveStateList listSaves(const char *target) const;
-	int getMaximumSaveSlot() const;
-	void removeSaveState(const char *target, int slot) const;
+	virtual bool createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const;
+	virtual bool hasFeature(MetaEngineFeature f) const;
+	virtual SaveStateList listSaves(const char *target) const;
+	virtual int getMaximumSaveSlot() const;
+	virtual void removeSaveState(const char *target, int slot) const;
 	SaveStateDescriptor querySaveMetaInfos(const char *target, int slot) const;
 };
 

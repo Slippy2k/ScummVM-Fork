@@ -26,6 +26,7 @@
 #include "engines/engine.h"
 
 #include "scumm/imuse/imuse_internal.h"
+#include "scumm/saveload.h"
 #include "scumm/scumm.h"
 
 #include "audio/midiparser.h"
@@ -1032,63 +1033,70 @@ void Player::metaEvent(byte type, byte *msg, uint16 len) {
 //
 ////////////////////////////////////////
 
-static void syncWithSerializer(Common::Serializer &s, ParameterFader &pf) {
-	s.syncAsSint16LE(pf.param, VER(17));
-	s.syncAsSint16LE(pf.start, VER(17));
-	s.syncAsSint16LE(pf.end, VER(17));
-	s.syncAsUint32LE(pf.total_time, VER(17));
-	s.syncAsUint32LE(pf.current_time, VER(17));
-}
+void Player::saveLoadWithSerializer(Serializer *ser) {
+	static const SaveLoadEntry playerEntries[] = {
+		MKLINE(Player, _active, sleByte, VER(8)),
+		MKLINE(Player, _id, sleUint16, VER(8)),
+		MKLINE(Player, _priority, sleByte, VER(8)),
+		MKLINE(Player, _volume, sleByte, VER(8)),
+		MKLINE(Player, _pan, sleInt8, VER(8)),
+		MKLINE(Player, _transpose, sleByte, VER(8)),
+		MKLINE(Player, _detune, sleInt8, VER(8)),
+		MKLINE(Player, _vol_chan, sleUint16, VER(8)),
+		MKLINE(Player, _vol_eff, sleByte, VER(8)),
+		MKLINE(Player, _speed, sleByte, VER(8)),
+		MK_OBSOLETE(Player, _song_index, sleUint16, VER(8), VER(19)),
+		MKLINE(Player, _track_index, sleUint16, VER(8)),
+		MK_OBSOLETE(Player, _timer_counter, sleUint16, VER(8), VER(17)),
+		MKLINE(Player, _loop_to_beat, sleUint16, VER(8)),
+		MKLINE(Player, _loop_from_beat, sleUint16, VER(8)),
+		MKLINE(Player, _loop_counter, sleUint16, VER(8)),
+		MKLINE(Player, _loop_to_tick, sleUint16, VER(8)),
+		MKLINE(Player, _loop_from_tick, sleUint16, VER(8)),
+		MK_OBSOLETE(Player, _tempo, sleUint32, VER(8), VER(19)),
+		MK_OBSOLETE(Player, _cur_pos, sleUint32, VER(8), VER(17)),
+		MK_OBSOLETE(Player, _next_pos, sleUint32, VER(8), VER(17)),
+		MK_OBSOLETE(Player, _song_offset, sleUint32, VER(8), VER(17)),
+		MK_OBSOLETE(Player, _tick_index, sleUint16, VER(8), VER(17)),
+		MK_OBSOLETE(Player, _beat_index, sleUint16, VER(8), VER(17)),
+		MK_OBSOLETE(Player, _ticks_per_beat, sleUint16, VER(8), VER(17)),
+		MKLINE(Player, _music_tick, sleUint32, VER(19)),
+		MKLINE(Player, _hook._jump[0], sleByte, VER(8)),
+		MKLINE(Player, _hook._transpose, sleByte, VER(8)),
+		MKARRAY(Player, _hook._part_onoff[0], sleByte, 16, VER(8)),
+		MKARRAY(Player, _hook._part_volume[0], sleByte, 16, VER(8)),
+		MKARRAY(Player, _hook._part_program[0], sleByte, 16, VER(8)),
+		MKARRAY(Player, _hook._part_transpose[0], sleByte, 16, VER(8)),
+		MKEND()
+	};
 
-void Player::saveLoadWithSerializer(Common::Serializer &s) {
-	if (!s.isSaving() && _parser) {
+	const SaveLoadEntry parameterFaderEntries[] = {
+		MKLINE(ParameterFader, param,        sleInt16,  VER(17)),
+		MKLINE(ParameterFader, start,        sleInt16,  VER(17)),
+		MKLINE(ParameterFader, end,          sleInt16,  VER(17)),
+		MKLINE(ParameterFader, total_time,   sleUint32, VER(17)),
+		MKLINE(ParameterFader, current_time, sleUint32, VER(17)),
+		MKEND()
+	};
+
+	if (!ser->isSaving() && _parser) {
 		delete _parser;
 		_parser = 0;
 	}
 	_music_tick = _parser ? _parser->getTick() : 0;
 
 	int num;
-	if (s.isSaving()) {
+	if (ser->isSaving()) {
 		num = (_parts ? (_parts - _se->_parts + 1) : 0);
-		s.syncAsUint16LE(num);
+		ser->saveUint16(num);
 	} else {
-		s.syncAsUint16LE(num);
+		num = ser->loadUint16();
 		_parts = (num ? &_se->_parts[num - 1] : 0);
 	}
-
-	s.syncAsByte(_active, VER(8));
-	s.syncAsUint16LE(_id, VER(8));
-	s.syncAsByte(_priority, VER(8));
-	s.syncAsByte(_volume, VER(8));
-	s.syncAsSByte(_pan, VER(8));
-	s.syncAsByte(_transpose, VER(8));
-	s.syncAsSByte(_detune, VER(8));
-	s.syncAsUint16LE(_vol_chan, VER(8));
-	s.syncAsByte(_vol_eff, VER(8));
-	s.syncAsByte(_speed, VER(8));
-	s.skip(2, VER(8), VER(19)); // _song_index
-	s.syncAsUint16LE(_track_index, VER(8));
-	s.skip(2, VER(8), VER(17)); // _timer_counter
-	s.syncAsUint16LE(_loop_to_beat, VER(8));
-	s.syncAsUint16LE(_loop_from_beat, VER(8));
-	s.syncAsUint16LE(_loop_counter, VER(8));
-	s.syncAsUint16LE(_loop_to_tick, VER(8));
-	s.syncAsUint16LE(_loop_from_tick, VER(8));
-	s.skip(4, VER(8), VER(19)); // _tempo
-	s.skip(4, VER(8), VER(17)); // _cur_pos
-	s.skip(4, VER(8), VER(17)); // _next_pos
-	s.skip(4, VER(8), VER(17)); // _song_offset
-	s.skip(2, VER(8), VER(17)); // _tick_index
-	s.skip(2, VER(8), VER(17)); // _beat_index
-	s.skip(2, VER(8), VER(17)); // _ticks_per_beat
-	s.syncAsUint32LE(_music_tick, VER(19));
-	s.syncAsByte(_hook._jump[0], VER(8));
-	s.syncAsByte(_hook._transpose, VER(8));
-	s.syncBytes(_hook._part_onoff, 16, VER(8));
-	s.syncBytes(_hook._part_volume, 16, VER(8));
-	s.syncBytes(_hook._part_program, 16, VER(8));
-	s.syncBytes(_hook._part_transpose, 16, VER(8));
-	s.syncArray(_parameterFaders, ARRAYSIZE(_parameterFaders), syncWithSerializer);
+	ser->saveLoadEntries(this, playerEntries);
+	ser->saveLoadArrayOf(_parameterFaders, ARRAYSIZE(_parameterFaders),
+	                     sizeof(ParameterFader), parameterFaderEntries);
+	return;
 }
 
 } // End of namespace Scumm

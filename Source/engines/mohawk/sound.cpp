@@ -181,9 +181,9 @@ Audio::RewindableAudioStream *makeMohawkWaveStream(Common::SeekableReadStream *s
 }
 
 Sound::Sound(MohawkEngine* vm) : _vm(vm) {
-	_midiDriver = nullptr;
-	_midiParser = nullptr;
-	_midiData = nullptr;
+	_midiDriver = NULL;
+	_midiParser = NULL;
+	_midiData = NULL;
 	initMidi();
 }
 
@@ -219,7 +219,7 @@ void Sound::initMidi() {
 }
 
 Audio::RewindableAudioStream *Sound::makeAudioStream(uint16 id, CueList *cueList) {
-	Audio::RewindableAudioStream *audStream = nullptr;
+	Audio::RewindableAudioStream *audStream = NULL;
 
 	switch (_vm->getGameType()) {
 	case GType_ZOOMBINI:
@@ -261,7 +261,7 @@ Audio::SoundHandle *Sound::playSound(uint16 id, byte volume, bool loop, CueList 
 		return &handle->handle;
 	}
 
-	return nullptr;
+	return NULL;
 }
 
 void Sound::playMidi(uint16 id) {

@@ -102,7 +102,7 @@ class MohawkEngine;
 
 class Sound {
 public:
-	explicit Sound(MohawkEngine *vm);
+	Sound(MohawkEngine *vm);
 	~Sound();
 
 	// Generic sound functions
@@ -126,7 +126,8 @@ private:
 
 	Common::Array<SndHandle> _handles;
 	SndHandle *getHandle();
-	Audio::RewindableAudioStream *makeAudioStream(uint16 id, CueList *cueList = nullptr);
+	Audio::RewindableAudioStream *makeAudioStream(uint16 id, CueList *cueList = NULL);
+	uint16 convertMystID(uint16 id);
 };
 
 } // End of namespace Mohawk

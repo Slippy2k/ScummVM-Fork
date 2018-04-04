@@ -130,7 +130,7 @@ private:
 
 class RivenVideoManager {
 public:
-	explicit RivenVideoManager(MohawkEngine_Riven *vm);
+	RivenVideoManager(MohawkEngine_Riven *vm);
 	~RivenVideoManager();
 
 	void updateMovies();

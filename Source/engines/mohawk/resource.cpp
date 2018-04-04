@@ -32,7 +32,7 @@ namespace Mohawk {
 // Base Archive code
 
 Archive::Archive() {
-	_stream = nullptr;
+	_stream = 0;
 }
 
 Archive::~Archive() {
@@ -57,7 +57,7 @@ bool Archive::openFile(const Common::String &fileName) {
 
 void Archive::close() {
 	_types.clear();
-	delete _stream; _stream = nullptr;
+	delete _stream; _stream = 0;
 }
 
 bool Archive::hasResource(uint32 tag, uint16 id) const {

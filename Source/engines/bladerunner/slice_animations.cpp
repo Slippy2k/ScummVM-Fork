@@ -67,14 +67,27 @@ bool SliceAnimations::open(const Common::String &name) {
 	_animations.resize(animationCount);
 
 	for (uint32 i = 0; i != animationCount; ++i) {
-		_animations[i].frameCount       = file.readUint32LE();
-		_animations[i].frameSize        = file.readUint32LE();
-		_animations[i].fps              = file.readFloatLE();
+		_animations[i].frameCount = file.readUint32LE();
+		_animations[i].frameSize  = file.readUint32LE();
+		_animations[i].fps        = file.readFloatLE();
 		_animations[i].positionChange.x = file.readFloatLE();
 		_animations[i].positionChange.y = file.readFloatLE();
 		_animations[i].positionChange.z = file.readFloatLE();
-		_animations[i].facingChange     = file.readFloatLE();
-		_animations[i].offset           = file.readUint32LE();
+		_animations[i].facingChange = file.readFloatLE();
+		_animations[i].offset     = file.readUint32LE();
+
+#if 0
+		debug("%4d  %6d %6x  %7.2g %7.2g %7.2g %7.2g %7.2g %8x",
+			i,
+			_animations[i].frameCount,
+			_animations[i].frameSize,
+			_animations[i].fps,
+			_animations[i].unk0,
+			_animations[i].unk1,
+			_animations[i].unk2,
+			_animations[i].unk3,
+			_animations[i].offset);
+#endif
 	}
 
 	_pages.resize(_pageCount);
@@ -93,28 +106,8 @@ bool SliceAnimations::openCoreAnim() {
 	return _coreAnimPageFile.open("COREANIM.DAT");
 }
 
-bool SliceAnimations::openFrames(int fileNumber) {
-	if (_framesPageFile._fileNumber == -1) { // Running for the first time, need to probe
-		// First, try HDFRAMES.DAT
-		if (_framesPageFile.open("HDFRAMES.DAT")) {
-			_framesPageFile._fileNumber = 0;
-
-			return true;
-		}
-	}
-
-	if (_framesPageFile._fileNumber == 0) // HDFRAMES.DAT
-		return true;
-
-	if (_framesPageFile._fileNumber == fileNumber)
-		return true;
-
-	_framesPageFile.close();
-
-	if (fileNumber == 1 && _framesPageFile.open("CDFRAMES.DAT")) // For Chapter1 we try both CDFRAMES.DAT and CDFRAMES1.DAT
-		return true;
-
-	return _framesPageFile.open(Common::String::format("CDFRAMES%d.DAT", fileNumber));
+bool SliceAnimations::openHDFrames() {
+	return _framesPageFile.open("HDFRAMES.DAT");
 }
 
 bool SliceAnimations::PageFile::open(const Common::String &name) {
@@ -139,15 +132,9 @@ bool SliceAnimations::PageFile::open(const Common::String &name) {
 		_pageOffsets[pageNumber] = dataOffset + i * _sliceAnimations->_pageSize;
 	}
 
-	debug(5, "PageFile::Open: page file \"%s\" opened with %d pages", name.c_str(), pageCount);
+	// debug("PageFile::Open: page file \"%s\" opened with %d pages", name.c_str(), pageCount);
 
 	return true;
-}
-
-void SliceAnimations::PageFile::close() {
-	if (_file.isOpen()) {
-		_file.close();
-	}
 }
 
 void *SliceAnimations::PageFile::loadPage(uint32 pageNumber) {
@@ -184,14 +171,14 @@ void *SliceAnimations::getFramePtr(uint32 animation, uint32 frame) {
 
 	_pages[page]._lastAccess = _vm->_system->getMillis();
 
-	return (byte *)_pages[page]._data + pageOffset;
+	return (byte*)_pages[page]._data + pageOffset;
 }
 
-Vector3 SliceAnimations::getPositionChange(int animation) const {
+Vector3 SliceAnimations::getPositionChange(int animation) {
 	return _animations[animation].positionChange;
 }
 
-float SliceAnimations::getFacingChange(int animation) const {
+float SliceAnimations::getFacingChange(int animation) {
 	return _animations[animation].facingChange;
 }
 

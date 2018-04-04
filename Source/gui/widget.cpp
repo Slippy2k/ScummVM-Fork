@@ -51,7 +51,6 @@ void Widget::init() {
 	// Insert into the widget list of the boss
 	_next = _boss->_firstWidget;
 	_boss->_firstWidget = this;
-	_needsRedraw = true;
 }
 
 Common::Rect Widget::getBossClipRect() const {
@@ -113,52 +112,38 @@ void Widget::updateState(int oldFlags, int newFlags) {
 	}
 }
 
-void Widget::markAsDirty() {
-	_needsRedraw = true;
-
-	Widget *w = _firstWidget;
-	while (w) {
-		w->markAsDirty();
-		w = w->next();
-	}
-}
-
 void Widget::draw() {
 	if (!isVisible() || !_boss->isVisible())
 		return;
 
-	if (_needsRedraw) {
-		int oldX = _x, oldY = _y;
+	int oldX = _x, oldY = _y;
 
-		// Account for our relative position in the dialog
-		_x = getAbsX();
-		_y = getAbsY();
+	// Account for our relative position in the dialog
+	_x = getAbsX();
+	_y = getAbsY();
 
-		// Draw border
-		if (_flags & WIDGET_BORDER) {
-			g_gui.theme()->drawWidgetBackgroundClip(Common::Rect(_x, _y, _x+_w, _y+_h), getBossClipRect(), 0, ThemeEngine::kWidgetBackgroundBorder);
-			_x += 4;
-			_y += 4;
-			_w -= 8;
-			_h -= 8;
-		}
-
-		// Now perform the actual widget draw
-		drawWidget();
-
-		// Restore x/y
-		if (_flags & WIDGET_BORDER) {
-			_x -= 4;
-			_y -= 4;
-			_w += 8;
-			_h += 8;
-		}
-
-		_x = oldX;
-		_y = oldY;
-
-		_needsRedraw = false;
+	// Draw border
+	if (_flags & WIDGET_BORDER) {
+		g_gui.theme()->drawWidgetBackgroundClip(Common::Rect(_x, _y, _x+_w, _y+_h), getBossClipRect(), 0, ThemeEngine::kWidgetBackgroundBorder);
+		_x += 4;
+		_y += 4;
+		_w -= 8;
+		_h -= 8;
 	}
+
+	// Now perform the actual widget draw
+	drawWidget();
+
+	// Restore x/y
+	if (_flags & WIDGET_BORDER) {
+		_x -= 4;
+		_y -= 4;
+		_w += 8;
+		_h += 8;
+	}
+
+	_x = oldX;
+	_y = oldY;
 
 	// Draw all children
 	Widget *w = _firstWidget;
@@ -206,7 +191,7 @@ void Widget::setEnabled(bool e) {
 		else
 			clearFlags(WIDGET_ENABLED);
 
-		g_gui.scheduleTopDialogRedraw();
+		_boss->draw();
 	}
 }
 
@@ -288,7 +273,7 @@ StaticTextWidget::StaticTextWidget(GuiObject *boss, int x, int y, int w, int h, 
 
 StaticTextWidget::StaticTextWidget(GuiObject *boss, const Common::String &name, const Common::String &text, const char *tooltip, ThemeEngine::FontStyle font)
 	: Widget(boss, name, tooltip) {
-	setFlags(WIDGET_ENABLED | WIDGET_CLEARBG);
+	setFlags(WIDGET_ENABLED);
 	_type = kStaticTextWidget;
 	_label = text;
 
@@ -304,7 +289,12 @@ void StaticTextWidget::setLabel(const Common::String &label) {
 	if (_label != label) {
 		_label = label;
 
-		markAsDirty();
+		// when changing the label, add the CLEARBG flag
+		// so the widget is completely redrawn, otherwise
+		// the new text is drawn on top of the old one.
+		setFlags(WIDGET_CLEARBG);
+		draw();
+		clearFlags(WIDGET_CLEARBG);
 	}
 }
 
@@ -312,8 +302,14 @@ void StaticTextWidget::setAlign(Graphics::TextAlign align) {
 	if (_align != align){
 		_align = align;
 
-		markAsDirty();
+		// same as setLabel() actually, the text
+		// would be redrawn on top of the old one so
+		// we add the CLEARBG flag
+		setFlags(WIDGET_CLEARBG);
+		draw();
+		clearFlags(WIDGET_CLEARBG);
 	}
+
 }
 
 
@@ -393,18 +389,18 @@ ButtonWidget *addClearButton(GuiObject *boss, const Common::String &name, uint32
 
 void ButtonWidget::setHighLighted(bool enable) {
 	(enable) ? setFlags(WIDGET_HILITED) : clearFlags(WIDGET_HILITED);
-	markAsDirty();
+	draw();
 }
 
 void ButtonWidget::setPressedState() {
 	setFlags(WIDGET_PRESSED);
 	clearFlags(WIDGET_HILITED);
-	markAsDirty();
+	draw();
 }
 
 void ButtonWidget::setUnpressedState() {
 	clearFlags(WIDGET_PRESSED);
-	markAsDirty();
+	draw();
 }
 
 #pragma mark -
@@ -567,7 +563,7 @@ void CheckboxWidget::setState(bool state) {
 	if (_state != state) {
 		_state = state;
 		//_flags ^= WIDGET_INV_BORDER;
-		markAsDirty();
+		draw();
 	}
 	sendCommand(_cmd, _state);
 }
@@ -636,7 +632,7 @@ void RadiobuttonWidget::setState(bool state, bool setGroup) {
 	if (_state != state) {
 		_state = state;
 		//_flags ^= WIDGET_INV_BORDER;
-		markAsDirty();
+		draw();
 	}
 	sendCommand(_cmd, _state);
 }
@@ -671,7 +667,7 @@ void SliderWidget::handleMouseMoved(int x, int y, int button) {
 
 		if (newValue != _value) {
 			_value = newValue;
-			markAsDirty();
+			draw();
 			sendCommand(_cmd, _value);	// FIXME - hack to allow for "live update" in sound dialog
 		}
 	}
@@ -703,7 +699,7 @@ void SliderWidget::handleMouseWheel(int x, int y, int direction) {
 
 		if (newValue != _value) {
 			_value = newValue;
-			markAsDirty();
+			draw();
 			sendCommand(_cmd, _value);	// FIXME - hack to allow for "live update" in sound dialog
 		}
 	}

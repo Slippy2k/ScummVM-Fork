@@ -28,7 +28,6 @@
 #include "common/system.h"
 
 #include "gui/browser.h"
-#include "gui/gui-manager.h"
 #include "gui/message.h"
 #ifdef ENABLE_EVENTRECORDER
 #include "gui/onscreendialog.h"
@@ -98,7 +97,7 @@ protected:
 EditGameDialog::EditGameDialog(const String &domain, const String &desc)
 	: OptionsDialog(domain, "GameOptions") {
 	// Retrieve all game specific options.
-	const Plugin *plugin = nullptr;
+	const EnginePlugin *plugin = 0;
 	// To allow for game domains without a gameid.
 	// TODO: Is it intentional that this is still supported?
 	String gameId(ConfMan.get("gameid", domain));
@@ -108,7 +107,7 @@ EditGameDialog::EditGameDialog(const String &domain, const String &desc)
 	// implementation.
 	EngineMan.findGame(gameId, &plugin);
 	if (plugin) {
-		_engineOptions = plugin->get<MetaEngine>().getExtraGuiOptions(domain);
+		_engineOptions = (*plugin)->getExtraGuiOptions(domain);
 	} else {
 		warning("Plugin for target \"%s\" not found! Game specific settings might be missing", domain.c_str());
 	}
@@ -425,26 +424,26 @@ void EditGameDialog::handleCommand(CommandSender *sender, uint32 cmd, uint32 dat
 	switch (cmd) {
 	case kCmdGlobalGraphicsOverride:
 		setGraphicSettingsState(data != 0);
-		g_gui.scheduleTopDialogRedraw();
+		draw();
 		break;
 	case kCmdGlobalAudioOverride:
 		setAudioSettingsState(data != 0);
 		setSubtitleSettingsState(data != 0);
 		if (_globalVolumeOverride == NULL)
 			setVolumeSettingsState(data != 0);
-		g_gui.scheduleTopDialogRedraw();
+		draw();
 		break;
 	case kCmdGlobalMIDIOverride:
 		setMIDISettingsState(data != 0);
-		g_gui.scheduleTopDialogRedraw();
+		draw();
 		break;
 	case kCmdGlobalMT32Override:
 		setMT32SettingsState(data != 0);
-		g_gui.scheduleTopDialogRedraw();
+		draw();
 		break;
 	case kCmdGlobalVolumeOverride:
 		setVolumeSettingsState(data != 0);
-		g_gui.scheduleTopDialogRedraw();
+		draw();
 		break;
 	case kCmdChooseSoundFontCmd:
 	{
@@ -460,7 +459,7 @@ void EditGameDialog::handleCommand(CommandSender *sender, uint32 cmd, uint32 dat
 			else
 				_soundFontClearButton->setEnabled(false);
 
-			g_gui.scheduleTopDialogRedraw();
+			draw();
 		}
 		break;
 	}
@@ -478,9 +477,9 @@ void EditGameDialog::handleCommand(CommandSender *sender, uint32 cmd, uint32 dat
 			// FSList files = dir.listDir(FSNode::kListFilesOnly);
 
 			_gamePathWidget->setLabel(dir.getPath());
-			g_gui.scheduleTopDialogRedraw();
+			draw();
 		}
-		g_gui.scheduleTopDialogRedraw();
+		draw();
 		break;
 	}
 
@@ -492,9 +491,9 @@ void EditGameDialog::handleCommand(CommandSender *sender, uint32 cmd, uint32 dat
 			// User made his choice...
 			Common::FSNode dir(browser.getResult());
 			_extraPathWidget->setLabel(dir.getPath());
-			g_gui.scheduleTopDialogRedraw();
+			draw();
 		}
-		g_gui.scheduleTopDialogRedraw();
+		draw();
 		break;
 	}
 	// Change path for stored save game (perm and temp) data
@@ -509,9 +508,9 @@ void EditGameDialog::handleCommand(CommandSender *sender, uint32 cmd, uint32 dat
 			MessageDialog warningMessage(_("Saved games sync feature doesn't work with non-default directories. If you want your saved games to sync, use default directory."));
 			warningMessage.runModal();
 #endif
-			g_gui.scheduleTopDialogRedraw();
+			draw();
 		}
-		g_gui.scheduleTopDialogRedraw();
+		draw();
 		break;
 	}
 

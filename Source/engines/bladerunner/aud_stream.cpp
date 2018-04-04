@@ -28,19 +28,12 @@
 
 namespace BladeRunner {
 
-AudStream::AudStream(byte *data) {
-	_hash  = 0;
-	_cache = nullptr;
-
+AudStream::AudStream(byte *data) : _cache(nullptr) {
 	init(data);
 }
 
-AudStream::AudStream(AudioCache *cache, int32 hash) {
-	assert(cache != nullptr);
-
-	_cache = cache;
-	_hash  = hash;
-
+AudStream::AudStream(AudioCache *cache, int32 hash)
+		: _cache(cache), _hash(hash) {
 	_cache->incRef(_hash);
 
 	init(_cache->findByHash(_hash));
@@ -125,7 +118,7 @@ bool AudStream::rewind() {
 	return true;
 }
 
-int AudStream::getLength() const {
+int AudStream::getLength() {
 	int bytesPerSecond = _frequency;
 	if (_flags & 1) { // 16 bit
 		bytesPerSecond *= 2;
@@ -133,12 +126,7 @@ int AudStream::getLength() const {
 	if (_flags & 2) { // stereo
 		bytesPerSecond *= 2;
 	}
-
-	// since everything is 44100, we easily get overflows with ints
-	// thus we must use doubles
-	double res = (double)_sizeDecompressed * 1000.0 / (double)bytesPerSecond;
-
-	return (int32)res;
+	return (1000 * _sizeDecompressed) / bytesPerSecond;
 }
 
 } // End of namespace BladeRunner

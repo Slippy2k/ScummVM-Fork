@@ -334,7 +334,7 @@ public:
  *
  * This deleter assures Surface::free is called on deletion.
  */
-struct SurfaceDeleter {
+struct SharedPtrSurfaceDeleter {
 	void operator()(Surface *ptr) {
 		if (ptr) {
 			ptr->free();

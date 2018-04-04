@@ -76,14 +76,14 @@ Common::String SaveLoadChooser::createDefaultSaveDescription(const int slot) con
 int SaveLoadChooser::runModalWithCurrentTarget() {
 	const Common::String gameId = ConfMan.get("gameid");
 
-	const Plugin *plugin = 0;
+	const EnginePlugin *plugin = 0;
 	EngineMan.findGame(gameId, &plugin);
 
 	return runModalWithPluginAndTarget(plugin, ConfMan.getActiveDomainName());
 }
 
-int SaveLoadChooser::runModalWithPluginAndTarget(const Plugin *plugin, const String &target) {
-	selectChooser(plugin->get<MetaEngine>());
+int SaveLoadChooser::runModalWithPluginAndTarget(const EnginePlugin *plugin, const String &target) {
+	selectChooser(**plugin);
 	if (!_impl)
 		return -1;
 
@@ -98,10 +98,10 @@ int SaveLoadChooser::runModalWithPluginAndTarget(const Plugin *plugin, const Str
 
 	int ret;
 	do {
-		ret = _impl->run(target, &plugin->get<MetaEngine>());
+		ret = _impl->run(target, &(**plugin));
 #ifndef DISABLE_SAVELOADCHOOSER_GRID
 		if (ret == kSwitchSaveLoadDialog) {
-			selectChooser(plugin->get<MetaEngine>());
+			selectChooser(**plugin);
 		}
 #endif // !DISABLE_SAVELOADCHOOSER_GRID
 	} while (ret < -1);

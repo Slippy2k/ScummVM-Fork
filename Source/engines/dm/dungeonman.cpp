@@ -1465,7 +1465,6 @@ Thing DungeonMan::getDiscardThing(uint16 thingType) {
 							case kDMThingTypeGroup:
 								if (((Group *)squareThingData)->getDoNotDiscard())
 									continue;
-								// fall through
 							case kDMThingTypeProjectile:
 								setCurrentMap(mapIndex);
 								if (thingType == kDMThingTypeGroup) {

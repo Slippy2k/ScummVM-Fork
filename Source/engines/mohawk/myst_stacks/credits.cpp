@@ -34,11 +34,9 @@ namespace MystStacks {
 
 // NOTE: Credits Start Card is 10000
 
-Credits::Credits(MohawkEngine_Myst *vm) :
-		MystScriptParser(vm),
-		_creditsRunning(false),
-		_curImage(0) {
+Credits::Credits(MohawkEngine_Myst *vm) : MystScriptParser(vm) {
 	setupOpcodes();
+	_curImage = 0;
 }
 
 Credits::~Credits() {

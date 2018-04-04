@@ -65,7 +65,7 @@ struct SLSTRecord {
  */
 class RivenSoundManager {
 public:
-	explicit RivenSoundManager(MohawkEngine_Riven *vm);
+	RivenSoundManager(MohawkEngine_Riven *vm);
 	~RivenSoundManager();
 
 	/**

@@ -45,75 +45,71 @@ void SuspectDatabaseEntry::setSex(int sex) {
 }
 
 bool SuspectDatabaseEntry::addMOClue(int clueId) {
-	if (_moClueCount >= kMOClueCount) {
+	if (_moCluesCount >= MO_CLUES_COUNT) {
 		return false;
 	}
-	_moClues[_moClueCount++] = clueId;
+	_moClues[_moCluesCount++] = clueId;
 	return true;
 }
 
 bool SuspectDatabaseEntry::addWhereaboutsClue(int clueId) {
-	if (_whereaboutsClueCount >= kWhereaboutsClueCount) {
+	if (_whereaboutsCluesCount >= WHEREABOUTS_CLUES_COUNT) {
 		return false;
 	}
-	_whereaboutsClues[_whereaboutsClueCount++] = clueId;
+	_whereaboutsClues[_whereaboutsCluesCount++] = clueId;
 	return true;
 }
 
 bool SuspectDatabaseEntry::addReplicantClue(int clueId) {
-	if (_replicantClueCount >= kReplicantClueCount) {
+	if (_replicantCluesCount >= REPLICANT_CLUES_COUNT) {
 		return false;
 	}
-	_replicantClues[_replicantClueCount++] = clueId;
+	_replicantClues[_replicantCluesCount++] = clueId;
 	return true;
 }
 
 bool SuspectDatabaseEntry::addNonReplicantClue(int clueId) {
-	if (_nonReplicantClueCount >= kNonReplicantClueCount) {
+	if (_nonReplicantCluesCount >= NONREPLICANT_CLUES_COUNT) {
 		return false;
 	}
-	_nonReplicantClues[_nonReplicantClueCount++] = clueId;
+	_nonReplicantClues[_nonReplicantCluesCount++] = clueId;
 	return true;
 }
 
 bool SuspectDatabaseEntry::addOtherClue(int clueId) {
-	if (_otherClueCount >= kOtherClueCount) {
+	if (_otherCluesCount >= OTHER_CLUES_COUNT) {
 		return false;
 	}
-	_otherClues[_otherClueCount++] = clueId;
+	_otherClues[_otherCluesCount++] = clueId;
 	return true;
 }
 
 bool SuspectDatabaseEntry::addIdentityClue(int clueId) {
-	if (_identityClueCount >= kIdentityClueCount) {
+	if (_identityCluesCount >= IDENTITY_CLUES_COUNT) {
 		return false;
 	}
-	_identityClues[_identityClueCount++] = clueId;
+	_identityClues[_identityCluesCount++] = clueId;
 	return true;
 }
 
 bool SuspectDatabaseEntry::addPhotoClue(int shapeId, int clueId) {
-	if (_photoClueCount >= kPhotoClueCount) {
+	if (_photoCluesCount >= PHOTO_CLUES_COUNT) {
 		return false;
 	}
-	_photoClues[_photoClueCount].clueId = clueId;
-	_photoClues[_photoClueCount].shapeId = shapeId;
-	_photoClues[_photoClueCount].notUsed = -1;
+	_photoClues[_photoCluesCount][0] = clueId;
+	_photoClues[_photoCluesCount][1] = shapeId;
+	_photoClues[_photoCluesCount][2] = -1;
 
-	_photoClueCount++;
+	_photoCluesCount++;
 	return true;
 }
 
-const char *SuspectDatabaseEntry::getName() const {
+const char *SuspectDatabaseEntry::getName() {
 	return _vm->_textActorNames->getText(_actorId);
 }
 
-int SuspectDatabaseEntry::getSex() const {
-	return _sex;
-}
-
-bool SuspectDatabaseEntry::hasMOClue(int clueId) const {
-	for (int i = 0; i < _moClueCount; ++i) {
+bool SuspectDatabaseEntry::hasMOClue(int clueId) {
+	for (int i = 0; i < _moCluesCount; i++) {
 		if (_moClues[i] == clueId) {
 			return true;
 		}
@@ -121,8 +117,8 @@ bool SuspectDatabaseEntry::hasMOClue(int clueId) const {
 	return false;
 }
 
-bool SuspectDatabaseEntry::hasWhereaboutsClue(int clueId) const {
-	for (int i = 0; i < _whereaboutsClueCount; ++i) {
+bool SuspectDatabaseEntry::hasWhereaboutsClue(int clueId) {
+	for (int i = 0; i < _whereaboutsCluesCount; i++) {
 		if (_whereaboutsClues[i] == clueId) {
 			return true;
 		}
@@ -130,8 +126,8 @@ bool SuspectDatabaseEntry::hasWhereaboutsClue(int clueId) const {
 	return false;
 }
 
-bool SuspectDatabaseEntry::hasReplicantClue(int clueId) const {
-	for (int i = 0; i < _replicantClueCount; ++i) {
+bool SuspectDatabaseEntry::hasReplicantClue(int clueId) {
+	for (int i = 0; i < _replicantCluesCount; i++) {
 		if (_replicantClues[i] == clueId) {
 			return true;
 		}
@@ -139,8 +135,8 @@ bool SuspectDatabaseEntry::hasReplicantClue(int clueId) const {
 	return false;
 }
 
-bool SuspectDatabaseEntry::hasNonReplicantClue(int clueId) const {
-	for (int i = 0; i < _nonReplicantClueCount; ++i) {
+bool SuspectDatabaseEntry::hasNonReplicantClue(int clueId) {
+	for (int i = 0; i < _nonReplicantCluesCount; i++) {
 		if (_nonReplicantClues[i] == clueId) {
 			return true;
 		}
@@ -148,8 +144,8 @@ bool SuspectDatabaseEntry::hasNonReplicantClue(int clueId) const {
 	return false;
 }
 
-bool SuspectDatabaseEntry::hasOtherClue(int clueId) const {
-	for (int i = 0; i < _otherClueCount; ++i) {
+bool SuspectDatabaseEntry::hasOtherClue(int clueId) {
+	for (int i = 0; i < _otherCluesCount; i++) {
 		if (_otherClues[i] == clueId) {
 			return true;
 		}
@@ -157,8 +153,8 @@ bool SuspectDatabaseEntry::hasOtherClue(int clueId) const {
 	return false;
 }
 
-bool SuspectDatabaseEntry::hasIdentityClue(int clueId) const {
-	for (int i = 0; i < _identityClueCount; ++i) {
+bool SuspectDatabaseEntry::hasIdentityClue(int clueId) {
+	for (int i = 0; i < _identityCluesCount; i++) {
 		if (_identityClues[i] == clueId) {
 			return true;
 		}
@@ -166,7 +162,7 @@ bool SuspectDatabaseEntry::hasIdentityClue(int clueId) const {
 	return false;
 }
 
-bool SuspectDatabaseEntry::hasClue(int clueId) const {
+bool SuspectDatabaseEntry::hasClue(int clueId) {
 	return hasMOClue(clueId)
 		|| hasWhereaboutsClue(clueId)
 		|| hasReplicantClue(clueId)
@@ -174,63 +170,54 @@ bool SuspectDatabaseEntry::hasClue(int clueId) const {
 		|| hasOtherClue(clueId);
 }
 
-int SuspectDatabaseEntry::getPhotoCount() const {
-	return _photoClueCount;
+int SuspectDatabaseEntry::getPhotoClue1(int photoId) {
+	return _photoClues[photoId][0];
 }
 
-int SuspectDatabaseEntry::getPhotoClueId(int photoId) const {
-	return _photoClues[photoId].clueId;
+int SuspectDatabaseEntry::getPhotoClue2(int photoId) {
+	return _photoClues[photoId][1];
 }
 
-int SuspectDatabaseEntry::getPhotoShapeId(int photoId) const {
-	return _photoClues[photoId].shapeId;
-}
-
-int SuspectDatabaseEntry::getPhotoNotUsed(int photoId) const {
-	return _photoClues[photoId].notUsed;
+int SuspectDatabaseEntry::getPhotoClue3(int photoId) {
+	return _photoClues[photoId][2];
 }
 
 void SuspectDatabaseEntry::reset() {
 	_actorId = -1;
 	_sex = -1;
-	for (int i = 0; i < kMOClueCount; ++i) {
+	for (int i = 0; i < MO_CLUES_COUNT; i++) {
 		_moClues[i] = -1;
 	}
-	for (int i = 0; i < kWhereaboutsClueCount; ++i) {
+	for (int i = 0; i < WHEREABOUTS_CLUES_COUNT; i++) {
 		_whereaboutsClues[i] = -1;
 	}
-	for (int i = 0; i < kIdentityClueCount; ++i) {
+	for (int i = 0; i < IDENTITY_CLUES_COUNT; i++) {
 		_identityClues[i] = -1;
 	}
-	for (int i = 0; i < kReplicantClueCount; ++i) {
+	for (int i = 0; i < REPLICANT_CLUES_COUNT; i++) {
 		_replicantClues[i] = -1;
 	}
-	for (int i = 0; i < kNonReplicantClueCount; ++i) {
+	for (int i = 0; i < NONREPLICANT_CLUES_COUNT; i++) {
 		_nonReplicantClues[i] = -1;
 	}
-	for (int i = 0; i < kOtherClueCount; ++i) {
+	for (int i = 0; i < OTHER_CLUES_COUNT; i++) {
 		_otherClues[i] = -1;
-	}
-	for (int i = 0; i < kPhotoClueCount; ++i) {
-		_photoClues[i].clueId  = -1;
-		_photoClues[i].shapeId = -1;
-		_photoClues[i].notUsed = -1;
 	}
 
 	// photo clues are not reseted in original game
 
-	_moClueCount = 0;
-	_whereaboutsClueCount = 0;
-	_replicantClueCount = 0;
-	_nonReplicantClueCount = 0;
-	_otherClueCount = 0;
-	_identityClueCount = 0;
-	_photoClueCount = 0;
+	_moCluesCount = 0;
+	_whereaboutsCluesCount = 0;
+	_replicantCluesCount = 0;
+	_nonReplicantCluesCount = 0;
+	_otherCluesCount = 0;
+	_identityCluesCount = 0;
+	_photoCluesCount = 0;
 }
 
 SuspectsDatabase::SuspectsDatabase(BladeRunnerEngine *vm, int size) {
 	_vm = vm;
-	for (int i = 0; i < size; ++i) {
+	for (int i = 0; i < size; i++) {
 		_suspects.push_back(new SuspectDatabaseEntry(_vm));
 	}
 }

@@ -86,7 +86,7 @@ protected:
 
 	virtual void processInput();
 
-	virtual void saveLoadWithSerializer(Common::Serializer &s);
+	virtual void saveOrLoad(Serializer *s);
 
 	virtual bool objIsActor(int obj);
 	virtual int objToActor(int obj);

@@ -37,8 +37,8 @@ namespace MystStacks {
 
 class Credits : public MystScriptParser {
 public:
-	explicit Credits(MohawkEngine_Myst *vm);
-	~Credits() override;
+	Credits(MohawkEngine_Myst *vm);
+	~Credits();
 
 	void disablePersistentScripts() override;
 	void runPersistentScripts() override;

@@ -22,333 +22,115 @@
 
 #include "common/scummsys.h"
 #include "xeen/worldofxeen/worldofxeen_menu.h"
-#include "xeen/worldofxeen/worldofxeen.h"
-#include "xeen/dialogs/credits_screen.h"
-#include "xeen/dialogs/dialogs_difficulty.h"
 #include "xeen/resources.h"
+#include "xeen/worldofxeen/worldofxeen.h"
 
 namespace Xeen {
 namespace WorldOfXeen {
 
-void MainMenuContainer::show() {
-	MainMenuContainer *menu;
+void WorldOfXeenMenu::show(XeenEngine *vm) {
+	WorldOfXeenMenu *menu;
 
-	switch (g_vm->getGameID()) {
+	switch (vm->getGameID()) {
 	case GType_Clouds:
-		menu = new CloudsMainMenuContainer();
+		menu = new CloudsOptionsMenu(vm);
 		break;
 	case GType_DarkSide:
-		menu = new DarkSideMainMenuContainer();
+		menu = new DarkSideOptionsMenu(vm);
 		break;
 	case GType_WorldOfXeen:
-		menu = new WorldOfXeenMainMenuContainer();
+		menu = new WorldOptionsMenu(vm);
 		break;
 	default:
-		error("Invalid game");
+		error("Unsupported game");
+		break;
 	}
 
 	menu->execute();
 	delete menu;
 }
 
-MainMenuContainer::MainMenuContainer(const Common::String &spritesName, uint frameCount) :
-		_frameCount(frameCount), _animateCtr(0), _dialog(nullptr) {
-	g_vm->_files->setGameCc(g_vm->getGameID() == GType_Clouds ? 0 : 1);
-	_backgroundSprites.load(spritesName);
-}
+void WorldOfXeenMenu::execute() {
+	SpriteResource special("special.icn");
+	Screen &screen = *_vm->_screen;
+	EventsManager &events = *_vm->_events;
 
-MainMenuContainer::~MainMenuContainer() {
-	delete _dialog;
-	g_vm->_windows->closeAll();
-	g_vm->_sound->stopAllAudio();
-	g_vm->_events->clearEvents();
-}
+	File newBright("newbrigh.m");
+	_vm->_sound->playSong(newBright);
 
-void MainMenuContainer::draw() {
-	g_vm->_screen->restoreBackground();
-	_animateCtr = (_animateCtr + 1) % _frameCount;
-	_backgroundSprites.draw(0, _animateCtr);
-}
+	screen._windows[GAME_WINDOW].setBounds(Common::Rect(72, 25, 248, 175));
 
-void MainMenuContainer::execute() {
-	EventsManager &events = *g_vm->_events;
-	Screen &screen = *g_vm->_screen;
-	bool showFlag = false;
+	Common::String title1, title2;
+	startup(title1, title2);
+	SpriteResource title1Sprites(title1), title2Sprites(title2);
 
-	// Show the cursor
-	events.clearEvents();
-	events.setCursor(0);
-	events.showCursor();
+	bool firstTime = true, doFade = true;
+	while (!_vm->shouldQuit()) {
+		setBackground(doFade);
 
-	screen.doScroll(true, false);
-
-	while (!g_vm->shouldExit() && g_vm->_gameMode == GMODE_NONE) {
-		// Draw the menu
-		draw();
-		if (_dialog)
-			_dialog->draw();
-
-		// Fade/scroll in screen if first frame showing screen
-		if (!showFlag) {
-			display();
-			screen.doScroll(false, true);
-			showFlag = true;
+		if (firstTime) {
+			firstTime = false;
+			events.setCursor(0);
+			events.showCursor();
+			warning("TODO: Read existing save file");
 		}
 
-		// Check for events
-		events.updateGameCounter();
-		
-		if (events.wait(4, true)) {
-			if (_dialog) {
-				// There's a dialog active, so let it handle the event
-				_dialog->handleEvents();
+		showTitles1(title1Sprites);
+		showTitles2();
 
-				// If dialog was removed as a result of the event, flag screen for re-showing,
-				// such as returning to main menu from the Credits screen
-				if (!_dialog)
-					showFlag = false;
-			} else {
-				// No active dialog. If Escape pressed, exit game entirely. Otherwise,
-				// open up the main menu dialog
-				if (events.isKeyPending()) {
-					Common::KeyState key;
-					if (events.getKey(key) && key.keycode == Common::KEYCODE_ESCAPE)
-						g_vm->_gameMode = GMODE_QUIT;
-				}
+		clearButtons();
+		setupButtons(&title2Sprites);
+		openWindow();
 
-				events.clearEvents();
-				showMenuDialog();
+		while (!_vm->shouldQuit()) {
+			// Show the dialog with a continually animating background
+			while (!_vm->shouldQuit() && !_buttonValue)
+				showContents(title1Sprites, true);
+			if (_vm->shouldQuit())
+				return;
+
+			// Handle keypress
+			int key = toupper(_buttonValue);
+			_buttonValue = 0;
+
+			if (key == 27) {
+				// Hide the options menu
+				break;
+			} else if (key == 'C' || key == 'V') {
+				// Show credits
+				CreditsScreen::show(_vm);
+				break;
+			} else if (key == 'S') {
+				// Start new game
+				WOX_VM._pendingAction = WOX_PLAY_GAME;
+				return;
 			}
 		}
 	}
 }
 
-/*------------------------------------------------------------------------*/
+void WorldOfXeenMenu::showTitles1(SpriteResource &sprites) {
+	Screen &screen = *_vm->_screen;
+	EventsManager &events = *_vm->_events;
 
-CloudsMainMenuContainer::CloudsMainMenuContainer() : MainMenuContainer("intro.vga", 9) {
-}
+	int frameNum = 0;
+	while (!_vm->shouldQuit() && !events.isKeyMousePressed()) {
+		events.updateGameCounter();
 
-void CloudsMainMenuContainer::display() {
-	FileManager &files = *g_vm->_files;
-	Screen &screen = *g_vm->_screen;
-	Sound &sound = *g_vm->_sound;
+		frameNum = (frameNum + 1) % (_vm->getGameID() == GType_WorldOfXeen ? 5 : 10);
+		screen.restoreBackground();
+		sprites.draw(screen, frameNum);
 
-	sound._musicSide = 0;
-	files.setGameCc(0);
-
-	screen.loadPalette("mm4.pal");
-	screen.loadBackground("intro.raw");
-	screen.saveBackground();
-
-	if (!sound.isMusicPlaying())
-		sound.playSong("inn.m");
-}
-
-void CloudsMainMenuContainer::showMenuDialog() {
-	setOwner(new CloudsMenuDialog(this));
-}
-
-/*------------------------------------------------------------------------*/
-
-DarkSideMainMenuContainer::DarkSideMainMenuContainer() : MainMenuContainer("title2a.int", 10) {
-	Screen &screen = *g_vm->_screen;
-	Sound &sound = *g_vm->_sound;
-	screen.loadPalette("dark.pal");
-	screen.fadeIn(0x81);
-
-	sound._musicSide = 1;
-	sound.playSong("newbrigh.m");
-
-	_background.load("title2.int");
-}
-
-void DarkSideMainMenuContainer::display() {
-	FileManager &files = *g_vm->_files;
-	Screen &screen = *g_vm->_screen;
-	Sound &sound = *g_vm->_sound;
-
-	_background.draw(0, 0, Common::Point(0, 0));
-	_background.draw(0, 1, Common::Point(160, 0));
-
-	sound._musicSide = 1;
-	files.setGameCc(1);
-
-	screen.loadPalette("dark.pal");
-	screen.saveBackground();
-
-	if (!sound.isMusicPlaying())
-		sound.playSong("newbrigh.m");
-}
-
-void DarkSideMainMenuContainer::showMenuDialog() {
-	setOwner(new DarkSideMenuDialog(this));
-}
-
-/*------------------------------------------------------------------------*/
-
-WorldOfXeenMainMenuContainer::WorldOfXeenMainMenuContainer() : MainMenuContainer("world.int", 5) {
-}
-
-void WorldOfXeenMainMenuContainer::display() {
-	FileManager &files = *g_vm->_files;
-	Screen &screen = *g_vm->_screen;
-	Sound &sound = *g_vm->_sound;
-
-	sound._musicSide = 1;
-	files.setGameCc(1);
-
-	screen.loadPalette("dark.pal");
-	screen.loadBackground("world.raw");
-	screen.saveBackground();
-
-	if (!sound.isMusicPlaying())
-		sound.playSong("newbrigh.m");
-}
-
-void WorldOfXeenMainMenuContainer::showMenuDialog() {
-	setOwner(new WorldMenuDialog(this));
-}
-
-/*------------------------------------------------------------------------*/
-
-bool MainMenuDialog::handleEvents() {
-	checkEvents(g_vm);
-	int difficulty;
-
-	switch (_buttonValue) {
-	case Common::KEYCODE_s:
-		// Start new game
-		difficulty = DifficultyDialog::show(g_vm);
-		if (difficulty == -1)
-			return true;
-
-		// Load a new game state and set the difficulty
-		g_vm->_saves->newGame();
-		g_vm->_party->_difficulty = (Difficulty)difficulty;
-		g_vm->_gameMode = GMODE_PLAY_GAME;
-		break;
-
-	case Common::KEYCODE_l:
-		// Load existing game
-		g_vm->_saves->newGame();
-		if (!g_vm->_saves->loadGame())
-			return true;
-
-		g_vm->_gameMode = GMODE_PLAY_GAME;
-		break;
-
-	case Common::KEYCODE_c:
-	case Common::KEYCODE_v:
-		// Show credits
-		CreditsScreen::show(g_vm);
-		break;
-
-	case Common::KEYCODE_ESCAPE:
-		// Exit dialog (returning to just the animated background)
-		break;
-
-	default:
-		return false;
+		events.wait(4);
 	}
-
-	// If this point is reached, delete the dialog itself, which will return the main menu
-	// to it's default "No dialog showing" state
-	delete this;
-	return true;
 }
 
-/*------------------------------------------------------------------------*/
+void WorldOfXeenMenu::showTitles2() {
+	Screen &screen = *_vm->_screen;
+	EventsManager &events = *_vm->_events;
+	Sound &sound = *_vm->_sound;
 
-CloudsMenuDialog::CloudsMenuDialog(MainMenuContainer *owner) : MainMenuDialog(owner) {
-	Windows &windows = *g_vm->_windows;
-	Window &w = windows[GAME_WINDOW];
-	w.setBounds(Common::Rect(72, 25, 248, g_vm->_gameWon[0] ? 175 : 150));
-	w.open();
-
-	loadButtons();
-}
-
-CloudsMenuDialog::~CloudsMenuDialog() {
-	Windows &windows = *g_vm->_windows;
-	Window &w = windows[GAME_WINDOW];
-	w.close();
-}
-
-void CloudsMenuDialog::loadButtons() {
-	_buttonSprites.load("start.icn");
-	addButton(Common::Rect(93, 53, 227, 73), Common::KEYCODE_s, &_buttonSprites);
-	addButton(Common::Rect(93, 78, 227, 98), Common::KEYCODE_l, &_buttonSprites);
-	addButton(Common::Rect(93, 103, 227, 123), Common::KEYCODE_c, &_buttonSprites);
-	if (g_vm->_gameWon[0])
-		addButton(Common::Rect(93, 128, 227, 148), Common::KEYCODE_e, &_buttonSprites);
-}
-
-void CloudsMenuDialog::draw() {
-	Windows &windows = *g_vm->_windows;
-	Window &w = windows[GAME_WINDOW];
-	
-	w.frame();
-	w.writeString(Common::String::format(Res.OPTIONS_MENU, Res.GAME_NAMES[0], g_vm->_gameWon[0] ? 117 : 92, 1992));
-	drawButtons(&w);
-}
-
-bool CloudsMenuDialog::handleEvents() {
-	if (MainMenuDialog::handleEvents())
-		return true;
-
-	switch (_buttonValue) {
-	case Common::KEYCODE_e:
-		if (g_vm->_gameWon[0]) {
-			// Close the window
-			delete this;
-
-			// Show clouds ending
-			WOX_VM._sound->stopAllAudio();
-			WOX_VM.showCloudsEnding(g_vm->_finalScore);
-			return true;
-		}
-		break;
-
-	default:
-		break;
-	}
-
-	return false;
-}
-
-/*------------------------------------------------------------------------*/
-
-DarkSideMenuDialog::DarkSideMenuDialog(MainMenuContainer *owner) : MainMenuDialog(owner), _firstDraw(true) {
-	Windows &windows = *g_vm->_windows;
-	Window &w = windows[GAME_WINDOW];
-	w.setBounds(Common::Rect(72, 25, 248, 150));
-	w.open();
-
-	loadButtons();
-}
-
-DarkSideMenuDialog::~DarkSideMenuDialog() {
-	Windows &windows = *g_vm->_windows;
-	Window &w = windows[GAME_WINDOW];
-	w.close();
-}
-
-void DarkSideMenuDialog::loadButtons() {
-	addButton(Common::Rect(124, 87, 177, 97), Common::KEYCODE_s);
-	addButton(Common::Rect(126, 98, 173, 108), Common::KEYCODE_l);
-	addButton(Common::Rect(91, 110, 209, 120), Common::KEYCODE_c);
-	addButton(Common::Rect(85, 121, 216, 131), Common::KEYCODE_o);
-}
-
-void DarkSideMenuDialog::draw() {
-	Screen &screen = *g_vm->_screen;
-	EventsManager &events = *g_vm->_events;
-	Sound &sound = *g_vm->_sound;
-	Windows &windows = *g_vm->_windows;
-
-	if (!_firstDraw)
-		return;
-
+	SpriteResource titleSprites("title2b.raw");
 	SpriteResource kludgeSprites("kludge.int");
 	SpriteResource title2Sprites[8] = {
 		SpriteResource("title2b.int"), SpriteResource("title2c.int"),
@@ -357,240 +139,100 @@ void DarkSideMenuDialog::draw() {
 		SpriteResource("title2h.int"), SpriteResource("title2i.int"),
 	};
 
-	screen.loadBackground("title2b.raw");
-	kludgeSprites.draw(0, 0, Common::Point(85, 86));
+	kludgeSprites.draw(screen, 0);
 	screen.saveBackground();
 	sound.playSound("elect.voc");
 
-	for (int i = 0; i < 30 && !g_vm->shouldExit(); ++i) {
+	for (int i = 0; i < 30 && !_vm->shouldQuit(); ++i) {
 		events.updateGameCounter();
 		screen.restoreBackground();
-		title2Sprites[i / 4].draw(0, i % 4);
-		windows[0].update();
+		title2Sprites[i / 4].draw(screen, i % 4);
+		screen._windows[0].update();
 
 		if (i == 19)
 			sound.stopSound();
 
-		if (events.wait(2))
-			break;
+		while (!_vm->shouldQuit() && events.timeElapsed() < 2)
+			events.pollEventsAndWait();
 	}
-
-	events.clearEvents();
-	sound.stopSound();
 
 	screen.restoreBackground();
-	windows[0].update();
-	_firstDraw = false;
+	screen._windows[0].update();
 }
 
-bool DarkSideMenuDialog::handleEvents() {
-	if (MainMenuDialog::handleEvents())
-		return true;
+void WorldOfXeenMenu::setupButtons(SpriteResource *buttons) {
+	addButton(Common::Rect(124, 87, 124 + 53, 87 + 10), 'S');
+	addButton(Common::Rect(126, 98, 126 + 47, 98 + 10), 'L');
+	addButton(Common::Rect(91, 110, 91 + 118, 110 + 10), 'C');
+	addButton(Common::Rect(85, 121, 85 + 131, 121 + 10), 'O');
+}
 
-	switch (_buttonValue) {
-	case Common::KEYCODE_o: {
-		// Show other options dialog
-		// Remove this dialog
-		MainMenuContainer *owner = _owner;
-		delete this;
-
-		// Set the new options dialog
-		owner->setOwner(new OtherOptionsDialog(owner));
-		return true;
-	}
-
-	default:
-		break;
-	}
-
-	return false;
+void WorldOptionsMenu::setupButtons(SpriteResource *buttons) {
+	addButton(Common::Rect(93, 53, 93 + 134, 53 + 20), 'S', buttons);
+	addButton(Common::Rect(93, 78, 93 + 134, 78 + 20), 'L', buttons);
+	addButton(Common::Rect(93, 103, 93 + 134, 103 + 20), 'C', buttons);
+	addButton(Common::Rect(93, 128, 93 + 134, 128 + 20), 'O', buttons);
 }
 
 /*------------------------------------------------------------------------*/
 
-WorldMenuDialog::WorldMenuDialog(MainMenuContainer *owner) : MainMenuDialog(owner) {
-	Windows &windows = *g_vm->_windows;
-	Window &w = windows[GAME_WINDOW];
-	w.setBounds(Common::Rect(72, 25, 248, 175));
-	w.open();
-
-	loadButtons();
-}
-
-WorldMenuDialog::~WorldMenuDialog() {
-	Windows &windows = *g_vm->_windows;
-	Window &w = windows[GAME_WINDOW];
-	w.close();
-}
-
-void WorldMenuDialog::loadButtons() {
-	_buttonSprites.load("start.icn");
-	addButton(Common::Rect(93, 53, 227, 73), Common::KEYCODE_s, &_buttonSprites);
-	addButton(Common::Rect(93, 78, 227, 98), Common::KEYCODE_l, &_buttonSprites);
-	addButton(Common::Rect(93, 103, 227, 123), Common::KEYCODE_c, &_buttonSprites);
-	addButton(Common::Rect(93, 128, 227, 148), Common::KEYCODE_o, &_buttonSprites);
-}
-
-void WorldMenuDialog::draw() {
-	Windows &windows = *g_vm->_windows;
-	Window &w = windows[GAME_WINDOW];
-
-	w.frame();
-	w.writeString(Common::String::format(Res.OPTIONS_MENU, Res.GAME_NAMES[2], 117, 1993));
-	drawButtons(&w);
-}
-
-bool WorldMenuDialog::handleEvents() {
-	if (MainMenuDialog::handleEvents())
-		return true;
-
-	switch (_buttonValue) {
-	case Common::KEYCODE_o: {
-		// Show other options dialog
-		// Remove this dialog
-		MainMenuContainer *owner = _owner;
-		delete this;
-
-		// Set the new options dialog
-		owner->setOwner(new OtherOptionsDialog(owner));
-		return true;
-	}
-
-	default:
-		break;
-	}
-
-	return false;
+void CloudsOptionsMenu::startup(Common::String &title1, Common::String &title2) {
+	title1 = "title1.int";
+	title2 = "title1a.int";
 }
 
 /*------------------------------------------------------------------------*/
 
-OtherOptionsDialog::OtherOptionsDialog(MainMenuContainer *owner) : MenuContainerDialog(owner) {
-	Windows &windows = *g_vm->_windows;
-	Window &w = windows[GAME_WINDOW];
-
-	int height = (g_vm->getGameID() == GType_WorldOfXeen ? 25 : 0)
-		+ (g_vm->getGameID() == GType_WorldOfXeen && g_vm->_gameWon[0] ? 25 : 0)
-		+ (g_vm->_gameWon[1] ? 25 : 0)
-		+ (g_vm->_gameWon[2] ? 25 : 0)
-		+ 75;
-
-	w.setBounds(Common::Rect(72, 25, 248, 25 + height));
-	w.open();
-
-	loadButtons();
+void DarkSideOptionsMenu::startup(Common::String &title1, Common::String &title2) {
+	title1 = "title2.int";
+	title2 = "title2a.int";
 }
 
-OtherOptionsDialog::~OtherOptionsDialog() {
-	Windows &windows = *g_vm->_windows;
-	Window &w = windows[GAME_WINDOW];
-	w.close();
+void WorldOptionsMenu::startup(Common::String &title1, Common::String &title2) {
+	title1 = "world.int";
+	title2 = "start.icn";
+
+	Screen &screen = *_vm->_screen;
+	screen.fadeOut();
+	screen.loadPalette("dark.pal");
+	_vm->_events->clearEvents();
 }
 
-void OtherOptionsDialog::loadButtons() {
-	_buttonSprites.load("special.icn");
-	Common::Rect r(93, 53, 227, 73);
+void WorldOptionsMenu::setBackground(bool doFade) {
+	Screen &screen = *_vm->_screen;
+	screen.loadBackground("world.raw");
+	screen.saveBackground();
 
-	// View Darkside Intro
-	addButton(r, Common::KEYCODE_d, &_buttonSprites);
-	r.translate(0, 25);
-
-	// View Clouds Intro
-	if (g_vm->getGameID() == GType_WorldOfXeen) {
-		addButton(r, Common::KEYCODE_c, &_buttonSprites);
-		r.translate(0, 25);
-	} else {
-		addButton(Common::Rect(), Common::KEYCODE_INVALID);
-	}
-
-	// View Darkside End
-	if (g_vm->_gameWon[1]) {
-		addButton(r, Common::KEYCODE_e, &_buttonSprites);
-		r.translate(0, 25);
-	} else {
-		addButton(Common::Rect(), Common::KEYCODE_INVALID);
-	}
-
-	// View Clouds End
-	if (g_vm->_gameWon[0]) {
-		addButton(r, Common::KEYCODE_v, &_buttonSprites);
-		r.translate(0, 25);
-	} else {
-		addButton(Common::Rect(), Common::KEYCODE_INVALID);
-	}
-
-	// View World End
-	if (g_vm->_gameWon[2]) {
-		addButton(r, Common::KEYCODE_w, &_buttonSprites);
-	} else {
-		addButton(Common::Rect(), Common::KEYCODE_INVALID);
-	}
+	if (doFade)
+		screen.fadeIn();
 }
 
-void OtherOptionsDialog::draw() {
-	Windows &windows = *g_vm->_windows;
-	Window &w = windows[GAME_WINDOW];
-
-	w.frame();
-	w.writeString(Common::String::format(Res.OPTIONS_MENU,
-		Res.GAME_NAMES[g_vm->getGameID() == GType_WorldOfXeen ? 2 : 1], 
-		w.getBounds().height() - 33, 1993));
-	drawButtons(&w);
+void WorldOptionsMenu::openWindow() {
+	_vm->_screen->_windows[GAME_WINDOW].open();
 }
 
-bool OtherOptionsDialog::handleEvents() {
-	Sound &sound = *g_vm->_sound;
-	checkEvents(g_vm);
+void WorldOptionsMenu::showContents(SpriteResource &title1, bool waitFlag) {
+	Screen &screen = *_vm->_screen;
+	EventsManager &events = *_vm->_events;
+	events.updateGameCounter();
 
-	switch (_buttonValue) {
-	case Common::KEYCODE_d:
-		delete this;
-		sound.stopAllAudio();
-		WOX_VM.showDarkSideIntro(false);
-		break;
+	// Draw the background frame in a continous cycle
+	_bgFrame = (_bgFrame + 1) % 5;
+	title1.draw(screen._windows[0], _bgFrame);
 
-	case Common::KEYCODE_c:
-		if (g_vm->getGameID() == GType_WorldOfXeen) {
-			delete this;
-			sound.stopAllAudio();
-			WOX_VM.showCloudsIntro();
+	// Draw the basic frame for the optitons menu and title text
+	screen._windows[GAME_WINDOW].frame();
+	screen._windows[GAME_WINDOW].writeString(Res.OPTIONS_TITLE);
+
+	drawButtons(&screen._windows[0]);
+	screen.update();
+
+	if (waitFlag) {
+		while (!_vm->shouldQuit() && !_buttonValue && events.timeElapsed() < 3) {
+			events.pollEventsAndWait();
+			checkEvents(_vm);
 		}
-		break;
-
-	case Common::KEYCODE_e:
-		if (g_vm->_gameWon[1]) {
-			delete this;
-			sound.stopAllAudio();
-			WOX_VM.showDarkSideEnding(g_vm->_finalScore);
-		}
-		break;
-
-	case Common::KEYCODE_v:
-		if (g_vm->_gameWon[0]) {
-			delete this;
-			sound.stopAllAudio();
-			WOX_VM.showCloudsEnding(g_vm->_finalScore);
-		}
-		break;
-
-	case Common::KEYCODE_w:
-		if (g_vm->_gameWon[2]) {
-			delete this;
-			sound.stopAllAudio();
-			WOX_VM.showWorldOfXeenEnding(NON_GOOBER, g_vm->_finalScore);
-		}
-		break;
-
-	case Common::KEYCODE_ESCAPE:
-		// Exit dialog
-		delete this;
-		break;
-
-	default:
-		return false;
 	}
-
-	return true;
 }
 
 } // End of namespace WorldOfXeen

@@ -101,28 +101,27 @@ public:
 		_tabs[tabID].title = title;
 	}
 
-	virtual void handleMouseDown(int x, int y, int button, int clickCount) override;
-	virtual bool handleKeyDown(Common::KeyState state) override;
-	virtual void handleCommand(CommandSender *sender, uint32 cmd, uint32 data) override;
+	virtual void handleMouseDown(int x, int y, int button, int clickCount);
+	virtual bool handleKeyDown(Common::KeyState state);
+	virtual void handleCommand(CommandSender *sender, uint32 cmd, uint32 data);
 	virtual int getFirstVisible() const;
 	virtual void setFirstVisible(int tabID, bool adjustIfRoom = false);
 
-	virtual bool containsWidget(Widget *) const override;
+	virtual bool containsWidget(Widget *) const;
 
-	virtual void reflowLayout() override;
+	virtual void reflowLayout();
 
-	void draw() override;
-	void markAsDirty() override;
+	virtual void draw();
 
 protected:
 	// We overload getChildY to make sure child widgets are positioned correctly.
 	// Essentially this compensates for the space taken up by the tab title header.
-	virtual int16 getChildY() const override;
-	virtual uint16 getHeight() const override;
+	virtual int16 getChildY() const;
+	virtual uint16 getHeight() const;
 
-	virtual void drawWidget() override;
+	virtual void drawWidget();
 
-	virtual Widget *findWidget(int x, int y) override;
+	virtual Widget *findWidget(int x, int y);
 
 	virtual void adjustTabs(int value);
 

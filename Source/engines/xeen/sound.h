@@ -25,112 +25,22 @@
 
 #include "audio/mixer.h"
 #include "audio/audiostream.h"
+//#include "common/scummsys.h"
+//#include "common/system.h"
 #include "xeen/files.h"
-#include "xeen/sound_driver.h"
+#include "xeen/music.h"
 
 namespace Xeen {
 
-
-class Sound {
+class Sound : public Music {
 private:
-	SoundDriver *_SoundDriver;
-	const byte *_effectsData;
-	Common::Array<uint16> _effectsOffsets;
-	const byte *_songData;
 	Audio::Mixer *_mixer;
 	Audio::SoundHandle _soundHandle;
-	byte _musicPercent;
-private:
-	/**
-	 * Loads effects data that was embedded in the music driver
-	 */
-	void loadEffectsData();
-
-	/**
-	 * Updates any playing music
-	 */
-	void update();
 public:
-	bool _fxOn;
-	bool _musicOn;
-	Common::String _currentMusic, _priorMusic;
-	int _musicSide;
-	bool _subtitles;
+	bool _soundOn;
 public:
-	Sound(Audio::Mixer *mixer);
+	Sound(XeenEngine *vm, Audio::Mixer *mixer);
 	virtual ~Sound();
-
-	/**
-	 * Starts an effect playing
-	 */
-	void playFX(uint effectId);
-
-	/**
-	 * Stops any currently playing FX
-	 */
-	void stopFX();
-
-	/**
-	 * Executes special music command
-	 */
-	int songCommand(uint commandId, byte volume = 0);
-
-	/**
-	 * Stops any currently playing music
-	 */
-	void stopSong() { songCommand(STOP_SONG); }
-
-	/**
-	 * Restart a previously playing song (which must still be loaded)
-	 */
-	void restartSong() { songCommand(RESTART_SONG); }
-
-	/**
-	 * Sets the in-game music volume percent. This is separate from the ScummVM volume
-	 */
-	void setMusicPercent(byte percent);
-
-	/**
-	 * Plays a song
-	 */
-	void playSong(Common::SeekableReadStream &stream);
-
-	/**
-	 * Plays a song
-	 */
-	void playSong(const Common::String &name, int param = 0);
-
-	/**
-	 * Plays a song
-	 */
-	void playSong(const byte *data) {
-		_SoundDriver->playSong(data);
-	}
-
-	/**
-	 * Returns true if music is playing
-	 */
-	bool isMusicPlaying() const;
-
-	/**
-	 * Sets whether music is on
-	 */
-	void setMusicOn(bool isOn);
-
-	/**
-	* Sets whether sound effects is on
-	*/
-	void setFxOn(bool isOn);
-
-	/**
-	 * Called to reload sound settings
-	 */
-	void updateSoundSettings();
-
-	/**
-	 * Stops all playing music, FX, and sound samples
-	 */
-	void stopAllAudio();
 
 	/**
 	 * Play a given sound
@@ -143,26 +53,21 @@ public:
 	void playSound(const Common::String &name, int unused = 0);
 
 	/**
-	 * Play a given sound
-	 */
-	void playSound(const Common::String &name, int ccNum, int unused);
-
-	/**
-	 * Stop playing a sound loaded from a .m file
+	 * Stop playing a sound
 	 * @remarks		In the original, passing 1 to playSound stopped the sound
 	 */
 	void stopSound();
 
 	/**
-	 * Returns true if a sound file is currently playing
+	 * Returns true if a sound is currently playing
 	 * @remarks		In the original, passing 0 to playSound returned play status
 	 */
-	bool isSoundPlaying() const;
+	bool isPlaying() const;
 
 	/**
-	 * Play a given voice file
+	 * Stops all playing music, FX, and sound samples
 	 */
-	void playVoice(const Common::String &name, int ccMode = -1);
+	void stopAllAudio();
 };
 
 } // End of namespace Xeen

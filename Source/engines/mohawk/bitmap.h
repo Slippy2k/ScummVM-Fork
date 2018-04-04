@@ -148,16 +148,16 @@ private:
 // Mohawk Bitmap format.
 class MystBitmap : public MohawkBitmap {
 public:
-	MystBitmap() : MohawkBitmap(), _bitsPerPixel(8) {}
-	~MystBitmap() override {}
+	MystBitmap() : MohawkBitmap() {}
+	~MystBitmap() {}
 
-	MohawkSurface *decodeImage(Common::SeekableReadStream *stream) override;
+	MohawkSurface *decodeImage(Common::SeekableReadStream *stream);
 
 protected:
-	byte getBitsPerPixel() override { return _bitsPerPixel; }
+	byte getBitsPerPixel() { return _bitsPerPixel; }
 
 private:
-	byte _bitsPerPixel;
+	uint16 _bitsPerPixel;
 };
 
 #endif
@@ -165,23 +165,23 @@ private:
 class LivingBooksBitmap_v1 : public MohawkBitmap {
 public:
 	LivingBooksBitmap_v1() : MohawkBitmap() {}
-	~LivingBooksBitmap_v1() override {}
+	~LivingBooksBitmap_v1() {}
 
-	MohawkSurface *decodeImage(Common::SeekableReadStream *stream) override;
+	MohawkSurface *decodeImage(Common::SeekableReadStream *stream);
 
 protected:
-	byte getBitsPerPixel() override { return 8; }
+	byte getBitsPerPixel() { return 8; }
 };
 
 class DOSBitmap : public MohawkBitmap {
 public:
 	DOSBitmap() : MohawkBitmap() {}
-	~DOSBitmap() override {}
+	~DOSBitmap() {}
 
-	MohawkSurface *decodeImage(Common::SeekableReadStream *stream) override;
+	MohawkSurface *decodeImage(Common::SeekableReadStream *stream);
 
 protected:
-	byte getBitsPerPixel() override { return ((_header.format & 0x30) >> 4) + 1; }
+	byte getBitsPerPixel() { return ((_header.format & 0x30) >> 4) + 1; }
 
 private:
 	void expandMonochromePlane(Graphics::Surface *surface, Common::SeekableReadStream *rawStream);

@@ -2162,20 +2162,22 @@ void DisplayMan::drawSquareD0L(Direction dir, int16 posX, int16 posY) {
 	uint16 squareAspect[5];
 	_vm->_dungeonMan->setSquareAspect(squareAspect, dir, posX, posY);
 	switch (squareAspect[kDMSquareAspectElement]) {
-	case kDMElementTypeStairsSide:
-		drawFloorPitOrStairsBitmap(_stairsNativeBitmapIndexSideD0L, frameStairsSideD0L);
-		return;
-	case kDMElementTypePit:
-		drawFloorPitOrStairsBitmap(squareAspect[kDMSquareAspectPitInvisible] ? kDMGraphicIdxFloorPitInvisibleD0L : kDMGraphicIdxFloorPitD0L, frameFloorPitD0L);
-		// fall through
-	case kDMElementTypeCorridor:
-	case kDMElementTypeDoorSide:
-	case kDMElementTypeTeleporter:
-		drawObjectsCreaturesProjectilesExplosions(Thing(squareAspect[kDMSquareAspectFirstGroupOrObject]), dir, posX, posY, kDMViewSquareD0L, kDMCellOrderBackRight);
-		break;
 	case kDMElementTypeWall:
 		drawWallSetBitmap(bitmapWallSetWallD0L, _frameWalls163[kDMViewSquareD0L]);
-		return;
+		break;
+	case kDMElementTypeCorridor:
+	case kDMElementTypeTeleporter:
+	case kDMElementTypeDoorSide:
+		drawObjectsCreaturesProjectilesExplosions(Thing(squareAspect[kDMSquareAspectFirstGroupOrObject]), dir, posX, posY, kDMViewSquareD0L, kDMCellOrderBackRight);
+		break;
+	case kDMElementTypePit:
+		drawFloorPitOrStairsBitmap(squareAspect[kDMSquareAspectPitInvisible] ? kDMGraphicIdxFloorPitInvisibleD0L : kDMGraphicIdxFloorPitD0L, frameFloorPitD0L);
+	case kDMElementTypeStairsSide:
+		if (squareAspect[kDMSquareAspectStairsUp])
+			drawFloorPitOrStairsBitmap(_stairsNativeBitmapIndexSideD0L, frameStairsSideD0L);
+		break;
+	default:
+		break;
 	}
 
 	drawCeilingPit(kDMGraphicIdxCeilingPitD0L, &frameCeilingPitD0L, posX, posY, false);
@@ -2198,7 +2200,6 @@ void DisplayMan::drawSquareD0R(Direction dir, int16 posX, int16 posY) {
 	case kDMElementTypePit:
 		drawFloorPitOrStairsBitmapFlippedHorizontally(squareAspect[kDMSquareAspectPitInvisible] ? kDMGraphicIdxFloorPitInvisibleD0L
 														   : kDMGraphicIdxFloorPitD0L, frameFloorPitD0R);
-		// fall through
 	case kDMElementTypeCorridor:
 	case kDMElementTypeDoorSide:
 	case kDMElementTypeTeleporter:

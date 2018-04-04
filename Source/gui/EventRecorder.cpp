@@ -177,7 +177,7 @@ bool EventRecorder::processDelayMillis() {
 }
 
 void EventRecorder::checkForKeyCode(const Common::Event &event) {
-	if ((event.type == Common::EVENT_KEYDOWN) && (event.kbd.flags & Common::KBD_CTRL) && (event.kbd.keycode == Common::KEYCODE_p) && (!event.kbdRepeat)) {
+	if ((event.type == Common::EVENT_KEYDOWN) && (event.kbd.flags & Common::KBD_CTRL) && (event.kbd.keycode == Common::KEYCODE_p) && (!event.synthetic)) {
 		togglePause();
 	}
 }
@@ -445,7 +445,7 @@ Common::List<Common::Event> EventRecorder::mapEvent(const Common::Event &ev, Com
 	evt.mouse.y = evt.mouse.y * (g_system->getOverlayHeight() / g_system->getHeight());
 	switch (_recordMode) {
 	case kRecorderPlayback:
-		if (ev.kbdRepeat != true) {
+		if (ev.synthetic != true) {
 			return Common::List<Common::Event>();
 		}
 		return Common::DefaultEventMapper::mapEvent(ev, source);
@@ -557,19 +557,17 @@ Common::SaveFileManager *EventRecorder::getSaveManager(Common::SaveFileManager *
 }
 
 void EventRecorder::preDrawOverlayGui() {
-	if ((_initialized) || (_needRedraw)) {
+    if ((_initialized) || (_needRedraw)) {
 		RecordMode oldMode = _recordMode;
 		_recordMode = kPassthrough;
 		g_system->showOverlay();
 		g_gui.theme()->clearAll();
-		g_gui.theme()->drawToBackbuffer();
-		_controlPanel->drawDialog(kDrawLayerBackground);
-		g_gui.theme()->drawToScreen();
-		g_gui.theme()->copyBackBufferToScreen();
-		_controlPanel->drawDialog(kDrawLayerForeground);
+		g_gui.theme()->openDialog(true, GUI::ThemeEngine::kShadingNone);
+		_controlPanel->drawDialog();
+		g_gui.theme()->finishBuffering();
 		g_gui.theme()->updateScreen();
 		_recordMode = oldMode;
-	}
+   }
 }
 
 void EventRecorder::postDrawOverlayGui() {
@@ -600,7 +598,8 @@ void EventRecorder::setFileHeader() {
 		return;
 	}
 	TimeDate t;
-	GameDescriptor desc = EngineMan.findGame(ConfMan.getActiveDomainName());
+	const EnginePlugin *plugin = 0;
+	GameDescriptor desc = EngineMan.findGame(ConfMan.getActiveDomainName(), &plugin);
 	g_system->getTimeAndDate(t);
 	if (_author.empty()) {
 		setAuthor("Unknown Author");
@@ -620,19 +619,19 @@ SDL_Surface *EventRecorder::getSurface(int width, int height) {
 
 bool EventRecorder::switchMode() {
 	const Common::String gameId = ConfMan.get("gameid");
-	const Plugin *plugin = nullptr;
+	const EnginePlugin *plugin = 0;
 	EngineMan.findGame(gameId, &plugin);
-	bool metaInfoSupport = plugin->get<MetaEngine>().hasFeature(MetaEngine::kSavesSupportMetaInfo);
+	bool metaInfoSupport = (*plugin)->hasFeature(MetaEngine::kSavesSupportMetaInfo);
 	bool featuresSupport = metaInfoSupport &&
 						  g_engine->canSaveGameStateCurrently() &&
-						  plugin->get<MetaEngine>().hasFeature(MetaEngine::kSupportsListSaves) &&
-						  plugin->get<MetaEngine>().hasFeature(MetaEngine::kSupportsDeleteSave);
+						  (*plugin)->hasFeature(MetaEngine::kSupportsListSaves) &&
+						  (*plugin)->hasFeature(MetaEngine::kSupportsDeleteSave);
 	if (!featuresSupport) {
 		return false;
 	}
 
 	int emptySlot = 1;
-	SaveStateList saveList = plugin->get<MetaEngine>().listSaves(gameId.c_str());
+	SaveStateList saveList = (*plugin)->listSaves(gameId.c_str());
 	for (SaveStateList::const_iterator x = saveList.begin(); x != saveList.end(); ++x) {
 		int saveSlot = x->getSaveSlot();
 		if (saveSlot == 0) {
@@ -668,9 +667,9 @@ bool EventRecorder::checkForContinueGame() {
 void EventRecorder::deleteTemporarySave() {
 	if (_temporarySlot == -1) return;
 	const Common::String gameId = ConfMan.get("gameid");
-	const Plugin *plugin = 0;
+	const EnginePlugin *plugin = 0;
 	EngineMan.findGame(gameId, &plugin);
-	 plugin->get<MetaEngine>().removeSaveState(gameId.c_str(), _temporarySlot);
+	 (*plugin)->removeSaveState(gameId.c_str(), _temporarySlot);
 	_temporarySlot = -1;
 }
 

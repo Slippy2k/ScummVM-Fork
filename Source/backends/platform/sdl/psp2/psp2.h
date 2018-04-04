@@ -34,21 +34,19 @@ public:
 	OSystem_PSP2(Common::String baseConfigName = "scummvm.ini");
 	virtual ~OSystem_PSP2() {}
 
-	virtual void init() override;
-	virtual void initBackend() override;
-	virtual bool hasFeature(Feature f) override;
-	virtual void setFeatureState(Feature f, bool enable) override;
-	virtual bool getFeatureState(Feature f) override;
-	virtual void logMessage(LogMessageType::Type type, const char *message) override;
+	virtual void init();
+	virtual void initBackend();
+	virtual bool hasFeature(Feature f);
+	virtual void logMessage(LogMessageType::Type type, const char *message);
 
 protected:
 	// Base string for creating the default path and filename
 	// for the configuration file
 	Common::String _baseConfigName;
 
-	virtual Common::String getDefaultConfigFileName() override;
+	virtual Common::String getDefaultConfigFileName();
 
-	virtual Common::WriteStream *createLogFile() override;
+	virtual Common::WriteStream *createLogFile();
 };
 
 #endif

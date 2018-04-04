@@ -94,13 +94,13 @@ enum {
 
 MohawkOptionsDialog::MohawkOptionsDialog(MohawkEngine *vm) :
 		GUI::Dialog(0, 0, 360, 200),
-		_vm(vm), _loadSlot(-1), _saveSlot(-1) {
-	_loadButton = new GUI::ButtonWidget(this, 245, 25, 100, 25, _("~L~oad"), nullptr, kLoadCmd);
-	_saveButton = new GUI::ButtonWidget(this, 245, 60, 100, 25, _("~S~ave"), nullptr, kSaveCmd);
-	new GUI::ButtonWidget(this, 245, 95, 100, 25, _("~Q~uit"), nullptr, kQuitCmd);
+		_vm(vm), _loadSlot(-1) {
+	_loadButton = new GUI::ButtonWidget(this, 245, 25, 100, 25, _("~L~oad"), 0, kLoadCmd);
+	_saveButton = new GUI::ButtonWidget(this, 245, 60, 100, 25, _("~S~ave"), 0, kSaveCmd);
+	new GUI::ButtonWidget(this, 245, 95, 100, 25, _("~Q~uit"), 0, kQuitCmd);
 
-	new GUI::ButtonWidget(this, 95, 160, 120, 25, _("~O~K"), nullptr, GUI::kOKCmd);
-	new GUI::ButtonWidget(this, 225, 160, 120, 25, _("~C~ancel"), nullptr, GUI::kCloseCmd);
+	new GUI::ButtonWidget(this, 95, 160, 120, 25, _("~O~K"), 0, GUI::kOKCmd);
+	new GUI::ButtonWidget(this, 225, 160, 120, 25, _("~C~ancel"), 0, GUI::kCloseCmd);
 
 	_loadDialog = new GUI::SaveLoadChooser(_("Load game:"), _("Load"), false);
 	_saveDialog = new GUI::SaveLoadChooser(_("Save game:"), _("Save"), true);
@@ -115,22 +115,22 @@ void MohawkOptionsDialog::open() {
 	GUI::Dialog::open();
 
 	_loadSlot = -1;
-	_saveSlot = -1;
 	_loadButton->setEnabled(_vm->canLoadGameStateCurrently());
 	_saveButton->setEnabled(_vm->canSaveGameStateCurrently());
 }
 
 
 void MohawkOptionsDialog::save() {
-	_saveSlot = _saveDialog->runModalWithCurrentTarget();
+	int slot = _saveDialog->runModalWithCurrentTarget();
 
-	if (_saveSlot >= 0) {
-		_saveDescription = _saveDialog->getResultString();
-		if (_saveDescription.empty()) {
+	if (slot >= 0) {
+		Common::String result(_saveDialog->getResultString());
+		if (result.empty()) {
 			// If the user was lazy and entered no save name, come up with a default name.
-			_saveDescription = _saveDialog->createDefaultSaveDescription(_saveSlot);
+			result = _saveDialog->createDefaultSaveDescription(slot);
 		}
 
+		_vm->saveGameState(slot, result);
 		close();
 	}
 }
@@ -180,22 +180,22 @@ void MohawkOptionsDialog::handleCommand(GUI::CommandSender *sender, uint32 cmd, 
 
 MystOptionsDialog::MystOptionsDialog(MohawkEngine_Myst* vm) : MohawkOptionsDialog(vm), _vm(vm) {
 	// I18N: Option for fast scene switching
-	_zipModeCheckbox = new GUI::CheckboxWidget(this, 15, 10, 220, 15, _("~Z~ip Mode Activated"), nullptr, kZipCmd);
-	_transitionsCheckbox = new GUI::CheckboxWidget(this, 15, 30, 220, 15, _("~T~ransitions Enabled"), nullptr, kTransCmd);
+	_zipModeCheckbox = new GUI::CheckboxWidget(this, 15, 10, 220, 15, _("~Z~ip Mode Activated"), 0, kZipCmd);
+	_transitionsCheckbox = new GUI::CheckboxWidget(this, 15, 30, 220, 15, _("~T~ransitions Enabled"), 0, kTransCmd);
 	// I18N: Drop book page
-	_dropPageButton = new GUI::ButtonWidget(this, 15, 60, 100, 25, _("~D~rop Page"), nullptr, kDropCmd);
+	_dropPageButton = new GUI::ButtonWidget(this, 15, 60, 100, 25, _("~D~rop Page"), 0, kDropCmd);
 
 	// Myst ME only has maps
 	if (_vm->getFeatures() & GF_ME)
-		_showMapButton = new GUI::ButtonWidget(this, 15, 95, 100, 25, _("Show ~M~ap"), nullptr, kMapCmd);
+		_showMapButton = new GUI::ButtonWidget(this, 15, 95, 100, 25, _("Show ~M~ap"), 0, kMapCmd);
 	else
-		_showMapButton = nullptr;
+		_showMapButton = 0;
 
 	// Myst demo only has a menu
 	if (_vm->getFeatures() & GF_DEMO)
-		_returnToMenuButton = new GUI::ButtonWidget(this, 15, 95, 100, 25, _("Main Men~u~"), nullptr, kMenuCmd);
+		_returnToMenuButton = new GUI::ButtonWidget(this, 15, 95, 100, 25, _("Main Men~u~"), 0, kMenuCmd);
 	else
-		_returnToMenuButton = nullptr;
+		_returnToMenuButton = 0;
 }
 
 MystOptionsDialog::~MystOptionsDialog() {
@@ -266,8 +266,8 @@ void MystOptionsDialog::handleCommand(GUI::CommandSender *sender, uint32 cmd, ui
 RivenOptionsDialog::RivenOptionsDialog(MohawkEngine_Riven* vm) :
 		MohawkOptionsDialog(vm),
 		_vm(vm) {
-	_zipModeCheckbox = new GUI::CheckboxWidget(this, 15, 10, 220, 15, _("~Z~ip Mode Activated"), nullptr, kZipCmd);
-	_waterEffectCheckbox = new GUI::CheckboxWidget(this, 15, 30, 220, 15, _("~W~ater Effect Enabled"), nullptr, kWaterCmd);
+	_zipModeCheckbox = new GUI::CheckboxWidget(this, 15, 10, 220, 15, _("~Z~ip Mode Activated"), 0, kZipCmd);
+	_waterEffectCheckbox = new GUI::CheckboxWidget(this, 15, 30, 220, 15, _("~W~ater Effect Enabled"), 0, kWaterCmd);
 
 	_transitionModeCaption = new GUI::StaticTextWidget(this, 15, 50, 90, 20, _("Transitions:"), Graphics::kTextAlignRight);
 	_transitionModePopUp = new GUI::PopUpWidget(this, 115, 50, 120, 20);

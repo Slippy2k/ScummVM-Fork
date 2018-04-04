@@ -119,7 +119,6 @@ public:
 
 	// AudioStream API
 	int readBuffer(int16 *buffer, const int numSamples);
-	bool endOfData() const;
 	bool endOfStream() const;
 
 	// PacketizedAudioStream API
@@ -453,10 +452,7 @@ int PacketizedMP3Stream::readBuffer(int16 *buffer, const int numSamples) {
 	while (samples < numSamples) {
 		// Empty? Bail out for now, and mark the stream as ended
 		if (_queue.empty()) {
-			// EOS state is only valid once a packet has been received at least
-			// once
-			if (_state == MP3_STATE_READY)
-				_state = MP3_STATE_EOS;
+			_state = MP3_STATE_EOS;
 			return samples;
 		}
 
@@ -488,17 +484,12 @@ int PacketizedMP3Stream::readBuffer(int16 *buffer, const int numSamples) {
 	return samples;
 }
 
-bool PacketizedMP3Stream::endOfData() const {
-	Common::StackLock lock(_mutex);
-	return BaseMP3Stream::endOfData();
-}
-
 bool PacketizedMP3Stream::endOfStream() const {
-	Common::StackLock lock(_mutex);
-
 	if (!endOfData())
 		return false;
 
+	// Lock the mutex
+	Common::StackLock lock(_mutex);
 	if (!_queue.empty())
 		return false;
 

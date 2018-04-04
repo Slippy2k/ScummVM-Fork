@@ -106,8 +106,8 @@ static bool launcherDialog() {
 	return (dlg.runModal() != -1);
 }
 
-static const Plugin *detectPlugin() {
-	const Plugin *plugin = nullptr;
+static const EnginePlugin *detectPlugin() {
+	const EnginePlugin *plugin = 0;
 
 	// Make sure the gameid is set in the config manager, and that it is lowercase.
 	Common::String gameid(ConfMan.getActiveDomainName());
@@ -141,7 +141,7 @@ static const Plugin *detectPlugin() {
 }
 
 // TODO: specify the possible return values here
-static Common::Error runGame(const Plugin *plugin, OSystem &system, const Common::String &edebuglevels) {
+static Common::Error runGame(const EnginePlugin *plugin, OSystem &system, const Common::String &edebuglevels) {
 	// Determine the game data path, for validation and error messages
 	Common::FSNode dir(ConfMan.get("path"));
 	Common::Error err = Common::kNoError;
@@ -169,16 +169,15 @@ static Common::Error runGame(const Plugin *plugin, OSystem &system, const Common
 
 	// Create the game engine
 	if (err.getCode() == Common::kNoError) {
-		const MetaEngine &metaEngine = plugin->get<MetaEngine>();
 		// Set default values for all of the custom engine options
 		// Appareantly some engines query them in their constructor, thus we
 		// need to set this up before instance creation.
-		const ExtraGuiOptions engineOptions = metaEngine.getExtraGuiOptions(Common::String());
+		const ExtraGuiOptions engineOptions = (*plugin)->getExtraGuiOptions(Common::String());
 		for (uint i = 0; i < engineOptions.size(); i++) {
 			ConfMan.registerDefault(engineOptions[i].configOption, engineOptions[i].defaultState);
 		}
 
-		err = metaEngine.createInstance(&system, &engine);
+		err = (*plugin)->createInstance(&system, &engine);
 	}
 
 	// Check for errors
@@ -505,7 +504,7 @@ extern "C" int scummvm_main(int argc, const char * const argv[]) {
 	// cleanly, so this is now enabled to encourage people to fix bits :)
 	while (0 != ConfMan.getActiveDomain()) {
 		// Try to find a plugin which feels responsible for the specified game.
-		const Plugin *plugin = detectPlugin();
+		const EnginePlugin *plugin = detectPlugin();
 		if (plugin) {
 			// Unload all plugins not needed for this game,
 			// to save memory

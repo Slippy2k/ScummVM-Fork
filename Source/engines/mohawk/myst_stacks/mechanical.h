@@ -37,8 +37,8 @@ namespace MystStacks {
 
 class Mechanical : public MystScriptParser {
 public:
-	explicit Mechanical(MohawkEngine_Myst *vm);
-	~Mechanical() override;
+	Mechanical(MohawkEngine_Myst *vm);
+	~Mechanical();
 
 	void disablePersistentScripts() override;
 	void runPersistentScripts() override;
@@ -49,7 +49,7 @@ private:
 	void toggleVar(uint16 var) override;
 	bool setVarValue(uint16 var, uint16 value) override;
 
-	uint16 getMap() override { return 9931; }
+	virtual uint16 getMap() override { return 9931; }
 
 	void birdSing_run();
 	void elevatorRotation_run();

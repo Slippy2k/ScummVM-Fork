@@ -99,8 +99,7 @@ bool SdlGraphicsManager::defaultGraphicsModeConfig() const {
 int SdlGraphicsManager::getGraphicsModeIdByName(const Common::String &name) const {
 	if (name == "normal" || name == "default") {
 		return getDefaultGraphicsMode();
-	}
-	
+	}	
 	const OSystem::GraphicsMode *mode = getSupportedGraphicsModes();
 	while (mode && mode->name != nullptr) {
 		if (name.equalsIgnoreCase(mode->name)) {
@@ -221,8 +220,7 @@ bool SdlGraphicsManager::notifyMousePosition(Common::Point &mouse) {
 void SdlGraphicsManager::setSystemMousePosition(const int x, const int y) {
 	assert(_window);
 	if (!_window->warpMouseInWindow(x, y)) {
-		const Common::Point mouse = convertWindowToVirtual(x, y);
-		_eventSource->fakeWarpMouse(mouse.x, mouse.y);
+		_eventSource->fakeWarpMouse(x, y);
 	}
 }
 
@@ -244,16 +242,13 @@ bool SdlGraphicsManager::createOrUpdateWindow(int width, int height, const Uint3
 	// resized the game window), or when the launcher is visible (since a user
 	// may change the scaler, which should reset the window size)
 	if (!_window->getSDLWindow() || _lastFlags != flags || _overlayVisible || _allowWindowSizeReset) {
-		const bool fullscreen = (flags & (SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP)) != 0;
-		if (!fullscreen) {
-			if (_hintedWidth) {
-				width = _hintedWidth;
-			}
-			if (_hintedHeight) {
-				height = _hintedHeight;
-			}
+		if (_hintedWidth) {
+			width = _hintedWidth;
 		}
-		
+		if (_hintedHeight) {
+			height = _hintedHeight;
+		}
+
 		if (!_window->createOrUpdateWindow(width, height, flags)) {
 			return false;
 		}

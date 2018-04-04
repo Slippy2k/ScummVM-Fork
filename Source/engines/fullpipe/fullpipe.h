@@ -23,15 +23,12 @@
 #ifndef FULLPIPE_FULLPIPE_H
 #define FULLPIPE_FULLPIPE_H
 
-#include "audio/mixer.h"
 #include "common/scummsys.h"
 #include "common/events.h"
 #include "common/keyboard.h"
-#include "common/ptr.h"
 #include "common/random.h"
 #include "common/savefile.h"
 #include "common/system.h"
-#include "graphics/surface.h"
 
 #include "engines/engine.h"
 
@@ -59,11 +56,8 @@ enum {
 	kDebugBehavior		= 1 << 6,
 	kDebugInventory		= 1 << 7,
 	kDebugSceneLogic	= 1 << 8,
-	kDebugInteractions	= 1 << 9,
-	kDebugXML			= 1 << 10
+	kDebugInteractions	= 1 << 9
 };
-
-#define MAXGAMEOBJH 10000
 
 class BehaviorManager;
 class BaseModalObject;
@@ -80,6 +74,7 @@ class GameObject;
 class GlobalMessageQueueList;
 struct MessageHandler;
 class MessageQueue;
+struct MovTable;
 class AniHandler;
 class NGIArchive;
 class PictureObject;
@@ -88,11 +83,6 @@ class Scene;
 class SoundList;
 class StaticANIObject;
 class Vars;
-typedef Common::Array<int16> MovTable;
-typedef Common::Array<int32> Palette;
-typedef Common::Array<Common::Point> PointList;
-
-typedef Common::HashMap<uint16, Common::String> GameObjHMap;
 
 int global_messageHandler1(ExCommand *cmd);
 int global_messageHandler2(ExCommand *cmd);
@@ -110,12 +100,11 @@ public:
 	FullpipeEngine(OSystem *syst, const ADGameDescription *gameDesc);
 	virtual ~FullpipeEngine();
 
-	Console _console;
-	GUI::Debugger *getDebugger() { return &_console; }
+	Console *_console;
+	GUI::Debugger *getDebugger() { return _console; }
 
 	void initialize();
 	void restartGame();
-	bool shouldQuit();
 
 	void setMusicAllowed(int val) { _musicAllowed = val; }
 
@@ -125,22 +114,19 @@ public:
 	bool isDemo();
 	Common::Language getLanguage() const;
 
-	Common::RandomSource _rnd;
+	Common::RandomSource *_rnd;
 
 	Common::KeyCode _keyState;
 	uint16 _buttonState;
 
 	void updateEvents();
 
-	Graphics::Surface _backgroundSurface;
-	Graphics::PixelFormat _origFormat;
+	Graphics::Surface *_backgroundSurface;
+	Graphics::PixelFormat *_origFormat;
 
-	Common::ScopedPtr<GameLoader> _gameLoader;
+	GameLoader *_gameLoader;
 	GameProject *_gameProject;
 	bool loadGam(const char *fname, int scene = 0);
-
-	void loadGameObjH();
-	Common::String gameIdToStr(uint16 id);
 
 	GameVar *getGameLoaderGameVar();
 	InputController *getGameLoaderInputController();
@@ -165,8 +151,7 @@ public:
 	Scene *_scene3;
 	StaticANIObject *_aniMan;
 	StaticANIObject *_aniMan2;
-	Palette _defaultPalette;
-	const Palette *_globalPalette;
+	byte *_globalPalette;
 
 	InputController *_inputController;
 	bool _inputDisabled;
@@ -199,7 +184,7 @@ public:
 	void updateTrackDelay();
 	void startSceneTrack();
 	void startSoundStream1(const Common::String &trackName);
-	void playOggSound(const Common::String &trackName, Audio::SoundHandle &stream);
+	void playOggSound(const Common::String &trackName, Audio::SoundHandle *stream);
 	void stopSoundStream2();
 	void stopAllSoundStreams();
 	void stopAllSoundInstances(int id);
@@ -209,7 +194,7 @@ public:
 	int _sfxVolume;
 	int _musicVolume;
 
-	Common::ScopedPtr<GlobalMessageQueueList> _globalMessageQueueList;
+	GlobalMessageQueueList *_globalMessageQueueList;
 	MessageHandler *_messageHandlers;
 
 	int _msgX;
@@ -224,16 +209,14 @@ public:
 	int _mouseVirtY;
 	Common::Point _mouseScreenPos;
 
-	Common::ScopedPtr<BehaviorManager> _behaviorManager;
+	BehaviorManager *_behaviorManager;
 
-	Common::ScopedPtr<MovTable> _movTable;
+	MovTable *_movTable;
 
-	Common::ScopedPtr<Floaters> _floaters;
-	Common::ScopedPtr<AniHandler> _aniHandler;
+	Floaters *_floaters;
+	AniHandler *_aniHandler;
 
-	Common::Array<Common::Point> _arcadeKeys;
-
-	void deleteModalObject();
+	Common::Array<Common::Point *> _arcadeKeys;
 
 	void initMap();
 	void updateMap(PreloadItem *pre);
@@ -294,7 +277,7 @@ public:
 	int getObjectEnumState(const Common::String &name, const char *state);
 
 	void sceneAutoScrolling();
-	bool sceneSwitcher(const EntranceInfo &entrance);
+	bool sceneSwitcher(EntranceInfo *entrance);
 	Scene *accessScene(int sceneId);
 	void setSceneMusicParameters(GameVar *var);
 	int convertScene(int scene);
@@ -347,14 +330,12 @@ public:
 	void lift_openLift();
 
 	GameVar *_musicGameVar;
-	Audio::SoundHandle _soundStream1;
-	Audio::SoundHandle _soundStream2;
-	Audio::SoundHandle _soundStream3;
-	Audio::SoundHandle _soundStream4;
+	Audio::SoundHandle *_soundStream1;
+	Audio::SoundHandle *_soundStream2;
+	Audio::SoundHandle *_soundStream3;
+	Audio::SoundHandle *_soundStream4;
 
 	bool _stream2playing;
-
-	GameObjHMap _gameObjH;
 
 public:
 

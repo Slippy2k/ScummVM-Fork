@@ -46,13 +46,11 @@ class ZBuffer;
 //TODO: split this into two components as it is in original game: universal vqa player, blade runner player functionality
 
 class VQAPlayer {
-	friend class Debugger;
-
 	BladeRunnerEngine           *_vm;
 	Common::SeekableReadStream  *_s;
 	VQADecoder                   _decoder;
+	const uint16                *_zBuffer;
 	Audio::QueuingAudioStream   *_audioStream;
-	Graphics::Surface           *_surface;
 
 	int _frame;
 	int _frameNext;
@@ -72,7 +70,7 @@ class VQAPlayer {
 	bool   _audioStarted;
 	Audio::SoundHandle _soundHandle;
 
-	void (*_callbackLoopEnded)(void *, int frame, int loopId);
+	void (*_callbackLoopEnded)(void*, int frame, int loopId);
 	void  *_callbackData;
 
 public:
@@ -80,10 +78,9 @@ public:
 	VQAPlayer(BladeRunnerEngine *vm, Graphics::Surface *surface)
 		: _vm(vm),
 		  _s(nullptr),
-		  _surface(surface),
-		  _decoder(),
+		  _decoder(surface),
+		  _zBuffer(nullptr),
 		  _audioStream(nullptr),
-		  _frame(-1),
 		  _frameNext(-1),
 		  _frameBegin(-1),
 		  _frameEnd(-1),
@@ -106,21 +103,19 @@ public:
 	bool open(const Common::String &name);
 	void close();
 
-	int  update(bool forceDraw = false, bool advanceFrame = true, Graphics::Surface *customSurface = nullptr);
+	int  update(bool forceDraw = false);
 	void updateZBuffer(ZBuffer *zbuffer);
 	void updateView(View *view);
 	void updateScreenEffects(ScreenEffects *screenEffects);
 	void updateLights(Lights *lights);
 
 	bool setBeginAndEndFrame(int begin, int end, int repeatsCount, int loopSetMode, void(*callback)(void *, int, int), void *callbackData);
-	bool setLoop(int loop, int repeatsCount, int loopSetMode, void(*callback)(void*, int, int), void *callbackData);
+	bool setLoop(int loop, int repeatsCount, int loopSetMode, void(*callback)(void*, int, int), void* callbackData);
 
 	bool seekToFrame(int frame);
 
 	int getLoopBeginFrame(int loop);
 	int getLoopEndFrame(int loop);
-
-	int getFrameCount();
 
 private:
 	void queueAudioFrame(Audio::AudioStream *audioStream);

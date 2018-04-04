@@ -83,9 +83,6 @@ Common::String RISCOSFilesystemNode::toUnix(Common::String &path) {
 	if (out.contains("$")) {
 		char *x = strstr(out.c_str(), "$");
 		start = x ? x - out.c_str() : -1;
-	} else if (out.contains(":")) {
-		char *x = strstr(out.c_str(), ":");
-		start = x ? x - out.c_str() : -1;
 	}
 
 	for (uint32 ptr = start; ptr < out.size(); ptr += 1) {
@@ -96,15 +93,12 @@ Common::String RISCOSFilesystemNode::toUnix(Common::String &path) {
 		case '/':
 			out.setChar('.', ptr);
 			break;
-		case '\xA0':
-			out.setChar(' ', ptr);
-			break;
 		default:
 			break;
 		}
 	}
 
-	if (out.contains("$") || out.contains(":"))
+	if (out.contains("$"))
 		out = "/" + out;
 
 	return out;

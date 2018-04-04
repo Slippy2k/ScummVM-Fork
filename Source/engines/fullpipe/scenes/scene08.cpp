@@ -193,7 +193,9 @@ int sceneHandler08_calcOffset(int off, int flag) {
 }
 
 void sceneHandler08_pushCallback(int *par) {
-	int y = g_fp->_aniMan->_oy + g_fp->_aniMan->getSomeXY().y;
+	Common::Point point;
+
+	int y = g_fp->_aniMan->_oy + g_fp->_aniMan->getSomeXY(point)->y;
 
 	if (g_fp->_aniMan->_statics && g_fp->_aniMan->_statics->_staticsId == ST_MAN8_FLYDOWN)
 		y -= 25;
@@ -251,7 +253,7 @@ void sceneHandler08_airMoves() {
 		int y = g_fp->_aniMan->_oy;
 		Common::Point point;
 
-		if (703 - g_fp->_aniMan->getSomeXY().y - y < 150) {
+		if (703 - g_fp->_aniMan->getSomeXY(point)->y - y < 150) {
 			if (g_fp->_aniMan->_statics) {
 				if (g_fp->_aniMan->_statics->_staticsId == ST_MAN8_FLYDOWN) {
 					y -= 25;
@@ -356,7 +358,7 @@ void sceneHandler08_calcFlight() {
 	if (g_vars->scene08_manOffsetY < g_vars->scene08_stairsOffset)
 		g_vars->scene08_manOffsetY = g_vars->scene08_stairsOffset;
 
-	y = y + g_fp->_aniMan->getSomeXY().y;
+	y = y + g_fp->_aniMan->getSomeXY(point)->y;
 
 	if (g_fp->_aniMan->_statics && g_fp->_aniMan->_statics->_staticsId == ST_MAN8_FLYDOWN)
 		y -= 25;

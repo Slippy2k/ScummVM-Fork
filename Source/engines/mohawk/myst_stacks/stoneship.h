@@ -37,8 +37,8 @@ namespace MystStacks {
 
 class Stoneship : public MystScriptParser {
 public:
-	explicit Stoneship(MohawkEngine_Myst *vm);
-	~Stoneship() override;
+	Stoneship(MohawkEngine_Myst *vm);
+	~Stoneship();
 
 	void disablePersistentScripts() override;
 	void runPersistentScripts() override;
@@ -49,7 +49,7 @@ private:
 	void toggleVar(uint16 var) override;
 	bool setVarValue(uint16 var, uint16 value) override;
 
-	uint16 getMap() override { return 9933; }
+	virtual uint16 getMap() override { return 9933; }
 
 	DECLARE_OPCODE(o_pumpTurnOff);
 	DECLARE_OPCODE(o_brotherDoorOpen);
