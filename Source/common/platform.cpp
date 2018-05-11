@@ -89,7 +89,7 @@ const char *getPlatformCode(Platform id) {
 		if (l->id == id)
 			return l->code;
 	}
-	return 0;
+	return nullptr;
 }
 
 const char *getPlatformAbbrev(Platform id) {
@@ -98,7 +98,7 @@ const char *getPlatformAbbrev(Platform id) {
 		if (l->id == id)
 			return l->abbrev;
 	}
-	return 0;
+	return nullptr;
 }
 
 const char *getPlatformDescription(Platform id) {

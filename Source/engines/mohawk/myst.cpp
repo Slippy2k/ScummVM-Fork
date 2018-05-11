@@ -262,8 +262,38 @@ void MohawkEngine_Myst::playMovieBlocking(const Common::String &name, MystStack 
 	waitUntilMovieEnds(video);
 }
 
-void MohawkEngine_Myst::playFlybyMovie(const Common::String &name) {
-	Common::String filename = wrapMovieFilename(name, kMasterpieceOnly);
+void MohawkEngine_Myst::playFlybyMovie(uint16 stack, uint16 card) {
+	// Play Flyby Entry Movie on Masterpiece Edition.
+	const char *flyby = nullptr;
+
+	switch (stack) {
+		case kSeleniticStack:
+			flyby = "selenitic flyby";
+			break;
+		case kStoneshipStack:
+			flyby = "stoneship flyby";
+			break;
+			// Myst Flyby Movie not used in Original Masterpiece Edition Engine
+			// We play it when first arriving on Myst, and if the user has chosen so.
+		case kMystStack:
+			if (ConfMan.getBool("playmystflyby"))
+				flyby = "myst flyby";
+			break;
+		case kMechanicalStack:
+			flyby = "mech age flyby";
+			break;
+		case kChannelwoodStack:
+			flyby = "channelwood flyby";
+			break;
+		default:
+			break;
+	}
+
+	if (!flyby) {
+		return;
+	}
+
+	Common::String filename = wrapMovieFilename(flyby, kMasterpieceOnly);
 	VideoEntryPtr video = _video->playMovie(filename, Audio::Mixer::kSFXSoundType);
 	if (!video) {
 		error("Failed to open the '%s' movie", filename.c_str());
@@ -416,9 +446,16 @@ void MohawkEngine_Myst::doFrame() {
 						}
 
 						if (_needsShowCredits) {
-							_cursor->hideCursor();
-							changeToStack(kCreditsStack, 10000, 0, 0);
-							_needsShowCredits = false;
+							if (_interactive) {
+								_cursor->hideCursor();
+								changeToStack(kCreditsStack, 10000, 0, 0);
+								_needsShowCredits = false;
+							} else {
+								// Showing the credits in the middle of a script is not possible
+								// because it unloads the previous age, removing data needed by the
+								// rest of the script. Instead we just quit without showing the credits.
+								quitGame();
+							}
 						}
 						break;
 					case Common::KEYCODE_ESCAPE:
@@ -486,20 +523,27 @@ void MohawkEngine_Myst::pauseEngineIntern(bool pause) {
 void MohawkEngine_Myst::changeToStack(uint16 stack, uint16 card, uint16 linkSrcSound, uint16 linkDstSound) {
 	debug(2, "changeToStack(%d)", stack);
 
-	_curStack = stack;
-
 	// Fill screen with black and empty cursor
 	_cursor->setCursor(0);
 	_currentCursor = 0;
+
+	_sound->stopEffect();
+	_video->stopVideos();
+
+	// In Myst ME, play a fullscreen flyby movie, except when loading saves.
+	// Also play a flyby when first linking to Myst.
+	if (getFeatures() & GF_ME
+			&& (_curStack != kIntroStack || (stack == kMystStack && card == 4134))) {
+		playFlybyMovie(stack, card);
+	}
+
+	_sound->stopBackground();
 
 	if (getFeatures() & GF_ME)
 		_system->fillScreen(_system->getScreenFormat().RGBToColor(0, 0, 0));
 	else
 		_gfx->clearScreenPalette();
 
-	_sound->stopEffect();
-	_sound->stopBackground();
-	_video->stopVideos();
 	if (linkSrcSound)
 		playSoundBlocking(linkSrcSound);
 
@@ -509,20 +553,22 @@ void MohawkEngine_Myst::changeToStack(uint16 stack, uint16 card, uint16 linkSrcS
 	delete _prevStack;
 	_prevStack = _scriptParser;
 
+	_curStack = stack;
+
 	switch (_curStack) {
 	case kChannelwoodStack:
-		_gameState->_globals.currentAge = 4;
+		_gameState->_globals.currentAge = kChannelwood;
 		_scriptParser = new MystStacks::Channelwood(this);
 		break;
 	case kCreditsStack:
 		_scriptParser = new MystStacks::Credits(this);
 		break;
 	case kDemoStack:
-		_gameState->_globals.currentAge = 0;
+		_gameState->_globals.currentAge = kSelenitic;
 		_scriptParser = new MystStacks::Demo(this);
 		break;
 	case kDniStack:
-		_gameState->_globals.currentAge = 6;
+		_gameState->_globals.currentAge = kDni;
 		_scriptParser = new MystStacks::Dni(this);
 		break;
 	case kIntroStack:
@@ -532,26 +578,26 @@ void MohawkEngine_Myst::changeToStack(uint16 stack, uint16 card, uint16 linkSrcS
 		_scriptParser = new MystStacks::MakingOf(this);
 		break;
 	case kMechanicalStack:
-		_gameState->_globals.currentAge = 3;
+		_gameState->_globals.currentAge = kMechanical;
 		_scriptParser = new MystStacks::Mechanical(this);
 		break;
 	case kMystStack:
-		_gameState->_globals.currentAge = 2;
+		_gameState->_globals.currentAge = kMystLibrary;
 		_scriptParser = new MystStacks::Myst(this);
 		break;
 	case kDemoPreviewStack:
 		_scriptParser = new MystStacks::Preview(this);
 		break;
 	case kSeleniticStack:
-		_gameState->_globals.currentAge = 0;
+		_gameState->_globals.currentAge = kSelenitic;
 		_scriptParser = new MystStacks::Selenitic(this);
 		break;
 	case kDemoSlidesStack:
-		_gameState->_globals.currentAge = 1;
+		_gameState->_globals.currentAge = kStoneship;
 		_scriptParser = new MystStacks::Slides(this);
 		break;
 	case kStoneshipStack:
-		_gameState->_globals.currentAge = 1;
+		_gameState->_globals.currentAge = kStoneship;
 		_scriptParser = new MystStacks::Stoneship(this);
 		break;
 	default:
@@ -575,38 +621,6 @@ void MohawkEngine_Myst::changeToStack(uint16 stack, uint16 card, uint16 linkSrcS
 	// Clear the resource cache and the image cache
 	_cache.clear();
 	_gfx->clearCache();
-
-	if (getFeatures() & GF_ME) {
-		// Play Flyby Entry Movie on Masterpiece Edition.
-		const char *flyby = nullptr;
-
-		switch (_curStack) {
-		case kSeleniticStack:
-			flyby = "selenitic flyby";
-			break;
-		case kStoneshipStack:
-			flyby = "stoneship flyby";
-			break;
-		// Myst Flyby Movie not used in Original Masterpiece Edition Engine
-		// We play it when first arriving on Myst, and if the user has chosen so.
-		case kMystStack:
-			if (ConfMan.getBool("playmystflyby") && card == 4134)
-				flyby = "myst flyby";
-			break;
-		case kMechanicalStack:
-			flyby = "mech age flyby";
-			break;
-		case kChannelwoodStack:
-			flyby = "channelwood flyby";
-			break;
-		default:
-			break;
-		}
-
-		if (flyby) {
-			playFlybyMovie(flyby);
-		}
-	}
 
 	changeToCard(card, kTransitionCopy);
 
@@ -683,7 +697,7 @@ void MohawkEngine_Myst::changeToCard(uint16 card, TransitionType transition) {
 
 	// The demo resets the cursor at each card change except when in the library
 	if (getFeatures() & GF_DEMO
-			&& _gameState->_globals.currentAge != 2) {
+			&& _gameState->_globals.currentAge != kMystLibrary) {
 		_cursor->setDefaultCursor();
 	}
 
@@ -1189,8 +1203,8 @@ bool MohawkEngine_Myst::canSaveGameStateCurrently() {
 }
 
 void MohawkEngine_Myst::dropPage() {
-	uint16 page = _gameState->_globals.heldPage;
-	bool whitePage = page == 13;
+	HeldPage page = _gameState->_globals.heldPage;
+	bool whitePage = page == kWhitePage;
 	bool bluePage = page - 1 < 6;
 	bool redPage = page - 7 < 6;
 
@@ -1198,25 +1212,25 @@ void MohawkEngine_Myst::dropPage() {
 	_sound->playEffect(800);
 
 	// Drop page
-	_gameState->_globals.heldPage = 0;
+	_gameState->_globals.heldPage = kNoPage;
 
 	// Redraw page area
-	if (whitePage && _gameState->_globals.currentAge == 2) {
+	if (whitePage && _gameState->_globals.currentAge == kMystLibrary) {
 		_scriptParser->toggleVar(41);
 		redrawArea(41);
 	} else if (bluePage) {
-		if (page == 6) {
-			if (_gameState->_globals.currentAge == 2)
+		if (page == kBlueFirePlacePage) {
+			if (_gameState->_globals.currentAge == kMystLibrary)
 				redrawArea(24);
 		} else {
 			redrawArea(103);
 		}
 	} else if (redPage) {
-		if (page == 12) {
-			if (_gameState->_globals.currentAge == 2)
+		if (page == kRedFirePlacePage) {
+			if (_gameState->_globals.currentAge == kMystLibrary)
 				redrawArea(25);
-		} else if (page == 10) {
-			if (_gameState->_globals.currentAge == 1)
+		} else if (page == kRedStoneshipPage) {
+			if (_gameState->_globals.currentAge == kStoneship)
 				redrawArea(35);
 		} else {
 			redrawArea(102);

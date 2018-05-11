@@ -57,10 +57,10 @@
 #define FORBIDDEN_SYMBOL_REPLACEMENT	FORBIDDEN_look_at_common_forbidden_h_for_more_info SYMBOL !%*
 
 
-// #ifndef FORBIDDEN_SYMBOL_EXCEPTION_printf
-// #undef printf
-// #define printf	FORBIDDEN_SYMBOL_REPLACEMENT
-// #endif
+#ifndef FORBIDDEN_SYMBOL_EXCEPTION_printf
+#undef printf
+#define printf	FORBIDDEN_SYMBOL_REPLACEMENT
+#endif
 
 #ifndef FORBIDDEN_SYMBOL_EXCEPTION_fprintf
 #undef fprintf

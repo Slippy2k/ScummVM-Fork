@@ -860,6 +860,9 @@ void BladeRunnerEngine::gameTick() {
 			if (_debugger->_viewSceneObjects) {
 				_debugger->drawSceneObjects();
 			}
+			if (_debugger->_viewObstacles) {
+				_obstacles->draw();
+			}
 
 			blitToScreen(_surfaceFront);
 			_system->delayMillis(10);
@@ -1153,7 +1156,7 @@ void BladeRunnerEngine::handleMouseAction(int x, int y, bool mainButton, bool bu
 		int exitIndex = _scene->_exits->getRegionAtXY(x, y);
 		int regionIndex = _scene->_regions->getRegionAtXY(x, y);
 
-		if ((sceneObjectId < kSceneObjectOffsetActors || sceneObjectId >= kSceneObjectOffsetActors) && exitIndex >= 0) {
+		if ((sceneObjectId < kSceneObjectOffsetActors || sceneObjectId >= kSceneObjectOffsetItems) && exitIndex >= 0) {
 			handleMouseClickExit(exitIndex, x, y, buttonDown);
 		} else if (regionIndex >= 0) {
 			handleMouseClickRegion(regionIndex, x, y, buttonDown);
@@ -1561,7 +1564,6 @@ bool BladeRunnerEngine::openArchive(const Common::String &name) {
 		 * archive when it runs out of slots. */
 
 		error("openArchive: No more archive slots");
-		return false;
 	}
 
 	_archives[i].open(name);
@@ -1594,9 +1596,11 @@ Common::SeekableReadStream *BladeRunnerEngine::getResourceStream(const Common::S
 		if (!_archives[i].isOpen()) {
 			continue;
 		}
+
 		if (false) {
 			debug("getResource: Searching archive %s for %s.", _archives[i].getName().c_str(), name.c_str());
 		}
+
 		Common::SeekableReadStream *stream = _archives[i].createReadStreamForMember(name);
 		if (stream) {
 			return stream;

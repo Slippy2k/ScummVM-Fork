@@ -497,7 +497,7 @@ GuildLocation::GuildLocation() : BaseLocation(GUILD) {
 	addButton(Common::Rect(234, 64, 308, 72), Common::KEYCODE_b);
 	addButton(Common::Rect(234, 74, 308, 82), Common::KEYCODE_s);
 	addButton(Common::Rect(234, 84, 308, 92), 0);
-	g_vm->_mode = MODE_17;
+	g_vm->_mode = MODE_INTERACTIVE7;
 
 	_vocName = _ccNum ? "parrot1.voc" : "guild10.voc";
 }
@@ -560,7 +560,7 @@ TavernLocation::TavernLocation() : BaseLocation(TAVERN) {
 	addButton(Common::Rect(234, 64, 308, 72), Common::KEYCODE_f);
 	addButton(Common::Rect(234, 74, 308, 82), Common::KEYCODE_t);
 	addButton(Common::Rect(234, 84, 308, 92), Common::KEYCODE_r);
-	g_vm->_mode = MODE_17;
+	g_vm->_mode = MODE_INTERACTIVE7;
 
 	_vocName = _ccNum ? "hello1.voc" : "hello.voc";
 }
@@ -713,7 +713,7 @@ Character *TavernLocation::doOptions(Character *c) {
 			party._activeParty[idx]._xeenSide = map._loadCcNum;
 		}
 
-		g_vm->_mode = MODE_17;
+		g_vm->_mode = MODE_INTERACTIVE7;
 		party.addTime(1440);
 		party._mazeId = 0;
 
@@ -1231,7 +1231,7 @@ exit:
 
 /*------------------------------------------------------------------------*/
 
-CutsceneLocation::CutsceneLocation(LocationAction action) : BaseLocation(action), _mazeFlag(false) {
+CutsceneLocation::CutsceneLocation(LocationAction action) : BaseLocation(action), _keyFound(false) {
 	Party &party = *g_vm->_party;
 	_mazeId = party._mazeId;
 	_mazePos = party._mazePosition;
@@ -1320,8 +1320,13 @@ int ReaperCutscene::show() {
 		sprites1.draw(0, party._isNight ? 3 : 2);
 	}
 
-	_subtitles.setLine(_mazeFlag ? 5 : 6);
-	sound.playVoice(_mazeFlag ? "reaper12.voc" : "reaper14.voc");
+	if (!_ccNum) {
+		_subtitles.setLine(_keyFound ? 5 : 6);
+		sound.playVoice(_keyFound ? "reaper12.voc" : "reaper14.voc");
+	} else if (_keyFound) {
+		_subtitles.setLine(2);
+		sound.playVoice("howdid1.voc");
+	}
 
 	do {
 		events.updateGameCounter();
@@ -1345,11 +1350,13 @@ int ReaperCutscene::show() {
 	windows[0].update();
 	WAIT(7);
 
-	sound.playVoice(_mazeFlag ? "reaper12.voc" : "reaper14.voc");
-	if (_mazeFlag)
+	if (_keyFound) {
 		sound.playVoice(_ccNum ? "goin1.voc" : "reaper13.voc");
-	else
+	} else {
+		if (_ccNum)
+			_subtitles.setLine(3);
 		sound.playVoice(_ccNum ? "needkey1.voc" : "reaper15.voc");
+	}
 
 	do {
 		events.updateGameCounter();
@@ -1371,7 +1378,7 @@ int ReaperCutscene::show() {
 	windows[0].update();
 	WAIT(1);
 
-	if (_mazeFlag) {
+	if (_keyFound) {
 		for (int idx = 0; idx < 14; ++idx) {
 			events.updateGameCounter();
 			screen.blitFrom(savedBg);
@@ -1418,7 +1425,7 @@ void ReaperCutscene::getNewLocation() {
 				_mazeId = 57;
 				_mazePos = Common::Point(11, 8);
 				_mazeDir = DIR_WEST;
-				_mazeFlag = true;
+				_keyFound = true;
 			}
 			break;
 
@@ -1427,7 +1434,7 @@ void ReaperCutscene::getNewLocation() {
 				_mazeId = 55;
 				_mazePos = Common::Point(3, 8);
 				_mazeDir = DIR_EAST;
-				_mazeFlag = true;
+				_keyFound = true;
 			}
 			break;
 
@@ -1436,7 +1443,16 @@ void ReaperCutscene::getNewLocation() {
 				_mazeId = 69;
 				_mazePos = Common::Point(7, 4);
 				_mazeDir = DIR_NORTH;
-				_mazeFlag = true;
+				_keyFound = true;
+			}
+			break;
+
+		case 16:
+			if (party._questItems[41]) {
+				_mazeId = 61;
+				_mazePos = Common::Point(7, 12);
+				_mazeDir = DIR_SOUTH;
+				_keyFound = true;
 			}
 			break;
 
@@ -1445,7 +1461,7 @@ void ReaperCutscene::getNewLocation() {
 				_mazeId = 65;
 				_mazePos = Common::Point(3, 8);
 				_mazeDir = DIR_EAST;
-				_mazeFlag = true;
+				_keyFound = true;
 			}
 			break;
 
@@ -1454,7 +1470,7 @@ void ReaperCutscene::getNewLocation() {
 				_mazeId = 53;
 				_mazePos = Common::Point(11, 8);
 				_mazeDir = DIR_WEST;
-				_mazeFlag = true;
+				_keyFound = true;
 			}
 			break;
 
@@ -1464,12 +1480,12 @@ void ReaperCutscene::getNewLocation() {
 	} else {
 		switch (party._mazeId) {
 		case 7:
-			if (party._questItems[30]) {
+			if (party._questItems[46]) {
 				map._loadCcNum = 1;
 				_mazeId = 113;
 				_mazePos = Common::Point(7, 4);
 				_mazeDir = DIR_NORTH;
-				_mazeFlag = true;
+				_keyFound = true;
 			}
 			break;
 
@@ -1478,17 +1494,17 @@ void ReaperCutscene::getNewLocation() {
 				_mazeId = 55;
 				_mazePos = Common::Point(3, 8);
 				_mazeDir = DIR_EAST;
-				_mazeFlag = true;
+				_keyFound = true;
 			}
 			break;
 
 		case 13:
-			if (party._questItems[29]) {
+			if (party._questItems[45]) {
 				map._loadCcNum = 1;
 				_mazeId = 117;
 				_mazePos = Common::Point(7, 4);
 				_mazeDir = DIR_NORTH;
-				_mazeFlag = true;
+				_keyFound = true;
 			}
 			break;
 
@@ -1497,7 +1513,7 @@ void ReaperCutscene::getNewLocation() {
 				_mazeId = 59;
 				_mazePos = Common::Point(11, 8);
 				_mazeDir = DIR_WEST;
-				_mazeFlag = true;
+				_keyFound = true;
 			}
 			break;
 
@@ -1506,7 +1522,7 @@ void ReaperCutscene::getNewLocation() {
 				_mazeId = 51;
 				_mazePos = Common::Point(7, 12);
 				_mazeDir = DIR_SOUTH;
-				_mazeFlag = true;
+				_keyFound = true;
 			}
 			break;
 
@@ -1563,7 +1579,7 @@ int GolemCutscene::show() {
 		WAIT(1);
 	}
 
-	if (_ccNum)
+	if (!_ccNum)
 		sound.playSound("ogre.voc");
 
 	for (int idx = -200; idx < 0; idx += 16) {
@@ -1592,12 +1608,18 @@ int GolemCutscene::show() {
 
 	windows[0].update();
 	while (sound.isSoundPlaying()) {
+		_subtitles.show();
 		WAIT(1);
 	}
 
 	sound.setMusicPercent(38);
-	_subtitles.setLine(_mazeFlag ? 8 : 7);
-	sound.playVoice(_mazeFlag ? "golem15.voc" : "golem13.voc");
+	if (_ccNum) {
+		_subtitles.setLine(_keyFound ? 5 : 4);
+		sound.playVoice("what2.voc");
+	} else {
+		_subtitles.setLine(_keyFound ? 8 : 7);
+		sound.playVoice(_keyFound ? "golem15.voc" : "golem13.voc");
+	}
 
 	do {
 		events.updateGameCounter();
@@ -1607,7 +1629,7 @@ int GolemCutscene::show() {
 		if (_ccNum) {
 			int frame = g_vm->getRandomNumber(6);
 			sprites2[0].draw(0, frame, Common::Point(0, 0));
-			sprites2[1].draw(1, frame, Common::Point(160, 0));
+			sprites2[1].draw(0, frame, Common::Point(160, 0));
 		} else {
 			sprites2[0].draw(0, 0, Common::Point(0, 0));
 			sprites2[0].draw(0, 1, Common::Point(160, 0));
@@ -1615,6 +1637,7 @@ int GolemCutscene::show() {
 				g_vm->getRandomNumber(9) - 3));
 		}
 
+		_subtitles.show();
 		WAIT(1);
 	} while (sound.isSoundPlaying());
 
@@ -1627,16 +1650,17 @@ int GolemCutscene::show() {
 
 	windows[0].update();
 	events.updateGameCounter();
-	events.wait(_ccNum ? 10 : 1);
+	if (_subtitles.wait(_ccNum ? 10 : 1))
+		goto exit;
 
-	if (!_ccNum) {
+	if (_ccNum) {
+		sound.playVoice(_keyFound ? "go2.voc" : "key2.voc");
+	} else {
 		sound.playVoice("ogre.voc");
 		while (sound.isSoundPlaying())
 			events.pollEventsAndWait();
 
-		sound.playVoice(_mazeFlag ? "golem16.voc" : "golem14.voc");
-	} else {
-		sound.playVoice(_mazeFlag ? "go2.voc" : "key2.voc");
+		sound.playVoice(_keyFound ? "golem16.voc" : "golem14.voc");
 	}
 
 	do {
@@ -1647,7 +1671,7 @@ int GolemCutscene::show() {
 		if (_ccNum) {
 			int frame = g_vm->getRandomNumber(6);
 			sprites2[0].draw(0, frame, Common::Point(0, 0));
-			sprites2[1].draw(1, frame, Common::Point(160, 0));
+			sprites2[1].draw(0, frame, Common::Point(160, 0));
 		} else {
 			sprites2[0].draw(0, 0, Common::Point(0, 0));
 			sprites2[0].draw(0, 1, Common::Point(160, 0));
@@ -1656,8 +1680,9 @@ int GolemCutscene::show() {
 		}
 
 		windows[0].update();
+		_subtitles.show();
 		WAIT(1);
-	} while (sound.isSoundPlaying());
+	} while (_subtitles.lineActive());
 
 	sprites1.draw(0, 0, Common::Point(0, 0));
 	sprites1.draw(0, 1, Common::Point(160, 0));
@@ -1665,15 +1690,11 @@ int GolemCutscene::show() {
 	sprites2[_ccNum].draw(0, 1 - _ccNum, Common::Point(160, 0));
 	if (!_ccNum)
 		sprites2[0].draw(0, 2);
-
 	windows[0].update();
-	while (_subtitles.lineActive()) {
-		WAIT(1);
-	}
 
 	sound.setMusicPercent(75);
 
-	if (!_mazeFlag) {
+	if (!_keyFound) {
 		for (int idx = 0; !g_vm->shouldExit() && idx < (_ccNum ? 9 : 12); ++idx) {
 			events.updateGameCounter();
 			screen.blitFrom(savedBg);
@@ -1716,7 +1737,7 @@ void GolemCutscene::getNewLocation() {
 				_mazeId = 73;
 				_mazePos = Common::Point(0, 7);
 				_mazeDir = DIR_NORTH;
-				_mazeFlag = true;
+				_keyFound = true;
 			}
 			break;
 
@@ -1725,7 +1746,7 @@ void GolemCutscene::getNewLocation() {
 				_mazeId = 83;
 				_mazePos = Common::Point(11, 1);
 				_mazeDir = DIR_NORTH;
-				_mazeFlag = true;
+				_keyFound = true;
 			}
 			break;
 
@@ -1734,7 +1755,7 @@ void GolemCutscene::getNewLocation() {
 				_mazeId = 121;
 				_mazePos = Common::Point(18, 0);
 				_mazeDir = DIR_NORTH;
-				_mazeFlag = true;
+				_keyFound = true;
 			}
 			break;
 
@@ -1743,7 +1764,7 @@ void GolemCutscene::getNewLocation() {
 				_mazeId = 78;
 				_mazePos = Common::Point(8, 14);
 				_mazeDir = DIR_SOUTH;
-				_mazeFlag = true;
+				_keyFound = true;
 			}
 			break;
 
@@ -1757,7 +1778,7 @@ void GolemCutscene::getNewLocation() {
 				_mazeId = 81;
 				_mazePos = Common::Point(1, 17);
 				_mazeDir = DIR_EAST;
-				_mazeFlag = true;
+				_keyFound = true;
 			}
 			break;
 
@@ -1766,7 +1787,7 @@ void GolemCutscene::getNewLocation() {
 				_mazeId = 80;
 				_mazePos = Common::Point(29, 16);
 				_mazeDir = DIR_WEST;
-				_mazeFlag = true;
+				_keyFound = true;
 			}
 			break;
 
@@ -1776,7 +1797,7 @@ void GolemCutscene::getNewLocation() {
 				_mazeId = 121;
 				_mazePos = Common::Point(18, 0);
 				_mazeDir = DIR_NORTH;
-				_mazeFlag = true;
+				_keyFound = true;
 			}
 			break;
 
@@ -1785,7 +1806,7 @@ void GolemCutscene::getNewLocation() {
 				_mazeId = 79;
 				_mazePos = Common::Point(5, 16);
 				_mazeDir = DIR_EAST;
-				_mazeFlag = true;
+				_keyFound = true;
 			}
 			break;
 
@@ -1873,7 +1894,10 @@ int DwarfCutscene::show() {
 	screen.blitFrom(savedBg);
 	sprites2.draw(0, 0);
 	windows[0].update();
-	_subtitles.setLine(_ccNum ? 0 : 4);
+	if (_ccNum)
+		_subtitles.setLine(_keyFound ? 7 : 8);
+	else
+		_subtitles.setLine(4);
 
 	for (int idx = 0; idx < (_ccNum ? 2 : 3); ++idx) {
 		switch (idx) {
@@ -1892,7 +1916,7 @@ int DwarfCutscene::show() {
 					WAIT(1);
 				}
 
-				sound.playSound(_mazeFlag ? "ok2.voc" : "back2.voc");
+				sound.playSound(_keyFound ? "ok2.voc" : "back2.voc");
 			} else {
 				sound.playSound("dwarf11.voc");
 			}
@@ -1941,14 +1965,37 @@ exit:
 void DwarfCutscene::getNewLocation() {
 	Party &party = *g_vm->_party;
 
-	if (_ccNum) {
+	if (g_vm->getGameID() == GType_Swords) {
+		switch (party._mazeId) {
+		case 1:
+			if (party._questItems[0]) {
+				_mazeId = 53;
+				_mazePos = Common::Point(8, 1);
+				_mazeDir = DIR_NORTH;
+				_keyFound = true;
+			}
+			break;
+
+		case 7:
+			if (party._questItems[1]) {
+				_mazeId = 92;
+				_mazePos = Common::Point(8, 1);
+				_mazeDir = DIR_NORTH;
+				_keyFound = true;
+			}
+			break;
+
+		default:
+			break;
+		}
+	} else if (_ccNum) {
 		switch (party._mazeId) {
 		case 4:
 			if (party._questItems[35]) {
 				_mazeId = 29;
 				_mazePos = Common::Point(15, 31);
 				_mazeDir = DIR_SOUTH;
-				_mazeFlag = true;
+				_keyFound = true;
 			}
 			break;
 
@@ -1957,7 +2004,7 @@ void DwarfCutscene::getNewLocation() {
 				_mazeId = 35;
 				_mazePos = Common::Point(15, 8);
 				_mazeDir = DIR_WEST;
-				_mazeFlag = true;
+				_keyFound = true;
 			}
 			break;
 
@@ -1966,7 +2013,7 @@ void DwarfCutscene::getNewLocation() {
 				_mazeId = 31;
 				_mazePos = Common::Point(31, 16);
 				_mazeDir = DIR_WEST;
-				_mazeFlag = true;
+				_keyFound = true;
 			}
 			break;
 
@@ -1975,7 +2022,7 @@ void DwarfCutscene::getNewLocation() {
 				_mazeId = 33;
 				_mazePos = Common::Point(0, 3);
 				_mazeDir = DIR_EAST;
-				_mazeFlag = true;
+				_keyFound = true;
 			}
 			break;
 
@@ -1984,7 +2031,7 @@ void DwarfCutscene::getNewLocation() {
 				_mazeId = 37;
 				_mazePos = Common::Point(7, 0);
 				_mazeDir = DIR_NORTH;
-				_mazeFlag = true;
+				_keyFound = true;
 			}
 			break;
 
@@ -1997,7 +2044,7 @@ void DwarfCutscene::getNewLocation() {
 			_mazeId = 37;
 			_mazePos = Common::Point(1, 4);
 			_mazeDir = DIR_EAST;
-			_mazeFlag = true;
+			_keyFound = true;
 			break;
 
 		case 18:
@@ -2010,7 +2057,7 @@ void DwarfCutscene::getNewLocation() {
 				_mazePos = Common::Point(7, 1);
 				_mazeDir = DIR_NORTH;
 			}
-			_mazeFlag = true;
+			_keyFound = true;
 			break;
 
 		case 23:
@@ -2023,7 +2070,7 @@ void DwarfCutscene::getNewLocation() {
 				_mazePos = Common::Point(7, 30);
 				_mazeDir = DIR_SOUTH;
 			}
-			_mazeFlag = true;
+			_keyFound = true;
 			break;
 
 		default:
@@ -2066,14 +2113,14 @@ int SphinxCutscene::show() {
 
 	sound.setMusicPercent(38);
 
-	for (int idx = 0; idx < (_mazeFlag ? 3 : 2); ++idx) {
+	for (int idx = 0; idx < (_keyFound ? 3 : 2); ++idx) {
 		switch (idx) {
 		case 0:
-			_subtitles.setLine(_mazeFlag ? 9 : 10);
-			sound.playSound(_mazeFlag ? "sphinx10.voc" : "sphinx13.voc");
+			_subtitles.setLine(_keyFound ? 9 : 10);
+			sound.playSound(_keyFound ? "sphinx10.voc" : "sphinx13.voc");
 			break;
 		case 1:
-			sound.playSound(_mazeFlag ? "sphinx11.voc" : "sphinx14.voc");
+			sound.playSound(_keyFound ? "sphinx11.voc" : "sphinx14.voc");
 			break;
 		case 2:
 			sound.playSound("sphinx12.voc");
@@ -2097,7 +2144,7 @@ int SphinxCutscene::show() {
 
 	sound.setMusicPercent(75);
 
-	if (!_mazeFlag) {
+	if (!_keyFound) {
 		for (int idx = 0; idx < 8; ++idx) {
 			screen.blitFrom(bgSurface);
 			sprites1.draw(0, 0, Common::Point(SPHINX_X1[idx], SPHINX_Y1[idx]), 0, idx);
@@ -2136,7 +2183,7 @@ void SphinxCutscene::getNewLocation() {
 			_mazeId = 125;
 			_mazePos = Common::Point(7, 6);
 			_mazeDir = DIR_NORTH;
-			_mazeFlag = true;
+			_keyFound = true;
 		}
 		break;
 
@@ -2145,7 +2192,7 @@ void SphinxCutscene::getNewLocation() {
 			_mazeId = 82;
 			_mazePos = Common::Point(7, 5);
 			_mazeDir = DIR_NORTH;
-			_mazeFlag = true;
+			_keyFound = true;
 		}
 		break;
 
@@ -2216,9 +2263,12 @@ int PyramidLocation::show() {
 LocationManager::LocationManager() : _location(nullptr) {
 }
 
-int LocationManager::doAction(LocationAction actionId) {
+int LocationManager::doAction(int actionId) {
+	LocationAction action = (g_vm->getGameID() == GType_Swords && actionId > 13 && actionId < 18) ?
+		BLACKSMITH : (LocationAction)actionId;
+
 	// Create the desired location
-	switch (actionId) {
+	switch (action) {
 	case BANK:
 		_location = new Locations::BankLocation();
 		break;

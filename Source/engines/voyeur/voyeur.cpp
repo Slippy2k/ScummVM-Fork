@@ -795,9 +795,6 @@ void VoyeurEngine::loadGame(int slot) {
 	VoyeurSavegameHeader header;
 	if (!header.read(saveFile))
 		return;
-	if (header._thumbnail)
-		header._thumbnail->free();
-	delete header._thumbnail;
 
 	serializer.setVersion(header._version);
 	synchronize(serializer);
@@ -862,8 +859,7 @@ void VoyeurEngine::synchronize(Common::Serializer &s) {
 
 /*------------------------------------------------------------------------*/
 
-bool VoyeurSavegameHeader::read(Common::InSaveFile *f) {
-	_thumbnail = NULL;
+bool VoyeurSavegameHeader::read(Common::InSaveFile *f, bool skipThumbnail) {
 
 	uint32 signature = f->readUint32BE();
 	if (signature != MKTAG('V', 'O', 'Y', 'R')) {
@@ -881,9 +877,9 @@ bool VoyeurSavegameHeader::read(Common::InSaveFile *f) {
 		_saveName += c;
 
 	// Get the thumbnail
-	_thumbnail = Graphics::loadThumbnail(*f);
-	if (!_thumbnail)
+	if (!Graphics::loadThumbnail(*f, _thumbnail, skipThumbnail)) {
 		return false;
+	}
 
 	// Read in the save datet/ime
 	_saveYear = f->readSint16LE();

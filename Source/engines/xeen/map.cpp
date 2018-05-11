@@ -463,8 +463,6 @@ void MonsterObjectData::synchronize(XeenSerializer &s, MonsterData &monsterData)
 			if (obj._id < (int)_objectSprites.size()) {
 				obj._spriteId = _objectSprites[obj._id]._spriteId;
 				obj._sprites = &_objectSprites[obj._id]._sprites;
-			} else {
-				assert(!obj._id);
 			}
 
 			_objects.push_back(obj);
@@ -610,7 +608,6 @@ Map::Map(XeenEngine *vm) : _vm(vm), _mobData(vm) {
 	_sideObjects = 0;
 	_sideMonsters = 0;
 	_sidePictures = 0;
-	_sideMusic = 0;
 	_isOutdoors = false;
 	_mazeDataIndex = 0;
 	_currentSteppedOn = false;
@@ -630,6 +627,7 @@ void Map::load(int mapId) {
 	FileManager &files = *g_vm->_files;
 	Interface &intf = *g_vm->_interface;
 	Party &party = *g_vm->_party;
+	Patcher &patcher = *g_vm->_patcher;
 	Sound &sound = *g_vm->_sound;
 	IndoorDrawList &indoorList = intf._indoorList;
 	OutdoorDrawList &outdoorList = intf._outdoorList;
@@ -714,7 +712,7 @@ void Map::load(int mapId) {
 	}
 
 	// Load any events for the new map
-	loadEvents(mapId);
+	loadEvents(mapId, _loadCcNum);
 
 	// Iterate through loading the given maze as well as the two successive
 	// mazes in each of the four cardinal directions
@@ -796,7 +794,7 @@ void Map::load(int mapId) {
 	for (uint i = 0; i < _mobData._objectSprites.size(); ++i) {
 		files.setGameCc(_sideObjects);
 
-		if (party._cloudsEnd && _mobData._objectSprites[i]._spriteId == 85 &&
+		if (party._cloudsCompleted && _mobData._objectSprites[i]._spriteId == 85 &&
 				mapId == 27 && ccNum) {
 			_mobData._objects[29]._spriteId = 0;
 			_mobData._objects[29]._id = 8;
@@ -880,8 +878,7 @@ void Map::load(int mapId) {
 		const int MUS_INDEXES[] = { 1, 2, 3, 4, 3, 5 };
 		Common::String musName;
 
-		_sideMusic = ccNum;
-		if (ccNum) {
+		if (files._ccNum) {
 			int randIndex = _vm->getRandomNumber(6);
 			musName = Res.MUSIC_FILES2[MUS_INDEXES[_mazeData->_wallKind]][randIndex];
 		} else {
@@ -984,6 +981,7 @@ void Map::load(int mapId) {
 		}
 	}
 
+	patcher.patch();
 	loadSky();
 
 	files.setGameCc(ccNum);
@@ -1054,7 +1052,8 @@ int Map::mazeLookup(const Common::Point &pt, int layerShift, int wallMask) {
 			_currentSurfaceId = _mazeData[_mazeDataIndex]._cells[pos.y][pos.x]._surfaceId;
 		}
 
-		if (_currentSurfaceId == SURFTYPE_SPACE || _currentSurfaceId == SURFTYPE_SKY) {
+		if (mazeData()._surfaceTypes[_currentSurfaceId] == SURFTYPE_SPACE ||
+				mazeData()._surfaceTypes[_currentSurfaceId] == SURFTYPE_SKY) {
 			_currentSteppedOn = true;
 		} else {
 			_currentSteppedOn = _mazeData[_mazeDataIndex]._steppedOnTiles[pos.y][pos.x];
@@ -1068,11 +1067,11 @@ int Map::mazeLookup(const Common::Point &pt, int layerShift, int wallMask) {
 	}
 }
 
-void Map::loadEvents(int mapId) {
+void Map::loadEvents(int mapId, int ccNum) {
 	// Load events
 	Common::String filename = Common::String::format("maze%c%03d.evt",
 		(mapId >= 100) ? 'x' : '0', mapId);
-	File fEvents(filename);
+	File fEvents(filename, ccNum);
 	XeenSerializer sEvents(&fEvents, nullptr);
 	_events.synchronize(sEvents);
 	fEvents.close();
@@ -1080,7 +1079,7 @@ void Map::loadEvents(int mapId) {
 	// Load text data
 	filename = Common::String::format("aaze%c%03d.txt",
 		(mapId >= 100) ? 'x' : '0', mapId);
-	File fText(filename);
+	File fText(filename, ccNum);
 	_events._text.clear();
 	while (fText.pos() < fText.size())
 		_events._text.push_back(fText.readString());
@@ -1224,7 +1223,8 @@ void Map::setWall(const Common::Point &pt, Direction dir, int v) {
 }
 
 int Map::getCell(int idx) {
-	int mapId = _vm->_party->_mazeId;
+	Party &party = *g_vm->_party;
+	int mapId = party._mazeId;
 	Direction dir = _vm->_party->_mazeDirection;
 	Common::Point pt(
 		_vm->_party->_mazePosition.x + Res.SCREEN_POSITIONING_X[_vm->_party->_mazeDirection][idx],
@@ -1258,6 +1258,8 @@ int Map::getCell(int idx) {
 		}
 
 		if (!mapId) {
+			mapId = party._mazeId;
+
 			if (_isOutdoors) {
 				_currentSurfaceId = SURFTYPE_SPACE;
 				_currentWall = 0;
@@ -1292,6 +1294,8 @@ int Map::getCell(int idx) {
 		}
 
 		if (!mapId) {
+			mapId = party._mazeId;
+
 			if (_isOutdoors) {
 				_currentSurfaceId = SURFTYPE_SPACE;
 				_currentWall = 0;

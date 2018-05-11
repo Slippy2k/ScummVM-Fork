@@ -38,7 +38,8 @@ namespace MystStacks {
 
 Myst::Myst(MohawkEngine_Myst *vm) :
 		MystScriptParser(vm),
-		_state(_vm->_gameState->_myst) {
+		_state(_vm->_gameState->_myst),
+		_towerRotationCenter(Common::Point(383, 124)) {
 	setupOpcodes();
 
 	// Card ID preinitialized by the engine for use by opcode 18
@@ -405,7 +406,7 @@ uint16 Myst::getVar(uint16 var) {
 	case 0: // Myst Library Bookcase Closed
 		return _state.libraryBookcaseDoor;
 	case 1:
-		if (_globals.ending != 4)
+		if (_globals.ending != kBooksDestroyed)
 			return _state.libraryBookcaseDoor != 1;
 		else if (_state.libraryBookcaseDoor == 1)
 			return 2;
@@ -486,13 +487,13 @@ uint16 Myst::getVar(uint16 var) {
 				&& _fireplaceLines[4] == 204
 				&& _fireplaceLines[5] == 250;
 	case 24: // Fireplace Blue Page Present
-		if (_globals.ending != 4)
-			return !(_globals.bluePagesInBook & 32) && (_globals.heldPage != 6);
+		if (_globals.ending != kBooksDestroyed)
+			return !(_globals.bluePagesInBook & 32) && (_globals.heldPage != kBlueFirePlacePage);
 		else
 			return 0;
 	case 25: // Fireplace Red Page Present
-		if (_globals.ending != 4)
-			return !(_globals.redPagesInBook & 32) && (_globals.heldPage != 12);
+		if (_globals.ending != kBooksDestroyed)
+			return !(_globals.redPagesInBook & 32) && (_globals.heldPage != kRedFirePlacePage);
 		else
 			return 0;
 	case 26: // Courtyard Image Box - Cross
@@ -633,25 +634,41 @@ uint16 Myst::getVar(uint16 var) {
 			return 10;
 	case 79: // Stellar Observatory Date - Year #4 (Right)
 		return (_state.observatoryYearSetting / 1) % 10;
-	case 80: // Stellar Observatory Hour #1 - Left ( Number 1 (0) or Blank (10))
+	case 80: // Stellar Observatory Hour #1 - Left ( Hour digits can be 10 (Blank), or 0-2)
+		uint32 observatoryLeftMinutes;
 		if (!observatoryIsDDMMYYYY2400()) {
-			if (_state.observatoryTimeSetting % (12 * 60) < (10 * 60))
+			// 12 Hour Format
+			observatoryLeftMinutes = _state.observatoryTimeSetting % (12 * 60);
+			if (observatoryLeftMinutes > 59 && observatoryLeftMinutes < (10 * 60))
 				return 10;
 			else
 				return 1;
 		} else {
-			if (_state.observatoryTimeSetting < (10 * 60))
-				return 10;
-			else if (_state.observatoryTimeSetting < (20 * 60))
+			// 24 Hour Format
+			observatoryLeftMinutes = _state.observatoryTimeSetting;
+			if (observatoryLeftMinutes < (10 * 60))
+				return 0;
+			else if (observatoryLeftMinutes < (20 * 60))
 				return 1;
 			else
 				return 2;
 		}
 	case 81: // Stellar Observatory Hour #2 - Right
-		if (!observatoryIsDDMMYYYY2400())
-			return ((_state.observatoryTimeSetting % (12 * 60)) / 60) % 10;
-		else
-			return (_state.observatoryTimeSetting / 60) % 10;
+		uint32 observatoryRightMinutes,observatoryRightHour;
+		if (!observatoryIsDDMMYYYY2400()) {
+			// 12 Hour Format
+			observatoryRightMinutes = _state.observatoryTimeSetting % (12 * 60);
+			observatoryRightHour = observatoryRightMinutes / 60;
+			if (observatoryRightHour % 12 == 0)
+				return 2;
+			else
+				return observatoryRightHour % 10;
+		} else {
+			// 24 Hour Format
+			observatoryRightMinutes = _state.observatoryTimeSetting;
+			observatoryRightHour = observatoryRightMinutes / 60;
+			return observatoryRightHour % 10;
+		}
 	case 82: // Stellar Observatory Minutes #1 - Left
 		return (_state.observatoryTimeSetting % 60) / 10;
 	case 83: // Stellar Observatory Minutes #2 - Right
@@ -689,13 +706,13 @@ uint16 Myst::getVar(uint16 var) {
 	case 99: // Cabin Boiler Gas Valve Position
 		return _state.cabinValvePosition % 6;
 	case 102: // Red page
-		if (_globals.ending != 4)
-			return !(_globals.redPagesInBook & 1) && (_globals.heldPage != 7);
+		if (_globals.ending != kBooksDestroyed)
+			return !(_globals.redPagesInBook & 1) && (_globals.heldPage != kRedLibraryPage);
 		else
 			return 0;
 	case 103: // Blue page
-		if (_globals.ending != 4)
-			return !(_globals.bluePagesInBook & 1) && (_globals.heldPage != 1);
+		if (_globals.ending != kBooksDestroyed)
+			return !(_globals.bluePagesInBook & 1) && (_globals.heldPage != kBlueLibraryPage);
 		else
 			return 0;
 	case 300: // Rocket Ship Music Puzzle Slider State
@@ -753,19 +770,19 @@ void Myst::toggleVar(uint16 var) {
 		_state.rocketshipMarkerSwitch = (_state.rocketshipMarkerSwitch + 1) % 2;
 		break;
 	case 24: // Fireplace Blue Page
-		if (_globals.ending != 4 && !(_globals.bluePagesInBook & 32)) {
-			if (_globals.heldPage == 6)
-				_globals.heldPage = 0;
+		if (_globals.ending != kBooksDestroyed && !(_globals.bluePagesInBook & 32)) {
+			if (_globals.heldPage == kBlueFirePlacePage)
+				_globals.heldPage = kNoPage;
 			else
-				_globals.heldPage = 6;
+				_globals.heldPage = kBlueFirePlacePage;
 		}
 		break;
 	case 25: // Fireplace Red page
-		if (_globals.ending != 4 && !(_globals.redPagesInBook & 32)) {
-			if (_globals.heldPage == 12)
-				_globals.heldPage = 0;
+		if (_globals.ending != kBooksDestroyed && !(_globals.redPagesInBook & 32)) {
+			if (_globals.heldPage == kRedFirePlacePage)
+				_globals.heldPage = kNoPage;
 			else
-				_globals.heldPage = 12;
+				_globals.heldPage = kRedFirePlacePage;
 		}
 		break;
 	case 26: // Courtyard Image Box - Cross
@@ -785,30 +802,30 @@ void Myst::toggleVar(uint16 var) {
 		}
 		break;
 	case 41: // Vault white page
-		if (_globals.ending != 4) {
+		if (_globals.ending != kBooksDestroyed) {
 			if (_dockVaultState == 1) {
 				_dockVaultState = 2;
-				_globals.heldPage = 0;
+				_globals.heldPage = kNoPage;
 			} else if (_dockVaultState == 2) {
 				_dockVaultState = 1;
-				_globals.heldPage = 13;
+				_globals.heldPage = kWhitePage;
 			}
 		}
 		break;
 	case 102: // Red page
-		if (_globals.ending != 4 && !(_globals.redPagesInBook & 1)) {
-			if (_globals.heldPage == 7)
-				_globals.heldPage = 0;
+		if (_globals.ending != kBooksDestroyed && !(_globals.redPagesInBook & 1)) {
+			if (_globals.heldPage == kRedLibraryPage)
+				_globals.heldPage = kNoPage;
 			else
-				_globals.heldPage = 7;
+				_globals.heldPage = kRedLibraryPage;
 		}
 		break;
 	case 103: // Blue page
-		if (_globals.ending != 4 && !(_globals.bluePagesInBook & 1)) {
-			if (_globals.heldPage == 1)
-				_globals.heldPage = 0;
+		if (_globals.ending != kBooksDestroyed && !(_globals.bluePagesInBook & 1)) {
+			if (_globals.heldPage == kBlueLibraryPage)
+				_globals.heldPage = kNoPage;
 			else
-				_globals.heldPage = 1;
+				_globals.heldPage = kBlueLibraryPage;
 		}
 		break;
 	default:
@@ -1005,10 +1022,9 @@ void Myst::o_towerRotationStart(uint16 var, const ArgumentsArray &args) {
 
 	_vm->_cursor->setCursor(700);
 
-	const Common::Point center = Common::Point(383, 124);
-	Common::Point end = towerRotationMapComputeCoords(center, _state.towerRotationAngle);
+	Common::Point end = towerRotationMapComputeCoords(_state.towerRotationAngle);
 	towerRotationMapComputeAngle();
-	towerRotationMapDrawLine(center, end);
+	towerRotationMapDrawLine(end, true);
 
 	_vm->_sound->playEffect(5378, true);
 }
@@ -1079,7 +1095,7 @@ void Myst::o_dockVaultOpen(uint16 var, const ArgumentsArray &args) {
 		(_state.observatoryMarkerSwitch == 1) &&
 		(_state.poolMarkerSwitch == 1) &&
 		(_state.rocketshipMarkerSwitch == 1)) {
-		if (_globals.heldPage != 13 && _globals.ending != 4)
+		if (_globals.heldPage != kWhitePage && _globals.ending != kBooksDestroyed)
 			_dockVaultState = 2;
 		else
 			_dockVaultState = 1;
@@ -1122,50 +1138,48 @@ void Myst::o_bookGivePage(uint16 var, const ArgumentsArray &args) {
 	debugC(kDebugScript, "Card Id (Book Cover): %d", cardIdBookCover);
 	debugC(kDebugScript, "SoundId (Add Page): %d", soundIdAddPage);
 
-	// No page or white page
-	if (!_globals.heldPage || _globals.heldPage == 13) {
-		_vm->changeToCard(cardIdBookCover, kTransitionDissolve);
-		return;
-	}
-
 	uint16 bookVar = 101;
 	uint16 mask = 0;
 
 	switch (_globals.heldPage) {
-	case 7:
+	case kNoPage:
+	case kWhitePage:
+		_vm->changeToCard(cardIdBookCover, kTransitionDissolve);
+		return;
+	case kRedLibraryPage:
 		bookVar = 100;
 		// fallthrough
-	case 1:
+	case kBlueLibraryPage:
 		mask = 1;
 		break;
-	case 8:
+	case kRedSeleniticPage:
 		bookVar = 100;
 		// fallthrough
-	case 2:
+	case kBlueSeleniticPage:
 		mask = 2;
 		break;
-	case 9:
+	case kRedMechanicalPage:
 		bookVar = 100;
 		// fallthrough
-	case 3:
+	case kBlueMechanicalPage:
 		mask = 4;
 		break;
-	case 10:
+	case kRedStoneshipPage:
 		bookVar = 100;
 		// fallthrough
-	case 4:
+	case kBlueStoneshipPage:
 		mask = 8;
 		break;
-	case 11:
+	case kRedChannelwoodPage:
 		bookVar = 100;
 		// fallthrough
-	case 5:
+	case kBlueChannelwoodPage:
 		mask = 16;
 		break;
-	case 12:
+	case kRedFirePlacePage:
 		bookVar = 100;
 		// fallthrough
-	case 6:
+	case kBlueFirePlacePage:
 		mask = 32;
 		break;
 	}
@@ -1187,16 +1201,16 @@ void Myst::o_bookGivePage(uint16 var, const ArgumentsArray &args) {
 		_globals.bluePagesInBook |= mask;
 
 	// Remove page from hand
-	_globals.heldPage = 0;
+	_globals.heldPage = kNoPage;
 
 	_vm->_cursor->showCursor();
 
 	if (mask == 32) {
 		// You lose!
 		if (var == 100)
-			_globals.currentAge = 9;
+			_globals.currentAge = kSirrusEnding;
 		else
-			_globals.currentAge = 10;
+			_globals.currentAge = kAchenarEnding;
 
 		_vm->changeToCard(cardIdLose, kTransitionDissolve);
 	} else {
@@ -1626,6 +1640,7 @@ void Myst::observatoryIncrementMonth(int16 increment) {
 	}
 
 	_vm->_sound->playEffect(8500);
+	_vm->wait(20);
 }
 
 void Myst::observatoryMonthChange_run() {
@@ -1692,6 +1707,7 @@ void Myst::observatoryIncrementDay(int16 increment) {
 	}
 
 	_vm->_sound->playEffect(8500);
+	_vm->wait(20);
 }
 
 void Myst::observatoryDayChange_run() {
@@ -1752,6 +1768,7 @@ void Myst::observatoryIncrementYear(int16 increment) {
 	}
 
 	_vm->_sound->playEffect(8500);
+	_vm->wait(20);
 }
 
 void Myst::observatoryYearChange_run() {
@@ -1817,6 +1834,7 @@ void Myst::observatoryIncrementTime(int16 increment) {
 	}
 
 	_vm->_sound->playEffect(8500);
+	_vm->wait(20);
 }
 
 void Myst::observatoryTimeChange_run() {
@@ -2441,7 +2459,7 @@ void Myst::o_rocketLeverMove(uint16 var, const ArgumentsArray &args) {
 		uint16 soundId = lever->getList2(0);
 
 		if (soundId)
-			_vm->_sound->playEffect(soundId);
+			_vm->playSoundBlocking(soundId);
 
 		// If rocket correctly powered
 		if (_state.generatorVoltage == 59 && !_state.generatorBreakers)
@@ -2512,6 +2530,7 @@ void Myst::observatoryUpdateMonth() {
 		_state.observatoryMonthSetting = month;
 		_state.observatoryMonthSlider = _observatoryMonthSlider->_pos.y;
 		_vm->_sound->playEffect(8500);
+		_vm->wait(20);
 
 		// Redraw digits
 		_vm->redrawArea(73);
@@ -2539,6 +2558,7 @@ void Myst::observatoryUpdateDay() {
 		_state.observatoryDaySetting = day;
 		_state.observatoryDaySlider = _observatoryDaySlider->_pos.y;
 		_vm->_sound->playEffect(8500);
+		_vm->wait(20);
 
 		// Redraw digits
 		_vm->redrawArea(75);
@@ -2567,6 +2587,7 @@ void Myst::observatoryUpdateYear() {
 		_state.observatoryYearSetting = year;
 		_state.observatoryYearSlider = _observatoryYearSlider->_pos.y;
 		_vm->_sound->playEffect(8500);
+		_vm->wait(20);
 
 		// Redraw digits
 		_vm->redrawArea(79);
@@ -2597,6 +2618,7 @@ void Myst::observatoryUpdateTime() {
 		_state.observatoryTimeSetting = time;
 		_state.observatoryTimeSlider = _observatoryTimeSlider->_pos.y;
 		_vm->_sound->playEffect(8500);
+		_vm->wait(20);
 
 		// Redraw digits
 		_vm->redrawArea(80);
@@ -3154,7 +3176,7 @@ void Myst::towerRotationMap_run() {
 		} else {
 			// Stop blinking label
 			_towerRotationBlinkLabel = false;
-			_towerRotationMapLabel->drawConditionalDataToScreen(0);
+			towerRotationMapRedraw();
 
 			// Blink tower
 			_startTime = time + 500;
@@ -3220,18 +3242,18 @@ uint16 Myst::towerRotationMapComputeAngle() {
 	return angle;
 }
 
-Common::Point Myst::towerRotationMapComputeCoords(const Common::Point &center, uint16 angle) {
+Common::Point Myst::towerRotationMapComputeCoords(uint16 angle) {
 	Common::Point end;
 
 	// Polar to rect coords
 	double radians = angle * M_PI / 180.0;
-	end.x = (int16)(center.x + cos(radians) * 310.0);
-	end.y = (int16)(center.y + sin(radians) * 310.0);
+	end.x = (int16)(_towerRotationCenter.x + cos(radians) * 310.0);
+	end.y = (int16)(_towerRotationCenter.y + sin(radians) * 310.0);
 
 	return end;
 }
 
-void Myst::towerRotationMapDrawLine(const Common::Point &center, const Common::Point &end) {
+void Myst::towerRotationMapDrawLine(const Common::Point &end, bool rotationLabelVisible) {
 	uint32 color;
 
 	if (_vm->getFeatures() & GF_ME) {
@@ -3266,18 +3288,22 @@ void Myst::towerRotationMapDrawLine(const Common::Point &center, const Common::P
 	_towerRotationMapTower->drawConditionalDataToScreen(0, false);
 
 	// Draw label
-	_towerRotationMapLabel->drawConditionalDataToScreen(1, false);
+	_towerRotationMapLabel->drawConditionalDataToScreen(rotationLabelVisible ? 1 : 0, false);
 
 	// Draw line
-	_vm->_gfx->drawLine(center, end, color);
+	_vm->_gfx->drawLine(_towerRotationCenter, end, color);
 	_vm->_gfx->copyBackBufferToScreen(rect);
 }
 
 void Myst::towerRotationMapRotate() {
-	const Common::Point center = Common::Point(383, 124);
 	uint16 angle = towerRotationMapComputeAngle();
-	Common::Point end = towerRotationMapComputeCoords(center, angle);
-	towerRotationMapDrawLine(center, end);
+	Common::Point end = towerRotationMapComputeCoords(angle);
+	towerRotationMapDrawLine(end, true);
+}
+
+void Myst::towerRotationMapRedraw() {
+	Common::Point end = towerRotationMapComputeCoords(_state.towerRotationAngle);
+	towerRotationMapDrawLine(end, false);
 }
 
 void Myst::o_forechamberDoor_init(uint16 var, const ArgumentsArray &args) {
@@ -3692,7 +3718,7 @@ void Myst::greenBook_run() {
 		VideoEntryPtr book = _vm->playMovie(videoName, kMystStack);
 		book->moveTo(314, 76);
 
-		if (_globals.ending != 4) {
+		if (_globals.ending != kBooksDestroyed) {
 			_tempVar = 2;
 		} else {
 			book->setBounds(Audio::Timestamp(0, loopStart, 600), Audio::Timestamp(0, loopEnd, 600));

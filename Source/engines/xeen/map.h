@@ -47,6 +47,10 @@ enum MonsterType {
 	MONSTER_DRAGON = 6
 };
 
+enum MapId {
+	XEEN_CASTLE1 = 75, XEEN_CASTLE4 = 78
+};
+
 class MonsterStruct {
 public:
 	Common::String _name;
@@ -165,16 +169,16 @@ enum SurfaceType {
 
 union MazeWallLayers {
 	struct MazeWallIndoors {
-		int _wallNorth : 4;
-		int _wallEast : 4;
-		int _wallSouth : 4;
-		int _wallWest : 4;
+		uint _wallNorth : 4;
+		uint _wallEast : 4;
+		uint _wallSouth : 4;
+		uint _wallWest : 4;
 	} _indoors;
 	struct MazeWallOutdoors {
-		SurfaceType _surfaceId : 4;
-		int _iMiddle : 4;
-		int _iTop : 4;
-		int _iOverlay : 4;
+		uint _surfaceId : 4;		// SurfaceType, but needs to be unsigned
+		uint _iMiddle : 4;
+		uint _iTop : 4;
+		uint _iOverlay : 4;
 	} _outdoors;
 	uint16 _data;
 };
@@ -403,13 +407,12 @@ private:
 	int _sidePictures;
 	int _sideObjects;
 	int _sideMonsters;
-	int _sideMusic;
 	int _mazeDataIndex;
 
 	/**
 	 * Load the events for a new map
 	 */
-	void loadEvents(int mapId);
+	void loadEvents(int mapId, int ccNum);
 
 	/**
 	 * Save the events for a map
